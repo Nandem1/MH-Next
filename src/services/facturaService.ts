@@ -35,7 +35,9 @@ export const getFacturas = async (): Promise<Factura[]> => {
       local: locales[factura.id_local] || "Local desconocido", // default
       estado: "BODEGA",    // default
       fechaIngreso: factura.fecha_registro,
-      image_url: transformDriveUrl(factura.image_url)
+      image_url: transformDriveUrl(factura.image_url),
+      usuario: factura.usuario || "undefined",
+      rut_proveedor: factura.rut_proveedor || "undefined"
     }));
 
     return facturas;

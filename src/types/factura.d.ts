@@ -7,6 +7,8 @@ export interface FacturaResponse {
   image_url: string;
   fecha_registro: string;
   id_local: number;
+  usuario?: string;
+  rut_proveedor?: string;
 }
 
 
@@ -18,4 +20,6 @@ export interface Factura {
   estado: "BODEGA" | "SALA";
   fechaIngreso: string; // Formato ISO (YYYY-MM-DDTHH:mm:ss)
   image_url: string;
+  usuario?: string;
+  rut_proveedor?: string;
 }
