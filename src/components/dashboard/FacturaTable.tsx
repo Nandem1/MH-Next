@@ -1,221 +1,104 @@
 "use client";
 
-import { useFacturas } from "@/hooks/useFacturas";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Card,
-  CardContent,
-  CardMedia,
-  Button,
-  CircularProgress,
-  Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-} from "@mui/material";
 import { useState } from "react";
-import { useMediaQuery } from "@mui/material";
-import styles from "./FacturaTable.module.css";
-import { formatearRut } from "@/utils/formatearRut";
-import DoneIcon from "@mui/icons-material/Done";
+import { useMediaQuery, CircularProgress } from "@mui/material";
+import { useFacturas } from "@/hooks/useFacturas";
+import { Factura } from "@/types/factura";
+import { FacturaCard } from "./FacturaCard";
+import { FacturaTableDesktop } from "./FacturaTableDesktop";
+import { ViewFacturaModal } from "./ViewFacturaModal";
+import { ConfirmChangeEstadoModal } from "./ConfirmChangeEstadoModal";
 
 export function FacturaTable() {
-  const { data, isLoading, error } = useFacturas();
+  const { data: facturas, isLoading, error } = useFacturas();
   const isMobile = useMediaQuery("(max-width:600px)");
 
-  // Modal para confirmar cambio de estado
-  const [open, setOpen] = useState(false);
-  const [selectedFacturaId, setSelectedFacturaId] = useState<string | null>(
-    null
-  );
+  const [openViewModal, setOpenViewModal] = useState(false);
+  const [selectedFactura, setSelectedFactura] = useState<Factura | null>(null);
 
-  const handleOpenModal = (id: string) => {
+  const [openConfirmModal, setOpenConfirmModal] = useState(false);
+  const [selectedFacturaId, setSelectedFacturaId] = useState<string | null>(null);
+
+  // Abrir modal de ver factura
+  const handleOpenViewModal = (factura: Factura) => {
+    setSelectedFactura(factura);
+    setOpenViewModal(true);
+  };
+
+  const handleCloseViewModal = () => {
+    setSelectedFactura(null);
+    setOpenViewModal(false);
+  };
+
+  // Abrir modal de confirmación de cambio de estado
+  const handleOpenConfirmModal = (id: string) => {
     setSelectedFacturaId(id);
-    setOpen(true);
+    setOpenConfirmModal(true);
   };
 
-  const handleCloseModal = () => {
-    setOpen(false);
+  const handleCloseConfirmModal = () => {
     setSelectedFacturaId(null);
+    setOpenConfirmModal(false);
   };
 
-  const handleConfirmChange = () => {
+  const handleConfirmChangeEstado = () => {
     console.log(`Cambiar estado de factura ID: ${selectedFacturaId}`);
-    handleCloseModal();
+    handleCloseConfirmModal();
   };
 
-  if (isLoading)
+  if (isLoading) {
     return (
       <div className="flex justify-center p-4">
         <CircularProgress />
       </div>
     );
+  }
 
-  if (error)
+  if (error) {
     return (
       <div className="text-center text-red-500">Error cargando facturas</div>
     );
+  }
 
-  if (isMobile) {
-    // Vista para móviles: Cards
+  if (!facturas || facturas.length === 0) {
     return (
-      <div className="p-4 space-y-4">
-        {data?.map((factura) => (
-          <Card
-            key={factura.id}
-            sx={{
-              backgroundColor: "background.paper",
-              borderRadius: 2,
-              boxShadow: 3,
-            }}
-            className={styles.facturaCard}
-          >
-            <CardMedia
-              component="img"
-              height="180"
-              image={factura.image_url}
-              alt={`Factura ${factura.folio}`}
-              sx={{
-                objectFit: "cover",
-                borderTopLeftRadius: 8,
-                borderTopRightRadius: 8,
-              }}
-              className={styles.facturaCardMedia}
-            />
-            <CardContent sx={{ p: 2 }} className={styles.facturaCardContent}>
-              <div className="text-sm space-y-2">
-                <Typography variant="subtitle1" fontWeight="bold">
-                  {factura.proveedor}
-                </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  Rut: {formatearRut(factura.rut_proveedor || "")}
-                </Typography>
-                <Typography>
-                  <strong>Folio:</strong> {factura.folio}
-                </Typography>
-                <Typography>
-                  <strong>Local:</strong> {factura.local}
-                </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  Subido por: {factura.nombre_usuario}
-                </Typography>
-                <Typography>
-                  <strong>Estado:</strong> {factura.estado}
-                </Typography>
-                <Typography>
-                  <strong>Fecha:</strong>{" "}
-                  {new Date(factura.fechaIngreso).toLocaleDateString()}
-                </Typography>
-              </div>
-              <Button
-                onClick={() => window.open(factura.image_url, "_blank")}
-                size="small"
-                variant="contained"
-                sx={{ marginTop: 2 }}
-                fullWidth
-                className={styles.facturaButton}
-              >
-                Ver Factura
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <div className="text-center text-gray-500">No hay facturas disponibles</div>
     );
   }
 
-  // Vista para Desktop: Tabla
   return (
     <>
-      <TableContainer component={Paper} sx={{ maxWidth: '99%', margin: 'auto', boxShadow: 3, marginTop: 2 }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell align="center">Folio</TableCell>
-              <TableCell align="center">Proveedor</TableCell>
-              <TableCell align="center">Local</TableCell>
-              <TableCell align="center">Estado</TableCell>
-              <TableCell align="center">Fecha Ingreso</TableCell>
-              <TableCell align="center">Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data?.map((factura) => (
-              <TableRow key={factura.id}>
-                <TableCell>{factura.folio}</TableCell>
-                <TableCell>
-                  <div>
-                    <Typography variant="body1">{factura.proveedor}</Typography>
-                    <Typography variant="caption" color="textSecondary">
-                      Rut: {formatearRut(factura.rut_proveedor || "")}
-                    </Typography>
-                  </div>
-                </TableCell>
-                <TableCell align="center">
-                  <div>
-                    <Typography variant="body1">{factura.local}</Typography>
-                    <Typography variant="caption" color="textSecondary">
-                      Subido por: {factura.nombre_usuario}
-                    </Typography>
-                  </div>
-                </TableCell>
-                <TableCell align="center">{factura.estado}</TableCell>
-                <TableCell align="center">
-                  {new Date(factura.fechaIngreso).toLocaleDateString()}
-                </TableCell>
-                <TableCell align="center">
-                  <div style={{ display: "flex", gap: "8px", alignItems: "center", justifyContent: "center" }}>
-                  <Button
-                      variant="contained"
-                      color="success"
-                      size="small"
-                      onClick={() => handleOpenModal(factura.id)}
-                    >
-                      <DoneIcon />
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      size="small"
-                      onClick={() => window.open(factura.image_url, "_blank")}
-                    >
-                      Ver
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      {isMobile ? (
+        <div className="p-4 space-y-4">
+          {facturas.map((factura) => (
+            <FacturaCard
+              key={factura.id}
+              factura={factura}
+              onView={() => handleOpenViewModal(factura)}
+            />
+          ))}
+        </div>
+      ) : (
+        <FacturaTableDesktop
+          facturas={facturas}
+          onView={handleOpenViewModal}
+          onChangeEstado={handleOpenConfirmModal}
+        />
+      )}
 
-      {/* Modal de confirmación */}
-      <Dialog open={open} onClose={handleCloseModal}>
-        <DialogTitle>Confirmar Cambio de Estado</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            ¿Estás seguro de que deseas cambiar el estado de esta factura?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseModal}>Cancelar</Button>
-          <Button
-            onClick={handleConfirmChange}
-            variant="contained"
-            color="primary"
-          >
-            Confirmar
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Modal Ver Factura */}
+      <ViewFacturaModal
+        open={openViewModal}
+        onClose={handleCloseViewModal}
+        factura={selectedFactura}
+      />
+
+      {/* Modal Confirmar Cambio Estado */}
+      <ConfirmChangeEstadoModal
+        open={openConfirmModal}
+        onClose={handleCloseConfirmModal}
+        onConfirm={handleConfirmChangeEstado}
+      />
     </>
   );
 }

@@ -36,6 +36,7 @@ export const getFacturas = async (): Promise<Factura[]> => {
       estado: "BODEGA",    // default
       fechaIngreso: factura.fecha_registro,
       image_url: transformDriveUrl(factura.image_url),
+      image_url_cloudinary: factura.image_url_cloudinary,
       nombre_usuario: factura.nombre_usuario,
       rut_proveedor: factura.rut_proveedor || "undefined"
     }));
