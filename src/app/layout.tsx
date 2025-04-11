@@ -1,11 +1,8 @@
-"use client";
-
+import { ThemeProvider } from "@/context/ThemeContext";
+import { ThemeRegistry } from "@/providers/ThemeRegistry";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { Inter } from "next/font/google";
-import { ThemeProvider } from "@/context/ThemeContext"; // Cambió aquí
 import { CssBaseline } from "@mui/material";
-import { ThemeRegistry } from "@/providers/ThemeRegistry";
-import { lightTheme } from "@/theme/theme"; 
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,14 +14,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ThemeRegistry theme={lightTheme}>
-          <QueryProvider>
-            <ThemeProvider>
+        <ThemeProvider> {/* Este va primero 🔥 */}
+          <ThemeRegistry> {/* Ahora sí puede leer el contexto */}
+            <QueryProvider>
               <CssBaseline />
               {children}
-            </ThemeProvider>
-          </QueryProvider>
-        </ThemeRegistry>
+            </QueryProvider>
+          </ThemeRegistry>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -17,6 +17,8 @@
     "@tanstack/react-query-devtools": "^5.71.10",
     "axios": "^1.8.4",
     "dotenv": "^16.4.7",
+    "framer-motion": "^12.6.3",
+    "lucide-react": "^0.487.0",
     "next": "15.2.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

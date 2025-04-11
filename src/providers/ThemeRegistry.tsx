@@ -1,20 +1,23 @@
-// src/providers/ThemeRegistry.tsx
 "use client";
 
 import { CacheProvider } from "@emotion/react";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import createEmotionCache from "@/utils/emotionCache";
 import { ReactNode } from "react";
-import { Theme } from "@mui/material/styles";
+import { useThemeContext } from "@/context/ThemeContext";
+import { darkTheme, lightTheme } from "@/theme/theme"; // 👈 Importa tus temas
 
 const clientSideEmotionCache = createEmotionCache();
 
 interface ThemeRegistryProps {
   children: ReactNode;
-  theme: Theme;
 }
 
-export function ThemeRegistry({ children, theme }: ThemeRegistryProps) {
+export function ThemeRegistry({ children }: ThemeRegistryProps) {
+  const { mode } = useThemeContext(); // 👈 Usamos tu contexto dinámico
+
+  const theme = mode === "light" ? lightTheme : darkTheme; // 👈 Selecciona el tema correcto
+
   return (
     <CacheProvider value={clientSideEmotionCache}>
       <ThemeProvider theme={theme}>
@@ -24,4 +27,3 @@ export function ThemeRegistry({ children, theme }: ThemeRegistryProps) {
     </CacheProvider>
   );
 }
-
