@@ -4,10 +4,17 @@ import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { Box, useMediaQuery } from "@mui/material";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 export function LayoutDashboard({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width:900px)"); // 📱 Detectar Mobile o Desktop
+
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return null; // 🔒 No renderizamos nada mientras redirige
+  }
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -33,15 +40,10 @@ export function LayoutDashboard({ children }: { children: React.ReactNode }) {
         }}
       >
         {/* Topbar recibe si es mobile */}
-        <Topbar
-          handleDrawerToggle={handleDrawerToggle}
-          isMobile={isMobile}
-        />
+        <Topbar handleDrawerToggle={handleDrawerToggle} isMobile={isMobile} />
 
         {/* Aquí van las páginas */}
-        <Box sx={{ flexGrow: 1, padding: 2, mt: 8 }}>
-          {children}
-        </Box>
+        <Box sx={{ flexGrow: 1, padding: 2, mt: 8 }}>{children}</Box>
       </Box>
     </Box>
   );

@@ -33,7 +33,11 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
     { text: "Inicio", icon: <DashboardIcon />, path: "/dashboard/inicio" },
     { text: "Facturas", icon: <ReceiptIcon />, path: "/dashboard/facturas" },
     { text: "Usuarios", icon: <PeopleIcon />, path: "/dashboard/usuarios" },
-    { text: "Configuración", icon: <SettingsIcon />, path: "/dashboard/configuracion" },
+    {
+      text: "Configuración",
+      icon: <SettingsIcon />,
+      path: "/dashboard/configuracion",
+    },
   ];
 
   const drawer = (
@@ -51,14 +55,16 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
               selected={pathname === item.path}
               sx={{
                 "&.Mui-selected": {
-                  bgcolor: "primary.main",
-                  color: "#fff",
+                  transition: "background-color 0.3s ease",
+                  backgroundColor: "primary.main",
+                  color: "#0a0a0a",
                   "&:hover": {
-                    bgcolor: "primary.dark",
+                    backgroundColor: "#e6c235",
                   },
                 },
                 "&:hover": {
-                  bgcolor: "action.hover",
+                  bgcolor: "rgba(255, 217, 61, 0.08)", // 🎨 Muted Yellow 8% opacidad
+                  transition: "background-color 0.3s ease",
                 },
               }}
             >

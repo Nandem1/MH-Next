@@ -1,9 +1,10 @@
 "use client";
 
-import { AppBar, Toolbar, IconButton, Typography, Box } from "@mui/material";
+import { AppBar, Toolbar, IconButton, Typography, Box, Button } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useThemeContext } from "@/context/ThemeContext";
 import { Sun, Moon } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface TopbarProps {
   handleDrawerToggle: () => void;
@@ -14,6 +15,11 @@ const drawerWidth = 240;
 
 export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
   const { toggleTheme, mode } = useThemeContext();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout(); // 🔒 Solo cerramos sesión directamente ahora
+  };
 
   return (
     <AppBar
@@ -28,8 +34,9 @@ export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
       }}
     >
       <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+        
+        {/* IZQUIERDA */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {/* Botón de hamburguesa SOLO en mobile */}
           {isMobile && (
             <IconButton
               color="inherit"
@@ -40,16 +47,28 @@ export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
               <MenuIcon />
             </IconButton>
           )}
-
           <Typography variant="h6" noWrap component="div">
             MH Dashboard
           </Typography>
         </Box>
 
-        {/* Botón para cambiar el tema */}
-        <IconButton onClick={toggleTheme} color="inherit">
-          {mode === "light" ? <Moon size={20} /> : <Sun size={20} />}
-        </IconButton>
+        {/* DERECHA */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <IconButton onClick={toggleTheme} color="inherit">
+            {mode === "light" ? <Moon size={20} /> : <Sun size={20} />}
+          </IconButton>
+
+          <Button
+            variant="outlined"
+            color="primary"
+            size="small"
+            onClick={handleLogout}
+            sx={{ textTransform: "none" }}
+          >
+            Cerrar sesión
+          </Button>
+        </Box>
+
       </Toolbar>
     </AppBar>
   );
