@@ -3,7 +3,6 @@
 export interface FacturaResponse {
   folio: string;
   proveedor: string;
-  rut_proveedor: string;
   image_url: string;
   image_url_cloudinary: string;
   fecha_registro: string;

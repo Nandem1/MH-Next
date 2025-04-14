@@ -5,21 +5,22 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { useThemeContext } from "@/context/ThemeContext";
 import { Sun, Moon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { drawerWidth } from "@/constants/layout"; // 🔥 Importa desde constants
+import { useCallback } from "react";
 
 interface TopbarProps {
   handleDrawerToggle: () => void;
   isMobile: boolean;
 }
 
-const drawerWidth = 240;
-
 export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
   const { toggleTheme, mode } = useThemeContext();
   const { logout } = useAuth();
 
-  const handleLogout = () => {
-    logout(); // 🔒 Solo cerramos sesión directamente ahora
-  };
+  // 🔥 useCallback para logout para evitar que se recree en cada render
+  const handleLogout = useCallback(() => {
+    logout();
+  }, [logout]);
 
   return (
     <AppBar

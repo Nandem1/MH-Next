@@ -37,60 +37,62 @@ export function FacturaTableDesktop({ facturas, onView, onChangeEstado }: Factur
           </TableRow>
         </TableHead>
         <TableBody>
-          {facturas.map((factura) => (
-            <TableRow key={factura.id}>
-              <TableCell align="center">{factura.folio}</TableCell>
+          {facturas.map((factura) => {
+            return (
+              <TableRow key={factura.id}>
+                <TableCell align="center">{factura.folio}</TableCell>
 
-              {/* Proveedor + Rut */}
-              <TableCell align="center">
-                <div>
-                  <Typography variant="body1">{factura.proveedor}</Typography>
-                  <Typography variant="caption" color="textSecondary">
-                    Rut: {formatearRut(factura.rut_proveedor || "")}
-                  </Typography>
-                </div>
-              </TableCell>
+                {/* Proveedor + Rut */}
+                <TableCell align="center">
+                  <div>
+                    <Typography variant="body1">{factura.proveedor}</Typography>
+                    <Typography variant="caption" color="textSecondary">
+                      Rut: {formatearRut(factura.rut_proveedor || "")}
+                    </Typography>
+                  </div>
+                </TableCell>
 
-              {/* Local + Usuario */}
-              <TableCell align="center">
-                <div>
-                  <Typography variant="body1">{factura.local}</Typography>
-                  <Typography variant="caption" color="textSecondary">
-                    Subido por: {factura.nombre_usuario}
-                  </Typography>
-                </div>
-              </TableCell>
+                {/* Local + Usuario */}
+                <TableCell align="center">
+                  <div>
+                    <Typography variant="body1">{factura.local}</Typography>
+                    <Typography variant="caption" color="textSecondary">
+                      Subido por: {factura.nombre_usuario}
+                    </Typography>
+                  </div>
+                </TableCell>
 
-              <TableCell align="center">{factura.estado}</TableCell>
+                <TableCell align="center">{factura.estado}</TableCell>
 
-              <TableCell align="center">
-                {new Date(factura.fechaIngreso).toLocaleDateString()}
-              </TableCell>
+                <TableCell align="center">
+                  {new Date(factura.fechaIngreso).toLocaleDateString()}
+                </TableCell>
 
-              {/* Acciones */}
-              <TableCell align="center">
-                <div style={{ display: "flex", gap: "8px", alignItems: "center", justifyContent: "center" }}>
-                  <Button
-                    variant="contained"
-                    color="success"
-                    size="small"
-                    onClick={() => onChangeEstado(factura.id)}
-                  >
-                    <DoneIcon />
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    size="small"
-                    onClick={() => onView(factura)}
-                  >
-                    Ver
-                  </Button>
-                </div>
-              </TableCell>
+                {/* Acciones */}
+                <TableCell align="center">
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center", justifyContent: "center" }}>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      size="small"
+                      onClick={() => onChangeEstado(factura.id)}
+                    >
+                      <DoneIcon />
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="small"
+                      onClick={() => onView(factura)}
+                    >
+                      Ver
+                    </Button>
+                  </div>
+                </TableCell>
 
-            </TableRow>
-          ))}
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </TableContainer>

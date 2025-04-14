@@ -3,26 +3,26 @@
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { Box, useMediaQuery } from "@mui/material";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { drawerWidth } from "@/constants/layout";
 
 export function LayoutDashboard({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const isMobile = useMediaQuery("(max-width:900px)"); // 📱 Detectar Mobile o Desktop
-
+  const isMobile = useMediaQuery("(max-width:900px)");
   const { isAuthenticated } = useAuth();
 
-  if (!isAuthenticated) {
-    return null; // 🔒 No renderizamos nada mientras redirige
-  }
+  const handleDrawerToggle = useCallback(() => {
+    setMobileOpen((prev) => !prev);
+  }, []);
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
-      {/* Sidebar recibe el estado de mobile */}
+      {/* Sidebar */}
       <Sidebar
         mobileOpen={mobileOpen}
         handleDrawerToggle={handleDrawerToggle}
@@ -33,17 +33,19 @@ export function LayoutDashboard({ children }: { children: React.ReactNode }) {
         component="main"
         sx={{
           flexGrow: 1,
+          minHeight: "100vh",
           display: "flex",
           flexDirection: "column",
-          width: "100%", // 📏 MUY IMPORTANTE
-          minHeight: "100vh", // ⬅️ Para que nunca quede más chico
+          paddingLeft: { xs: 0, md: `${drawerWidth - 120}px` }, // 👈 ESTE ES EL CAMBIO
         }}
       >
-        {/* Topbar recibe si es mobile */}
+        {/* Topbar */}
         <Topbar handleDrawerToggle={handleDrawerToggle} isMobile={isMobile} />
 
-        {/* Aquí van las páginas */}
-        <Box sx={{ flexGrow: 1, padding: 2, mt: 8 }}>{children}</Box>
+        {/* Contenido dinámico */}
+        <Box sx={{ padding: 2, mt: 8 }}>
+          {children}
+        </Box>
       </Box>
     </Box>
   );
