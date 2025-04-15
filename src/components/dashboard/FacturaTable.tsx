@@ -59,13 +59,13 @@ export function FacturaTable({ facturas, isLoading, error }: FacturaTableProps) 
 
   if (error) {
     return (
-      <div className="text-center text-red-500">Error cargando facturas</div>
+      <div>Error cargando facturas</div>
     );
   }
 
   if (!facturas || facturas.length === 0) {
     return (
-      <div className="text-center text-gray-500">No hay facturas disponibles</div>
+      <div>No hay facturas disponibles</div>
     );
   }
 

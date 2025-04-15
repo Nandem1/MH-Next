@@ -85,7 +85,6 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
       ModalProps={isMobile ? { keepMounted: true } : undefined}
       sx={{
         flexShrink: 0,
-        // 💥 Aquí controlamos el espacio azul fantasma
         [`& .MuiDrawer-paper`]: {
           width: drawerWidth,
           boxSizing: "border-box",

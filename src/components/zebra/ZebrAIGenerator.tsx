@@ -85,7 +85,7 @@ export function ZebrAIGenerator() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 3, ml: { xs: 0, md: "120px" } }}>
       <Typography variant="h4" fontWeight="bold" mb={3}>
         ZebrAI Generator
       </Typography>

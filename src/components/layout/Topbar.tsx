@@ -27,8 +27,8 @@ export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
       position="fixed"
       elevation={1}
       sx={{
-        width: isMobile ? "100%" : `calc(100% - ${drawerWidth}px)`,
-        ml: isMobile ? 0 : `${drawerWidth}px`,
+        width: { md: `calc(100% - ${drawerWidth}px)` },
+        ml:    { md: `${drawerWidth}px` },
         bgcolor: "background.paper",
         color: "text.primary",
         boxShadow: 1,

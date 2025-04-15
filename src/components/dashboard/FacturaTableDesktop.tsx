@@ -19,11 +19,15 @@ interface FacturaTableDesktopProps {
   onChangeEstado: (id: string) => void;
 }
 
-export function FacturaTableDesktop({ facturas, onView, onChangeEstado }: FacturaTableDesktopProps) {
+export function FacturaTableDesktop({
+  facturas,
+  onView,
+  onChangeEstado,
+}: FacturaTableDesktopProps) {
   return (
     <TableContainer
       component={Paper}
-      sx={{ maxWidth: "99%", margin: "auto", boxShadow: 3, marginTop: 2 }}
+      sx={{ width: "100%", boxShadow: 3, mt: 2 }}
     >
       <Table>
         <TableHead>
@@ -70,7 +74,14 @@ export function FacturaTableDesktop({ facturas, onView, onChangeEstado }: Factur
 
                 {/* Acciones */}
                 <TableCell align="center">
-                  <div style={{ display: "flex", gap: "8px", alignItems: "center", justifyContent: "center" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
                     <Button
                       variant="contained"
                       color="success"
@@ -89,7 +100,6 @@ export function FacturaTableDesktop({ facturas, onView, onChangeEstado }: Factur
                     </Button>
                   </div>
                 </TableCell>
-
               </TableRow>
             );
           })}

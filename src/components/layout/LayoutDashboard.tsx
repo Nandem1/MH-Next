@@ -1,3 +1,4 @@
+// components/layout/LayoutDashboard.tsx
 "use client";
 
 import { Sidebar } from "./Sidebar";
@@ -5,7 +6,7 @@ import { Topbar } from "./Topbar";
 import { Box, useMediaQuery } from "@mui/material";
 import { useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { drawerWidth } from "@/constants/layout";
+//import { drawerWidth } from "@/constants/layout";
 
 export function LayoutDashboard({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -16,34 +17,37 @@ export function LayoutDashboard({ children }: { children: React.ReactNode }) {
     setMobileOpen((prev) => !prev);
   }, []);
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  if (!isAuthenticated) return null;
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
-      {/* Sidebar */}
-      <Sidebar
-        mobileOpen={mobileOpen}
-        handleDrawerToggle={handleDrawerToggle}
-      />
+      {/* ───── Sidebar ───── */}
+      <Sidebar mobileOpen={mobileOpen} handleDrawerToggle={handleDrawerToggle} />
 
-      {/* Contenido principal */}
+      {/* ───── Contenido principal ───── */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          paddingLeft: { xs: 0, md: `${drawerWidth - 120}px` }, // 👈 ESTE ES EL CAMBIO
+          p: 3,
+          ml: { xs: 0, md: '120px'}          // padding habitual
+          /* QUITA estas dos líneas  👇           */
+          /* ml:  { xs: 0, md: `${drawerWidth}px` }, */
+          /* width:{ xs: '100%', md: `calc(100% - ${drawerWidth}px)` }, */
         }}
       >
-        {/* Topbar */}
+        {/* Topbar fija */}
         <Topbar handleDrawerToggle={handleDrawerToggle} isMobile={isMobile} />
 
         {/* Contenido dinámico */}
-        <Box sx={{ padding: 2, mt: 8 }}>
+        <Box
+          sx={{
+            /* Padding interior agradable que NO depende del Drawer */
+            px: 2,
+            py: 2,
+            mt: 8,               // separa del AppBar
+          }}
+        >
           {children}
         </Box>
       </Box>

@@ -26,6 +26,7 @@ export default function InicioPage() {
         textAlign: "center",
         gap: 2,
         padding: 2,
+        ml: { xs: 0, md: "120px" }, // padding habitual
       }}
     >
       <Typography variant="h3" fontWeight="bold">
