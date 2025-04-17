@@ -1,27 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Factura } from "@/types/factura";
 import { FacturaSearchBar } from "./FacturaSearchBar";
 import { FacturaTable } from "./FacturaTable";
 import { useFacturas } from "@/hooks/useFacturas";
-import { CircularProgress, Box, Typography } from "@mui/material";
+import {
+  CircularProgress,
+  Box,
+  Typography,
+  Pagination,
+} from "@mui/material";
 import { adaptFactura } from "@/utils/adaptFactura";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export function FacturaPageContent() {
-  const { data: facturas, isLoading, isFetching, error } = useFacturas();
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
   const [facturaFiltrada, setFacturaFiltrada] = useState<Factura[] | null>(null);
+
+  const { data, isLoading, isFetching, error } = useFacturas(page, limit);
+  const facturas = data?.facturas ?? [];
+  const totalFacturas = data?.total ?? 0;
+
+  // 🔄 Limpia el filtro al cambiar de página
+  useEffect(() => {
+    setFacturaFiltrada(null);
+  }, [page]);
 
   const handleSearch = async (folio: string, local: string) => {
     try {
+      setPage(1); // Reiniciar página
+
       if (folio) {
         const response = await fetch(`${API_URL}/api/facturas/${folio}`);
         if (!response.ok) throw new Error("Factura no encontrada");
 
         const data = await response.json();
-        const adaptedData = adaptFactura(data[0], 0);
+        const rawData = Array.isArray(data) ? data[0] : data;
+        const adaptedData = adaptFactura(rawData);
 
         let result = adaptedData ? [adaptedData] : [];
 
@@ -31,11 +49,11 @@ export function FacturaPageContent() {
 
         setFacturaFiltrada(result);
       } else if (local) {
-        // Si solo hay filtro por local
-        const filtradas = facturas?.filter((factura) => factura.local.includes(local)) ?? [];
+        const filtradas = facturas.filter((factura) =>
+          factura.local.includes(local)
+        );
         setFacturaFiltrada(filtradas);
       } else {
-        // Si no hay ningún filtro
         setFacturaFiltrada(null);
       }
     } catch (err) {
@@ -46,9 +64,15 @@ export function FacturaPageContent() {
 
   const handleClearSearch = () => {
     setFacturaFiltrada(null);
+    setPage(1);
   };
 
-  const facturasParaMostrar = facturaFiltrada ?? facturas;
+  const handlePageChange = (_: React.ChangeEvent<unknown>, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const facturasParaMostrar =
+    facturaFiltrada !== null ? facturaFiltrada : facturas;
 
   return (
     <>
@@ -63,7 +87,23 @@ export function FacturaPageContent() {
           <Typography color="error">Error cargando facturas</Typography>
         </Box>
       ) : (
-        <FacturaTable facturas={facturasParaMostrar || []} isLoading={false} error={false} />
+        <>
+          <FacturaTable
+            facturas={facturasParaMostrar}
+            isLoading={false}
+            error={false}
+          />
+          {facturaFiltrada === null && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+              <Pagination
+                count={Math.ceil(totalFacturas / limit)}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+              />
+            </Box>
+          )}
+        </>
       )}
     </>
   );

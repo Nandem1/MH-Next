@@ -18,7 +18,11 @@ export function FacturaSearchBar({ onSearch, onClear }: FacturaSearchBarProps) {
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", gap: 2, mb: 2, flexWrap: "wrap" }}>
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{ display: "flex", gap: 2, mb: 2, flexWrap: "wrap" }}
+    >
       <TextField
         label="Buscar por Folio"
         variant="outlined"
@@ -43,7 +47,15 @@ export function FacturaSearchBar({ onSearch, onClear }: FacturaSearchBarProps) {
         Buscar
       </Button>
 
-      <Button variant="outlined" color="secondary" onClick={onClear}>
+      <Button
+        variant="outlined"
+        color="secondary"
+        onClick={() => {
+          setFolio("");
+          setLocal("");
+          onClear();
+        }}
+      >
         Limpiar
       </Button>
     </Box>

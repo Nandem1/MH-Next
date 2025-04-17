@@ -16,13 +16,13 @@ const transformDriveUrl = (url: string) => {
   return url;
 };
 
-export function adaptFactura(factura: FacturaResponse, index: number = 0): Factura {
+export function adaptFactura(factura: FacturaResponse): Factura {
   return {
-    id: `${index}`, // inventamos ID si no tiene
+    id: `${factura.folio}-${factura.fecha_registro}`, // ahora es único y estable
     folio: factura.folio,
     proveedor: factura.proveedor,
     local: locales[factura.id_local] || "Local desconocido",
-    estado: "BODEGA", // default
+    estado: "BODEGA",
     fechaIngreso: factura.fecha_registro,
     image_url: transformDriveUrl(factura.image_url || ""),
     image_url_cloudinary: factura.image_url_cloudinary,
