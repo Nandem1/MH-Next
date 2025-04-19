@@ -1,12 +1,6 @@
 // src/utils/adaptFactura.ts
 import { Factura, FacturaResponse } from "@/types/factura";
 
-const locales: { [key: number]: string } = {
-  1: "LA CANTERA 3055",
-  2: "LIBERTADOR 1476",
-  3: "BALMACEDA 599",
-};
-
 const transformDriveUrl = (url: string) => {
   const regex = /\/file\/d\/(.*?)\/view/;
   const match = url.match(regex);
@@ -21,7 +15,7 @@ export function adaptFactura(factura: FacturaResponse): Factura {
     id: `${factura.folio}-${factura.fecha_registro}`, // ahora es único y estable
     folio: factura.folio,
     proveedor: factura.proveedor,
-    local: locales[factura.id_local] || "Local desconocido",
+    local: factura.nombre_local || "Local desconocido",
     estado: "BODEGA",
     fechaIngreso: factura.fecha_registro,
     image_url: transformDriveUrl(factura.image_url || ""),

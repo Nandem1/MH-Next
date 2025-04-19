@@ -6,7 +6,7 @@ export interface FacturaResponse {
   image_url: string;
   image_url_cloudinary: string;
   fecha_registro: string;
-  id_local: number;
+  nombre_local: string;
   nombre_usuario: string;
   rut_proveedor?: string;
 }
