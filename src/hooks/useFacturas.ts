@@ -8,10 +8,14 @@ interface FacturasQueryResult {
   total: number;
 }
 
-export const useFacturas = (page: number, limit: number): UseQueryResult<FacturasQueryResult, Error> => {
+export const useFacturas = (
+  page: number,
+  limit: number,
+  local?: string // ✅ Nuevo argumento opcional
+): UseQueryResult<FacturasQueryResult, Error> => {
   return useQuery<FacturasQueryResult, Error>({
-    queryKey: ["facturas", page, limit],
-    queryFn: () => getFacturas(page, limit),
+    queryKey: ["facturas", page, limit, local ?? ""], // ✅ clave única
+    queryFn: () => getFacturas(page, limit, local),   // ✅ nuevo uso
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: 1,

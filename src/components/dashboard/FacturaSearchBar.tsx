@@ -1,20 +1,38 @@
 "use client";
 
-import { Box, TextField, Button, Select, MenuItem } from "@mui/material";
+import { Box, TextField, Button, Select, MenuItem, SelectChangeEvent } from "@mui/material";
 import { useState } from "react";
 
 interface FacturaSearchBarProps {
   onSearch: (folio: string, local: string) => void;
   onClear: () => void;
+  onLocalChange: (local: string) => void;
+  localActual: string;
 }
 
-export function FacturaSearchBar({ onSearch, onClear }: FacturaSearchBarProps) {
+export function FacturaSearchBar({
+  onSearch,
+  onClear,
+  onLocalChange,
+  localActual,
+}: FacturaSearchBarProps) {
   const [folio, setFolio] = useState("");
-  const [local, setLocal] = useState("");
+
+  const handleLocalChange = (e: SelectChangeEvent<string>) => {
+    const selectedLocal = e.target.value;
+    onLocalChange(selectedLocal);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch(folio, local);
+    if (folio.trim()) {
+      onSearch(folio, localActual);
+    }
+  };
+
+  const handleClear = () => {
+    setFolio("");
+    onClear();
   };
 
   return (
@@ -31,8 +49,8 @@ export function FacturaSearchBar({ onSearch, onClear }: FacturaSearchBarProps) {
       />
 
       <Select
-        value={local}
-        onChange={(e) => setLocal(e.target.value)}
+        value={localActual}
+        onChange={handleLocalChange}
         displayEmpty
         sx={{ minWidth: 200 }}
       >
@@ -40,22 +58,13 @@ export function FacturaSearchBar({ onSearch, onClear }: FacturaSearchBarProps) {
         <MenuItem value="LA CANTERA">La Cantera</MenuItem>
         <MenuItem value="BALMACEDA">Balmaceda</MenuItem>
         <MenuItem value="LIBERTADOR">Libertador</MenuItem>
-        {/* Agrega aquí todos tus locales */}
       </Select>
 
       <Button variant="contained" color="warning" type="submit">
         Buscar
       </Button>
 
-      <Button
-        variant="outlined"
-        color="secondary"
-        onClick={() => {
-          setFolio("");
-          setLocal("");
-          onClear();
-        }}
-      >
+      <Button variant="outlined" color="secondary" onClick={handleClear}>
         Limpiar
       </Button>
     </Box>

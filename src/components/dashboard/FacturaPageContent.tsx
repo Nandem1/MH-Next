@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Factura } from "@/types/factura";
 import { FacturaSearchBar } from "./FacturaSearchBar";
 import { FacturaTable } from "./FacturaTable";
@@ -19,15 +19,11 @@ export function FacturaPageContent() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [facturaFiltrada, setFacturaFiltrada] = useState<Factura[] | null>(null);
+  const [localActivo, setLocalActivo] = useState<string>("");
 
-  const { data, isLoading, isFetching, error } = useFacturas(page, limit);
+  const { data, isLoading, isFetching, error } = useFacturas(page, limit, localActivo);
   const facturas = data?.facturas ?? [];
   const totalFacturas = data?.total ?? 0;
-
-  // 🔄 Limpia el filtro al cambiar de página
-  useEffect(() => {
-    setFacturaFiltrada(null);
-  }, [page]);
 
   const handleSearch = async (folio: string, local: string) => {
     try {
@@ -48,11 +44,6 @@ export function FacturaPageContent() {
         }
 
         setFacturaFiltrada(result);
-      } else if (local) {
-        const filtradas = facturas.filter((factura) =>
-          factura.local.includes(local)
-        );
-        setFacturaFiltrada(filtradas);
       } else {
         setFacturaFiltrada(null);
       }
@@ -62,8 +53,15 @@ export function FacturaPageContent() {
     }
   };
 
+  const handleLocalChange = (nuevoLocal: string) => {
+    setFacturaFiltrada(null);
+    setLocalActivo(nuevoLocal);
+    setPage(1);
+  };
+
   const handleClearSearch = () => {
     setFacturaFiltrada(null);
+    setLocalActivo("");
     setPage(1);
   };
 
@@ -76,7 +74,12 @@ export function FacturaPageContent() {
 
   return (
     <>
-      <FacturaSearchBar onSearch={handleSearch} onClear={handleClearSearch} />
+      <FacturaSearchBar
+        onSearch={handleSearch}
+        onClear={handleClearSearch}
+        onLocalChange={handleLocalChange}
+        localActual={localActivo}
+      />
 
       {isLoading || isFetching ? (
         <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
