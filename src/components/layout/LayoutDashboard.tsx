@@ -3,21 +3,40 @@
 
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
-import { Box, useMediaQuery } from "@mui/material";
+import { Box, CircularProgress, useMediaQuery } from "@mui/material";
 import { useState, useCallback } from "react";
-import { useAuth } from "@/hooks/useAuth";
-//import { drawerWidth } from "@/constants/layout";
+import { useAuthStatus } from "@/hooks/useAuthStatus"; // 👈 Ahora usamos el nuevo hook
+import { useRouter } from "next/navigation";
 
 export function LayoutDashboard({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width:900px)");
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuthStatus(); // 👈 Nuevo hook
+  const router = useRouter();
 
   const handleDrawerToggle = useCallback(() => {
     setMobileOpen((prev) => !prev);
   }, []);
 
-  if (!isAuthenticated) return null;
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!isAuthenticated) {
+    router.push("/login");
+    return null;
+  }
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
@@ -30,10 +49,7 @@ export function LayoutDashboard({ children }: { children: React.ReactNode }) {
         sx={{
           flexGrow: 1,
           p: 3,
-          ml: { xs: 0, md: '120px'}          // padding habitual
-          /* QUITA estas dos líneas  👇           */
-          /* ml:  { xs: 0, md: `${drawerWidth}px` }, */
-          /* width:{ xs: '100%', md: `calc(100% - ${drawerWidth}px)` }, */
+          ml: { xs: 0, md: "120px" }, // Padding habitual
         }}
       >
         {/* Topbar fija */}
@@ -42,10 +58,9 @@ export function LayoutDashboard({ children }: { children: React.ReactNode }) {
         {/* Contenido dinámico */}
         <Box
           sx={{
-            /* Padding interior agradable que NO depende del Drawer */
             px: 2,
             py: 2,
-            mt: 8,               // separa del AppBar
+            mt: 8, // separa del AppBar
           }}
         >
           {children}
@@ -54,3 +69,4 @@ export function LayoutDashboard({ children }: { children: React.ReactNode }) {
     </Box>
   );
 }
+

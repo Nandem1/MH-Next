@@ -1,12 +1,12 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
-import { useSnackbar } from "@/hooks/useSnackbar"; // 👈 Nuevo hook
+import { useSnackbar } from "@/hooks/useSnackbar";
 import { useState, useEffect } from "react";
-import { Box, Button, TextField, Typography, Paper, Snackbar, Alert } from "@mui/material";
+import { Box, Button, TextField, Typography, Paper, Snackbar, Alert, CircularProgress } from "@mui/material"; // 👈 Importamos CircularProgress
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, loading } = useAuth(); // 👈 Ahora usamos loading
   const { open, message, severity, showSnackbar, handleClose } = useSnackbar();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +20,7 @@ export default function LoginPage() {
     const showLogoutMessage = localStorage.getItem("showLogoutMessage");
     if (showLogoutMessage === "true") {
       showSnackbar("Sesión cerrada exitosamente", "success");
-      localStorage.removeItem("showLogoutMessage"); // ✅ Limpiamos la marca después
+      localStorage.removeItem("showLogoutMessage");
     }
   }, [showSnackbar]);
 
@@ -47,6 +47,7 @@ export default function LoginPage() {
             margin="normal"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            disabled={loading} // 🔥 Bloquea inputs mientras carga
           />
           <TextField
             label="Contraseña"
@@ -56,6 +57,7 @@ export default function LoginPage() {
             margin="normal"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={loading} // 🔥 Bloquea inputs mientras carga
           />
           <Button
             type="submit"
@@ -63,8 +65,9 @@ export default function LoginPage() {
             color="primary"
             fullWidth
             sx={{ mt: 2 }}
+            disabled={loading} // 🔥 Deshabilita botón mientras carga
           >
-            Iniciar Sesión
+            {loading ? <CircularProgress size={24} color="inherit" /> : "Iniciar Sesión"}
           </Button>
         </form>
       </Paper>
