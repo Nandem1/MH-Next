@@ -30,7 +30,7 @@ export function FacturaPageContent() {
       setPage(1); // Reiniciar página
 
       if (folio) {
-        const response = await fetch(`${API_URL}/api/facturas/${folio}`);
+        const response = await fetch(`${API_URL}/api-beta/facturas/${folio}`);
         if (!response.ok) throw new Error("Factura no encontrada");
 
         const data = await response.json();

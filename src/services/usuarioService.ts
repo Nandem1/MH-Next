@@ -14,7 +14,7 @@ export interface UsuarioFull {
 
 // 🚀 Servicio para obtener todos los usuarios combinados
 export const getUsuariosFull = async (): Promise<UsuarioFull[]> => {
-  const response = await axios.get<UsuarioFull[]>(`${API_URL}/api/usuarios/full`, {
+  const response = await axios.get<UsuarioFull[]>(`${API_URL}/api-beta/usuarios/full`, {
     withCredentials: true, // 👈 No olvidar para enviar cookie
   });
   return response.data;

@@ -23,7 +23,7 @@ export const useAuthStatus = (): AuthStatus => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data } = await axios.get(`${API_URL}/api/me`, {
+        const { data } = await axios.get(`${API_URL}/api-beta/me`, {
           withCredentials: true,
         });
 

@@ -26,7 +26,7 @@ export const getFacturas = async (
 
     const id_local = local ? localMap[local] : undefined;
 
-    const response = await axios.get<FacturaAPIResponse>(`${API_URL}/api/facturas`, {
+    const response = await axios.get<FacturaAPIResponse>(`${API_URL}/api-beta/facturas`, {
       params: {
         limit,
         offset: (page - 1) * limit,

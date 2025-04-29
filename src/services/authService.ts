@@ -5,7 +5,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const login = async (email: string, password: string): Promise<void> => {
   await axios.post(
-    `${API_URL}/api/login`,
+    `${API_URL}/api-beta/login`,
     { email, password },
     {
       withCredentials: true,
@@ -14,5 +14,5 @@ export const login = async (email: string, password: string): Promise<void> => {
 };
 
 export const logout = async (): Promise<void> => {
-  await axios.post(`${API_URL}/api/logout`, {}, { withCredentials: true });
+  await axios.post(`${API_URL}/api-beta/logout`, {}, { withCredentials: true });
 };
