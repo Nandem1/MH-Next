@@ -1,12 +1,19 @@
 "use client";
 
-import { AppBar, Toolbar, IconButton, Typography, Box, Button } from "@mui/material";
+import {
+  AppBar,
+  Toolbar,
+  IconButton,
+  Typography,
+  Box,
+  Button,
+} from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useThemeContext } from "@/context/ThemeContext";
 import { Sun, Moon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { drawerWidth } from "@/constants/layout"; // 🔥 Importa desde constants
-import { useCallback } from "react";
+import { drawerWidth } from "@/constants/layout";
+import { useCallback, useEffect } from "react";
 
 interface TopbarProps {
   handleDrawerToggle: () => void;
@@ -15,12 +22,31 @@ interface TopbarProps {
 
 export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
   const { toggleTheme, mode } = useThemeContext();
-  const { logout } = useAuth();
+  const { logout, usuario, loadUsuario } = useAuth();
+  console.log("👤 Usuario:", usuario);
 
-  // 🔥 useCallback para logout para evitar que se recree en cada render
   const handleLogout = useCallback(() => {
     logout();
   }, [logout]);
+
+  const getNombreLocal = (id_local: number | null): string => {
+    switch (id_local) {
+      case 1:
+        return "LA CANTERA 3055";
+      case 2:
+        return "LIBERTADOR 1476";
+      case 3:
+        return "BALMACEDA 599";
+      default:
+        return "Local desconocido";
+    }
+  };
+
+  useEffect(() => {
+    if (!usuario) {
+      loadUsuario(); // 👈 Cargar usuario si aún no existe
+    }
+  }, [usuario, loadUsuario]);
 
   return (
     <AppBar
@@ -28,14 +54,13 @@ export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
       elevation={1}
       sx={{
         width: { md: `calc(100% - ${drawerWidth}px)` },
-        ml:    { md: `${drawerWidth}px` },
+        ml: { md: `${drawerWidth}px` },
         bgcolor: "background.paper",
         color: "text.primary",
         boxShadow: 1,
       }}
     >
       <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-        
         {/* IZQUIERDA */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {isMobile && (
@@ -55,6 +80,27 @@ export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
 
         {/* DERECHA */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          {/* 👤 Usuario y Local */}
+          {usuario?.nombre && (
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+                mr: 1,
+              }}
+            >
+              <Typography variant="body2" fontWeight={500}>
+                Hola, {usuario.nombre}
+              </Typography>
+              {usuario.id_local !== null && (
+                <Typography variant="caption" color="text.secondary">
+                  {getNombreLocal(usuario.id_local)}
+                </Typography>
+              )}
+            </Box>
+          )}
+
           <IconButton onClick={toggleTheme} color="inherit">
             {mode === "light" ? <Moon size={20} /> : <Sun size={20} />}
           </IconButton>
@@ -69,7 +115,6 @@ export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
             Cerrar sesión
           </Button>
         </Box>
-
       </Toolbar>
     </AppBar>
   );

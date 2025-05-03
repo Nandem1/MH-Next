@@ -3,17 +3,42 @@
 
 import { useUsuariosFull } from "@/hooks/useUsuariosFull";
 import { useAuthStatus } from "@/hooks/useAuthStatus";
-import { Box, Button, CircularProgress, Typography, Paper, Table, TableHead, TableRow, TableCell, TableBody } from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Typography,
+  Paper,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Snackbar,
+  Alert,
+} from "@mui/material";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import NuevoUsuarioModal from "@/components/usuarios/NuevoUsuarioModal";
 
 export default function UsuariosPage() {
   const { usuarios, isLoading, isError } = useUsuariosFull();
   const { isAuthenticated, isLoading: authLoading, rol_id } = useAuthStatus();
   const router = useRouter();
 
+  const [modalOpen, setModalOpen] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+
   if (isLoading || authLoading) {
     return (
-      <Box sx={{ minHeight: "80vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Box
+        sx={{
+          minHeight: "80vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -24,7 +49,7 @@ export default function UsuariosPage() {
     return null;
   }
 
-  const esAdmin = rol_id === 1; // 🔥 Solo admin puede ver el botón "Nuevo Usuario"
+  const esAdmin = rol_id === 1;
 
   return (
     <Box sx={{ minHeight: "80vh", padding: 2, ml: { xs: 0, md: "120px" } }}>
@@ -32,16 +57,18 @@ export default function UsuariosPage() {
         Gestión de Usuarios
       </Typography>
 
-      {/* Botón "Nuevo Usuario" solo para Admin */}
       {esAdmin && (
         <Box sx={{ mb: 2 }}>
-          <Button variant="contained" color="primary" onClick={() => alert("Abrir modal de nuevo usuario")}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => setModalOpen(true)}
+          >
             Nuevo Usuario
           </Button>
         </Box>
       )}
 
-      {/* Tabla de usuarios */}
       <Paper sx={{ width: "100%", overflowX: "auto" }}>
         <Table>
           <TableHead>
@@ -59,13 +86,34 @@ export default function UsuariosPage() {
                 <TableCell>{usuario.nombre ?? "-"}</TableCell>
                 <TableCell>{usuario.whatsapp_id ?? "-"}</TableCell>
                 <TableCell>
-                  {usuario.rol_id === 1 ? "Administrador" : usuario.rol_id === 2 ? "Supervisor" : "Empleado"}
+                  {usuario.rol_id === 1
+                    ? "Administrador"
+                    : usuario.rol_id === 2
+                    ? "Supervisor"
+                    : "Empleado"}
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </Paper>
+
+      <NuevoUsuarioModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onUsuarioCreado={() => setSnackbarOpen(true)}
+      />
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert severity="success" sx={{ width: "100%" }}>
+          Cuenta registrada exitosamente
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

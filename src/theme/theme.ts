@@ -5,37 +5,47 @@ export const darkTheme = createTheme({
   palette: {
     mode: "dark",
     primary: {
-      main: "#FFD93D", // Muted Yellow para navegación
+      main: "#FFD93D",
     },
     secondary: {
-      main: "#38BDF8", // Azul cielo para info general
+      main: "#38BDF8",
     },
     success: {
-      main: "#4ADE80", // Verde suave para success
+      main: "#4ADE80",
     },
     error: {
-      main: "#F87171", // Rojo suave para error
+      main: "#F87171",
     },
     warning: {
-      main: "#FACC15", // Amarillo más fuerte para warning
+      main: "#FACC15",
     },
     info: {
-      main: "#38BDF8", // Azul cielo para info
+      main: "#38BDF8",
     },
     background: {
-      default: "#0a0a0a", // Negro profundo
-      paper: "#121212", // Un negro más suave para tarjetas
+      default: "#0a0a0a",
+      paper: "#121212",
     },
-    divider: "#262626", // Divisiones suaves
+    divider: "#262626",
     text: {
-      primary: "#F4F4F5", // Blanco muy suave
-      secondary: "#A1A1AA", // Gris clarito
+      primary: "#F4F4F5",
+      secondary: "#A1A1AA",
     },
   },
   typography: {
     fontFamily: "Inter, sans-serif",
   },
   components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        "*, *::before, *::after": {
+          "::selection": {
+            backgroundColor: "#FFD93D",
+            color: "#0a0a0a",
+          },
+        },
+      },
+    },
     MuiPaper: {
       styleOverrides: {
         root: {
@@ -81,22 +91,22 @@ export const lightTheme = createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: "#FFD93D", // Muted Yellow también en modo claro
+      main: "#FFD93D",
     },
     secondary: {
       main: "#38BDF8",
     },
     success: {
-      main: "#22C55E", // Verde brillante en light mode
+      main: "#22C55E",
     },
     error: {
-      main: "#EF4444", // Rojo más vibrante en light mode
+      main: "#EF4444",
     },
     warning: {
       main: "#FACC15",
     },
     info: {
-      main: "#0EA5E9", // Azul un poquito más fuerte en light
+      main: "#0EA5E9",
     },
     background: {
       default: "#FFFFFF",
@@ -111,3 +121,4 @@ export const lightTheme = createTheme({
     fontFamily: "Inter, sans-serif",
   },
 });
+
