@@ -27,10 +27,12 @@ export const useAuthStatus = (): AuthStatus => {
           withCredentials: true,
         });
 
+        const user = data.user;
+
         setIsAuthenticated(true);
-        setId(data.id);
-        setUsuarioId(data.usuario_id);
-        setRolId(data.rol_id);
+        setId(user.id_auth_user);
+        setUsuarioId(user.usuario_id);
+        setRolId(user.rol_id);
       } catch (error) {
         console.error("No autenticado:", error);
         setIsAuthenticated(false);

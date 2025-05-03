@@ -9,6 +9,9 @@ import {
   ListItemText,
   Toolbar,
   Divider,
+  Box,
+  Typography,
+  Link as MuiLink,
 } from "@mui/material";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import ReceiptIcon from "@mui/icons-material/Receipt";
@@ -37,44 +40,62 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
   ];
 
   const drawerContent = (
-    <>
+    <Box display="flex" flexDirection="column" height="100%">
       <Toolbar />
       <Divider />
-      <List>
-        {navItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
-            <ListItemButton
-              onClick={() => {
-                router.push(item.path);
-                if (isMobile) handleDrawerToggle();
-              }}
-              selected={pathname === item.path}
-              sx={{
-                "&.Mui-selected": {
-                  backgroundColor: "primary.main",
-                  color: "#0a0a0a",
-                  "&:hover": { backgroundColor: "#e6c235" },
-                },
-                "&:hover": {
-                  bgcolor: "rgba(255, 217, 61, 0.08)",
-                  transition: "background-color 0.3s ease",
-                },
-              }}
-            >
-              <ListItemIcon
+      <Box flexGrow={1}>
+        <List>
+          {navItems.map((item) => (
+            <ListItem key={item.text} disablePadding>
+              <ListItemButton
+                onClick={() => {
+                  router.push(item.path);
+                  if (isMobile) handleDrawerToggle();
+                }}
+                selected={pathname === item.path}
                 sx={{
-                  color: pathname === item.path ? "#fff" : "inherit",
-                  minWidth: 40,
+                  "&.Mui-selected": {
+                    backgroundColor: "primary.main",
+                    color: "#0a0a0a",
+                    "&:hover": { backgroundColor: "#e6c235" },
+                  },
+                  "&:hover": {
+                    bgcolor: "rgba(255, 217, 61, 0.08)",
+                    transition: "background-color 0.3s ease",
+                  },
                 }}
               >
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
-    </>
+                <ListItemIcon
+                  sx={{
+                    color: pathname === item.path ? "#fff" : "inherit",
+                    minWidth: 40,
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText primary={item.text} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+
+      <Divider />
+      <Box textAlign="center" p={2}>
+        <Typography variant="body2" color="textSecondary">
+          Developed by:{" "}
+          <MuiLink
+            href="https://github.com/Nandem1"
+            target="_blank"
+            rel="noopener noreferrer"
+            underline="hover"
+            color="inherit"
+          >
+            Nandev
+          </MuiLink>
+        </Typography>
+      </Box>
+    </Box>
   );
 
   return (
@@ -91,7 +112,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
           bgcolor: "background.paper",
         },
         [`& .MuiDrawer-docked`]: {
-          ...(isMobile ? {} : { width: 0 }), // <- La clave!
+          ...(isMobile ? {} : { width: 0 }),
         },
       }}
     >
