@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useResponsive } from "@/hooks/useResponsive";
 import { Factura } from "@/types/factura";
 import { FacturaSearchBar } from "./FacturaSearchBar";
 import { FacturaTable } from "./FacturaTable";
@@ -11,6 +12,9 @@ import { adaptFactura } from "@/utils/adaptFactura";
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export function FacturaPageContent() {
+  // Hook para forzar un re-render después del primer mount y corregir glitch visual
+  const mounted = useResponsive("(min-width:0px)");
+
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [facturaFiltrada, setFacturaFiltrada] = useState<Factura[] | null>(
@@ -75,6 +79,7 @@ export function FacturaPageContent() {
 
   return (
     <Box
+      key={mounted ? "mounted" : "init"} // Fuerza remount tras mount inicial
       sx={{
         display: "flex",
         flexDirection: "column",

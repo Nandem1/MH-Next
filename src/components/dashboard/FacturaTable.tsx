@@ -6,8 +6,8 @@ import { FacturaTableDesktop } from "./FacturaTableDesktop";
 import { ViewFacturaModal } from "./ViewFacturaModal";
 import { ConfirmChangeEstadoModal } from "./ConfirmChangeEstadoModal";
 import { Box, Skeleton, Typography, Container } from "@mui/material";
-import { useState } from "react";
-import { useResponsive } from "@/hooks/useResponsive"; // 👈 Nuevo hook
+import { useState, useEffect } from "react";
+import { useResponsive } from "@/hooks/useResponsive";
 
 interface FacturaTableProps {
   facturas: Factura[];
@@ -20,7 +20,12 @@ export function FacturaTable({
   isLoading,
   error,
 }: FacturaTableProps) {
-  const isMobile = useResponsive("(max-width:600px)"); // 👈 Reemplazo robusto
+  const isMobile = useResponsive("(max-width:600px)");
+
+  // Forzar recálculo de layout al montar
+  useEffect(() => {
+    window.dispatchEvent(new Event("resize"));
+  }, []);
 
   const [openViewModal, setOpenViewModal] = useState(false);
   const [selectedFactura, setSelectedFactura] = useState<Factura | null>(null);
