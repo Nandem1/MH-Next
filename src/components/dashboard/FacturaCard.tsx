@@ -51,7 +51,17 @@ export function FacturaCard({ factura, onView }: FacturaCardProps) {
       <CardContent sx={{ flexGrow: 1, px: { xs: 2, sm: 3 }, pb: 2 }}>
         <Stack spacing={1} height="100%">
           <Box>
-            <Typography variant="subtitle1" fontWeight="bold" noWrap>
+            <Typography
+              variant="subtitle1"
+              fontWeight="bold"
+              sx={{
+                wordBreak: "break-word", // fuerza salto dentro de palabras muy largas
+                hyphens: "auto", // añade guiones automáticos si el idioma lo permite
+                lineHeight: 1.25, // ajusta altura de línea para textos de 2‑3 líneas
+                maxHeight: { xs: 48, sm: 56 }, // límite visual (2–3 líneas aprox.)
+                overflow: "hidden",
+              }}
+            >
               {factura.proveedor}
             </Typography>
             <Typography variant="caption" color="text.secondary">
