@@ -30,13 +30,14 @@ export function FacturaCard({ factura, onView }: FacturaCardProps) {
         flexDirection: "column",
         width: "100%",
         maxWidth: 600,
-        mx: "auto", // centra la card en móviles
+        mx: "auto",
       }}
     >
       <CardMedia
         component="img"
         image={factura.image_url_cloudinary}
         alt={`Imagen factura folio ${factura.folio} - ${factura.proveedor}`}
+        onLoad={() => window.dispatchEvent(new Event("resize"))}
         sx={{
           height: { xs: 180, sm: 200, md: 220 },
           objectFit: "cover",
