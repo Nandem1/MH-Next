@@ -2,7 +2,6 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import { useSnackbar } from "@/hooks/useSnackbar";
-import { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -14,6 +13,7 @@ import {
   CircularProgress,
   Link,
 } from "@mui/material";
+import { useState, useEffect } from "react";
 
 export default function LoginPage() {
   const { login, loading } = useAuth();
@@ -24,14 +24,12 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = await login(email, password);
-    if (!result.success) {
-      showSnackbar(result.message, "error");
-    }
+    if (!result.success) showSnackbar(result.message, "error");
   };
 
+  /* mensaje post‑logout --------------------------------------------------- */
   useEffect(() => {
-    const showLogoutMessage = localStorage.getItem("showLogoutMessage");
-    if (showLogoutMessage === "true") {
+    if (localStorage.getItem("showLogoutMessage") === "true") {
       showSnackbar("Sesión cerrada exitosamente", "success");
       localStorage.removeItem("showLogoutMessage");
     }
@@ -41,64 +39,75 @@ export default function LoginPage() {
     <Box
       sx={{
         minHeight: "100vh",
-        backgroundColor: "background.default",
         display: "flex",
         flexDirection: "column",
+        backgroundColor: "background.default",
       }}
     >
-      {/* Main content (centro) */}
+      {/* ---------- main (centro) ---------- */}
       <Box
         sx={{
-          flex: 1,
+          flexGrow: 1, // ocupa todo lo disponible
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          p: 2,
+          px: 2,
+          py: 4,
         }}
       >
-        <Paper sx={{ p: 4, width: 350 }}>
-          <Typography variant="h5" mb={2} fontWeight="bold" textAlign="center">
+        <Paper
+          elevation={4}
+          sx={{
+            width: { xs: "100%", sm: "420px", md: "380px" }, // ancho máx. responsive
+            maxWidth: "100%",
+            p: { xs: 3, sm: 4 },
+            borderRadius: 3,
+          }}
+        >
+          <Typography variant="h5" fontWeight={700} textAlign="center" mb={3}>
             Iniciar Sesión
           </Typography>
-          <form onSubmit={handleSubmit}>
+
+          <Box component="form" onSubmit={handleSubmit} noValidate>
             <TextField
               label="Correo electrónico"
-              variant="outlined"
+              type="email"
               fullWidth
               margin="normal"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
+              required
             />
             <TextField
               label="Contraseña"
               type="password"
-              variant="outlined"
               fullWidth
               margin="normal"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
+              required
             />
+
             <Button
               type="submit"
-              variant="contained"
-              color="primary"
               fullWidth
-              sx={{ mt: 2 }}
+              variant="contained"
+              sx={{ mt: 3, py: 1.25, fontWeight: 600 }}
               disabled={loading}
             >
               {loading ? (
                 <CircularProgress size={24} color="inherit" />
               ) : (
-                "Iniciar Sesión"
+                "Entrar"
               )}
             </Button>
-          </form>
+          </Box>
         </Paper>
       </Box>
 
-      {/* Footer */}
+      {/* ---------- footer ---------- */}
       <Box
         component="footer"
         sx={{
@@ -108,7 +117,7 @@ export default function LoginPage() {
           color: "text.secondary",
         }}
       >
-        © 2025 Mercado House SPA · Desarrollado por{" "}
+        © 2025 Mercado House SPA · Desarrollado por{" "}
         <Link
           href="https://github.com/Nandem1"
           target="_blank"
@@ -118,6 +127,7 @@ export default function LoginPage() {
         </Link>
       </Box>
 
+      {/* ---------- snackbar ---------- */}
       <Snackbar
         open={open}
         autoHideDuration={3000}
