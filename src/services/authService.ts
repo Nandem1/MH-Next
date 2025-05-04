@@ -1,9 +1,8 @@
-// /services/authService.ts
 import axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-interface UsuarioAuth {
+export interface UsuarioAuth {
   id_auth_user: number;
   email: string;
   usuario_id: number | null;
@@ -13,8 +12,9 @@ interface UsuarioAuth {
   id_local: number | null;
 }
 
-interface LoginResponse {
+export interface LoginResponse {
   message: string;
+  token: string; // ← ahora llega el token
   user: UsuarioAuth;
 }
 
@@ -22,22 +22,22 @@ export const login = async (
   email: string,
   password: string
 ): Promise<LoginResponse> => {
-  const response = await axios.post<LoginResponse>(
+  const { data } = await axios.post<LoginResponse>(
     `${API_URL}/api-beta/login`,
     { email, password },
     { withCredentials: true }
   );
-
-  return response.data; // 👈 aquí es donde retorna los datos
+  return data;
 };
 
 export const logout = async (): Promise<void> => {
   await axios.post(`${API_URL}/api-beta/logout`, {}, { withCredentials: true });
 };
 
-export const getUsuarioAutenticado = async (): Promise<{ user: UsuarioAuth }> => {
-  const response = await axios.get(`${API_URL}/api-beta/me`, {
-    withCredentials: true,
-  });
-  return response.data;
+export const getUsuarioAutenticado = async () => {
+  const { data } = await axios.get<{ user: UsuarioAuth }>(
+    `${API_URL}/api-beta/me`,
+    { withCredentials: true }
+  );
+  return data;
 };
