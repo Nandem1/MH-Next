@@ -7,9 +7,9 @@ import {
   Select,
   MenuItem,
   SelectChangeEvent,
-  useMediaQuery,
 } from "@mui/material";
 import { useState } from "react";
+import { useResponsive } from "@/hooks/useResponsive"; // 👈 Nuevo hook
 
 interface FacturaSearchBarProps {
   onSearch: (folio: string, local: string) => void;
@@ -25,7 +25,7 @@ export function FacturaSearchBar({
   localActual,
 }: FacturaSearchBarProps) {
   const [folio, setFolio] = useState("");
-  const isSmall = useMediaQuery("(max-width:600px)");
+  const isSmall = useResponsive("(max-width:600px)"); // 👈 Hook más robusto
 
   const handleLocalChange = (e: SelectChangeEvent<string>) => {
     const selectedLocal = e.target.value;

@@ -67,7 +67,8 @@ export function LayoutDashboard({ children }: { children: React.ReactNode }) {
             flex: 1,
             display: "flex",
             flexDirection: "column",
-            padding: 3,
+            px: { xs: 0, md: 3 },
+            py: { xs: 3, md: 2 },
             gap: 2,
           }}
         >

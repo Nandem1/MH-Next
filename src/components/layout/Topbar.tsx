@@ -79,11 +79,11 @@ export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
 
         {/* DERECHA */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          {/* 👤 Usuario y Local */}
+          {/* 👤 Usuario y Local - SOLO EN DESKTOP */}
           {usuario?.nombre && (
             <Box
               sx={{
-                display: "flex",
+                display: { xs: "none", md: "flex" },
                 flexDirection: "column",
                 alignItems: "flex-end",
                 mr: 1,
@@ -100,19 +100,23 @@ export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
             </Box>
           )}
 
+          {/* Botón modo oscuro - SIEMPRE visible */}
           <IconButton onClick={toggleTheme} color="inherit">
             {mode === "light" ? <Moon size={20} /> : <Sun size={20} />}
           </IconButton>
 
-          <Button
-            variant="outlined"
-            color="primary"
-            size="small"
-            onClick={handleLogout}
-            sx={{ textTransform: "none" }}
-          >
-            Cerrar sesión
-          </Button>
+          {/* Botón logout - SOLO EN DESKTOP */}
+          <Box sx={{ display: { xs: "none", md: "block" } }}>
+            <Button
+              variant="outlined"
+              color="primary"
+              size="small"
+              onClick={handleLogout}
+              sx={{ textTransform: "none" }}
+            >
+              Cerrar sesión
+            </Button>
+          </Box>
         </Box>
       </Toolbar>
     </AppBar>

@@ -28,7 +28,9 @@ export function FacturaCard({ factura, onView }: FacturaCardProps) {
         borderColor: "divider",
         display: "flex",
         flexDirection: "column",
-        height: "100%",
+        width: "100%",
+        maxWidth: 600,
+        mx: "auto", // centra la card en móviles
       }}
     >
       <CardMedia
@@ -36,15 +38,17 @@ export function FacturaCard({ factura, onView }: FacturaCardProps) {
         image={factura.image_url_cloudinary}
         alt={`Imagen factura folio ${factura.folio} - ${factura.proveedor}`}
         sx={{
-          height: "30vh",
+          height: { xs: 180, sm: 200, md: 220 },
           objectFit: "cover",
+          objectPosition: "top",
           backgroundColor: "#1e1e1e",
+          borderTopLeftRadius: 8,
+          borderTopRightRadius: 8,
         }}
       />
 
-      <CardContent sx={{ flexGrow: 1, px: 2, pb: 2 }}>
+      <CardContent sx={{ flexGrow: 1, px: { xs: 2, sm: 3 }, pb: 2 }}>
         <Stack spacing={1} height="100%">
-          {/* Proveedor */}
           <Box>
             <Typography variant="subtitle1" fontWeight="bold" noWrap>
               {factura.proveedor}
@@ -56,7 +60,6 @@ export function FacturaCard({ factura, onView }: FacturaCardProps) {
 
           <Divider />
 
-          {/* Folio / Local */}
           <Box>
             <Typography variant="body2">
               <strong>Folio:</strong> {factura.folio}
@@ -71,7 +74,6 @@ export function FacturaCard({ factura, onView }: FacturaCardProps) {
 
           <Divider />
 
-          {/* Estado / Fecha */}
           <Box>
             <Typography variant="body2">
               <strong>Estado:</strong> {factura.estado}

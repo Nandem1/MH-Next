@@ -11,6 +11,8 @@ import {
   Toolbar,
   Divider,
   Box,
+  Typography,
+  Button,
   Link as MuiLink,
 } from "@mui/material";
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -20,6 +22,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import { useRouter, usePathname } from "next/navigation";
 import { useMediaQuery } from "@mui/material";
 import { drawerWidth } from "@/constants/layout";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -30,6 +33,20 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const isMobile = useMediaQuery("(max-width:900px)");
+  const { logout, usuario } = useAuth();
+
+  const getNombreLocal = (id_local: number | null): string => {
+    switch (id_local) {
+      case 1:
+        return "LA CANTERA 3055";
+      case 2:
+        return "LIBERTADOR 1476";
+      case 3:
+        return "BALMACEDA 599";
+      default:
+        return "Local desconocido";
+    }
+  };
 
   const navItems = [
     { text: "Inicio", icon: <DashboardIcon />, path: "/dashboard/inicio" },
@@ -45,7 +62,41 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
 
   const drawerContent = (
     <Box display="flex" flexDirection="column" height="100%">
-      <Toolbar />
+      {!isMobile && <Toolbar />}
+      {isMobile && usuario?.nombre && (
+        <Box
+          sx={{
+            px: 2,
+            py: 1.5,
+            borderBottom: "1px solid",
+            borderColor: "divider",
+            bgcolor: "background.paper",
+          }}
+        >
+          <Typography variant="body2" fontWeight={500}>
+            Hola, {usuario.nombre}
+          </Typography>
+          {usuario.id_local !== null && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              display="block"
+            >
+              {getNombreLocal(usuario.id_local)}
+            </Typography>
+          )}
+          <Button
+            variant="outlined"
+            color="primary"
+            size="small"
+            onClick={logout}
+            fullWidth
+            sx={{ mt: 1, textTransform: "none" }}
+          >
+            Cerrar sesión
+          </Button>
+        </Box>
+      )}
       <Divider />
       <Box flexGrow={1}>
         <List>
