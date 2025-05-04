@@ -5,12 +5,7 @@ import { Factura } from "@/types/factura";
 import { FacturaSearchBar } from "./FacturaSearchBar";
 import { FacturaTable } from "./FacturaTable";
 import { useFacturas } from "@/hooks/useFacturas";
-import {
-  CircularProgress,
-  Box,
-  Typography,
-  Pagination,
-} from "@mui/material";
+import { CircularProgress, Box, Typography, Pagination } from "@mui/material";
 import { adaptFactura } from "@/utils/adaptFactura";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -18,16 +13,22 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export function FacturaPageContent() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const [facturaFiltrada, setFacturaFiltrada] = useState<Factura[] | null>(null);
+  const [facturaFiltrada, setFacturaFiltrada] = useState<Factura[] | null>(
+    null
+  );
   const [localActivo, setLocalActivo] = useState<string>("");
 
-  const { data, isLoading, isFetching, error } = useFacturas(page, limit, localActivo);
+  const { data, isLoading, isFetching, error } = useFacturas(
+    page,
+    limit,
+    localActivo
+  );
   const facturas = data?.facturas ?? [];
   const totalFacturas = data?.total ?? 0;
 
   const handleSearch = async (folio: string, local: string) => {
     try {
-      setPage(1); // Reiniciar página
+      setPage(1);
 
       if (folio) {
         const response = await fetch(`${API_URL}/api-beta/facturas/${folio}`);
@@ -73,7 +74,15 @@ export function FacturaPageContent() {
     facturaFiltrada !== null ? facturaFiltrada : facturas;
 
   return (
-    <>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        flexGrow: 1,
+        minHeight: 0,
+        gap: 2,
+      }}
+    >
       <FacturaSearchBar
         onSearch={handleSearch}
         onClear={handleClearSearch}
@@ -97,7 +106,7 @@ export function FacturaPageContent() {
             error={false}
           />
           {facturaFiltrada === null && (
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+            <Box sx={{ display: "flex", justifyContent: "center" }}>
               <Pagination
                 count={Math.ceil(totalFacturas / limit)}
                 page={page}
@@ -108,6 +117,6 @@ export function FacturaPageContent() {
           )}
         </>
       )}
-    </>
+    </Box>
   );
 }

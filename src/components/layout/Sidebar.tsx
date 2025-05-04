@@ -1,3 +1,4 @@
+// src/components/layout/Sidebar.tsx
 "use client";
 
 import {
@@ -10,7 +11,6 @@ import {
   Toolbar,
   Divider,
   Box,
-  Typography,
   Link as MuiLink,
 } from "@mui/material";
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -36,7 +36,11 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
     { text: "Facturas", icon: <ReceiptIcon />, path: "/dashboard/facturas" },
     { text: "ZebrAI", icon: <ReceiptIcon />, path: "/dashboard/zebrai" },
     { text: "Usuarios", icon: <PeopleIcon />, path: "/dashboard/usuarios" },
-    { text: "Configuración", icon: <SettingsIcon />, path: "/dashboard/configuracion" },
+    {
+      text: "Configuración",
+      icon: <SettingsIcon />,
+      path: "/dashboard/configuracion",
+    },
   ];
 
   const drawerContent = (
@@ -81,19 +85,29 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
       </Box>
 
       <Divider />
-      <Box textAlign="center" p={2}>
-        <Typography variant="body2" color="textSecondary">
-          Developed by:{" "}
-          <MuiLink
-            href="https://github.com/Nandem1"
-            target="_blank"
-            rel="noopener noreferrer"
-            underline="hover"
-            color="inherit"
-          >
-            Nandev
-          </MuiLink>
-        </Typography>
+      <Box
+        component="footer"
+        sx={{
+          py: 3,
+          px: 1,
+          textAlign: "center",
+          fontSize: "0.8rem",
+          color: "text.secondary",
+          borderTop: "1px solid",
+          borderColor: "divider",
+          bgcolor: "background.paper",
+        }}
+      >
+        Desarrollado por{" "}
+        <MuiLink
+          href="https://github.com/Nandem1"
+          target="_blank"
+          rel="noopener noreferrer"
+          underline="hover"
+          sx={{ color: "primary.main", fontWeight: 500 }}
+        >
+          Nandev
+        </MuiLink>
       </Box>
     </Box>
   );

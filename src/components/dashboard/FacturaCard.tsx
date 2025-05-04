@@ -1,7 +1,17 @@
-import { Card, CardContent, CardMedia, Typography, Button, Box, Stack } from "@mui/material";
+"use client";
+
+import {
+  Card,
+  CardContent,
+  CardMedia,
+  Typography,
+  Button,
+  Box,
+  Stack,
+  Divider,
+} from "@mui/material";
 import { Factura } from "@/types/factura";
 import { formatearRut } from "@/utils/formatearRut";
-import styles from "./FacturaCard.module.css"; // Usaremos también un CSS Custom
 
 interface FacturaCardProps {
   factura: Factura;
@@ -11,36 +21,42 @@ interface FacturaCardProps {
 export function FacturaCard({ factura, onView }: FacturaCardProps) {
   return (
     <Card
-      className={styles.facturaCard}
       sx={{
         backgroundColor: "background.paper",
-        borderRadius: 3,
-        boxShadow: 4,
-        overflow: "hidden",
+        borderRadius: 2,
+        border: "1px solid",
+        borderColor: "divider",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
       }}
     >
       <CardMedia
         component="img"
-        height="200"
         image={factura.image_url_cloudinary}
-        alt={`Factura ${factura.folio}`}
+        alt={`Imagen factura folio ${factura.folio} - ${factura.proveedor}`}
         sx={{
-          objectFit: "contain",
+          height: "30vh",
+          objectFit: "cover",
+          backgroundColor: "#1e1e1e",
         }}
       />
 
-      <CardContent sx={{ p: 2 }}>
-        {/* Stack para orden vertical y espaciado */}
-        <Stack spacing={1}>
+      <CardContent sx={{ flexGrow: 1, px: 2, pb: 2 }}>
+        <Stack spacing={1} height="100%">
+          {/* Proveedor */}
           <Box>
             <Typography variant="subtitle1" fontWeight="bold" noWrap>
               {factura.proveedor}
             </Typography>
-            <Typography variant="caption" color="textSecondary">
+            <Typography variant="caption" color="text.secondary">
               Rut: {formatearRut(factura.rut_proveedor || "")}
             </Typography>
           </Box>
 
+          <Divider />
+
+          {/* Folio / Local */}
           <Box>
             <Typography variant="body2">
               <strong>Folio:</strong> {factura.folio}
@@ -48,32 +64,37 @@ export function FacturaCard({ factura, onView }: FacturaCardProps) {
             <Typography variant="body2">
               <strong>Local:</strong> {factura.local}
             </Typography>
-            <Typography variant="caption" color="textSecondary">
+            <Typography variant="caption" color="text.secondary">
               Subido por: {factura.nombre_usuario}
             </Typography>
           </Box>
 
+          <Divider />
+
+          {/* Estado / Fecha */}
           <Box>
             <Typography variant="body2">
               <strong>Estado:</strong> {factura.estado}
             </Typography>
             <Typography variant="body2">
-              <strong>Fecha:</strong> {new Date(factura.fechaIngreso).toLocaleDateString()}
+              <strong>Fecha:</strong>{" "}
+              {new Date(factura.fechaIngreso).toLocaleDateString()}
             </Typography>
           </Box>
-        </Stack>
 
-        <Button
-          onClick={onView}
-          size="small"
-          variant="contained"
-          color="primary"
-          fullWidth
-          sx={{ marginTop: 2, borderRadius: 2 }}
-          className={styles.facturaButton}
-        >
-          Ver Factura
-        </Button>
+          <Box sx={{ mt: "auto" }}>
+            <Button
+              onClick={onView}
+              size="small"
+              variant="contained"
+              color="primary"
+              fullWidth
+              sx={{ borderRadius: 2 }}
+            >
+              Ver Factura
+            </Button>
+          </Box>
+        </Stack>
       </CardContent>
     </Card>
   );

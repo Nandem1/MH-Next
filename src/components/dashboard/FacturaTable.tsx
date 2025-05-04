@@ -5,8 +5,14 @@ import { FacturaCard } from "./FacturaCard";
 import { FacturaTableDesktop } from "./FacturaTableDesktop";
 import { ViewFacturaModal } from "./ViewFacturaModal";
 import { ConfirmChangeEstadoModal } from "./ConfirmChangeEstadoModal";
+import {
+  useMediaQuery,
+  Box,
+  Skeleton,
+  Typography,
+  Container,
+} from "@mui/material";
 import { useState } from "react";
-import { useMediaQuery, Box, Skeleton } from "@mui/material";
 
 interface FacturaTableProps {
   facturas: Factura[];
@@ -14,13 +20,19 @@ interface FacturaTableProps {
   error: boolean;
 }
 
-export function FacturaTable({ facturas, isLoading, error }: FacturaTableProps) {
+export function FacturaTable({
+  facturas,
+  isLoading,
+  error,
+}: FacturaTableProps) {
   const isMobile = useMediaQuery("(max-width:600px)");
 
   const [openViewModal, setOpenViewModal] = useState(false);
   const [selectedFactura, setSelectedFactura] = useState<Factura | null>(null);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
-  const [selectedFacturaId, setSelectedFacturaId] = useState<string | null>(null);
+  const [selectedFacturaId, setSelectedFacturaId] = useState<string | null>(
+    null
+  );
 
   const handleOpenViewModal = (factura: Factura) => {
     setSelectedFactura(factura);
@@ -49,23 +61,31 @@ export function FacturaTable({ facturas, isLoading, error }: FacturaTableProps) 
 
   if (isLoading) {
     return (
-      <Box sx={{ padding: 2 }}>
-        <Skeleton variant="rectangular" height={40} sx={{ mb: 2 }} />
-        <Skeleton variant="rectangular" height={40} sx={{ mb: 2 }} />
-        <Skeleton variant="rectangular" height={40} sx={{ mb: 2 }} />
+      <Box sx={{ px: 3, py: 4, flexGrow: 1 }}>
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} variant="rectangular" height={40} sx={{ mb: 2 }} />
+        ))}
       </Box>
     );
   }
 
   if (error) {
     return (
-      <div>Error cargando facturas</div>
+      <Container sx={{ py: 4, flexGrow: 1 }}>
+        <Typography color="error" textAlign="center">
+          Error cargando facturas
+        </Typography>
+      </Container>
     );
   }
 
   if (!facturas || facturas.length === 0) {
     return (
-      <div>No hay facturas disponibles</div>
+      <Container sx={{ py: 4, flexGrow: 1 }}>
+        <Typography textAlign="center" color="text.secondary">
+          No hay facturas disponibles
+        </Typography>
+      </Container>
     );
   }
 
@@ -88,13 +108,13 @@ export function FacturaTable({ facturas, isLoading, error }: FacturaTableProps) 
           onChangeEstado={handleOpenConfirmModal}
         />
       )}
-  
+
       <ViewFacturaModal
         open={openViewModal}
         onClose={handleCloseViewModal}
         factura={selectedFactura}
       />
-  
+
       <ConfirmChangeEstadoModal
         open={openConfirmModal}
         onClose={handleCloseConfirmModal}

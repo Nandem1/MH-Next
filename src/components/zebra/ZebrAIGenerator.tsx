@@ -58,24 +58,20 @@ export function ZebrAIGenerator() {
 ^FT423,237^A0N,17,18^FH\\^CI28^FDCOD. ITEM: 482270^FS^CI27
 ^PQ1,0,1,Y
 ^XZ
-      `;
+      `; // tu ZPL completo aquí
 
       const response = await fetch("/api/zebra", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ zpl }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Respuesta no OK: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Respuesta no OK: ${response.status}`);
 
       const blob = await response.blob();
       const imageUrl = URL.createObjectURL(blob);
 
-      setImagenes([imageUrl, imageUrl, imageUrl]); // 👈 Ahora son 3
+      setImagenes([imageUrl, imageUrl, imageUrl]);
     } catch (error) {
       console.error("Error generando etiqueta:", error);
       setImagenes([]);
@@ -85,38 +81,38 @@ export function ZebrAIGenerator() {
   };
 
   return (
-    <Box sx={{ p: 3, ml: { xs: 0, md: "120px" } }}>
+    <Box>
       <Typography variant="h4" fontWeight="bold" mb={3}>
         ZebrAI Generator
       </Typography>
 
-      {/* Input + Botón */}
-      <Box sx={{ display: "flex", gap: 2, mb: 4, flexWrap: "wrap" }}>
+      <Box sx={{ maxWidth: 400, mb: 2 }}>
         <TextField
           label="Código de Barras"
           variant="outlined"
+          fullWidth
           value={barcode}
           onChange={(e) => setBarcode(e.target.value)}
-          fullWidth
         />
+      </Box>
+
+      <Box sx={{ mb: 4 }}>
         <Button
           variant="contained"
           color="primary"
           onClick={handleGenerate}
           disabled={loading}
-          sx={{ whiteSpace: "nowrap", flexShrink: 0 }}
         >
           {loading ? "Generando..." : "Generar Etiquetas"}
         </Button>
       </Box>
 
-      {/* Previews */}
       <Grid container spacing={2}>
         {Array.from({ length: 3 }).map((_, index) => (
-          <Grid key={index} size={{ xs: 12, sm: 6, md: 4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
             <Card
               sx={{
-                height: "400px",
+                height: 400,
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "center",
@@ -131,7 +127,6 @@ export function ZebrAIGenerator() {
                   flexGrow: 1,
                   width: "100%",
                   display: "flex",
-                  flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
