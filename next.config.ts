@@ -1,7 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  reactStrictMode: true,      // (opcional) buena práctica en prod
+  swcMinify: true,            // (opcional) build más rápido
+
+  async rewrites() {
+    return [
+      {
+        source: "/api-beta/:path*",                 // todo lo que empiece con /api-beta
+        destination:
+          "https://mh-backend-production.up.railway.app/api-beta/:path*", // tu backend
+      },
+    ];
+  },
 };
 
 export default nextConfig;
