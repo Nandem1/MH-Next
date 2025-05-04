@@ -2,67 +2,89 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
+import axios, { AxiosError } from "axios";
 import {
   login as loginService,
   logout as logoutService,
   getUsuarioAutenticado,
+  UsuarioAuth,
 } from "@/services/authService";
-import { useEffect, useState } from "react";
-import { AxiosError } from "axios";
 
 interface LoginResult {
   success: boolean;
   message: string;
 }
 
-interface UsuarioAuth {
-  id_auth_user: number;
-  email: string;
-  usuario_id: number | null;
-  rol_id: number;
-  nombre: string | null;
-  whatsapp_id: string | null;
-  id_local: number | null;
-}
+// -------------------------------------------------- helpers
+const setAuthHeader = (token: string | null) => {
+  if (token) {
+    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  } else {
+    delete axios.defaults.headers.common["Authorization"];
+  }
+};
 
+const saveLocalAuth = (user: UsuarioAuth | null, token: string | null) => {
+  if (user) {
+    localStorage.setItem("usuario", JSON.stringify(user));
+  } else {
+    localStorage.removeItem("usuario");
+  }
+
+  if (token) {
+    localStorage.setItem("authToken", token);
+  } else {
+    localStorage.removeItem("authToken");
+  }
+  setAuthHeader(token);
+};
+
+// -------------------------------------------------- hook
 export const useAuth = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [usuario, setUsuario] = useState<UsuarioAuth | null>(null);
 
-  useEffect(() => {
-    // Cargar usuario desde localStorage si existe
-    const storedUser = localStorage.getItem("usuario");
-    if (storedUser) {
-      setUsuario(JSON.parse(storedUser));
-    } else {
-      loadUsuario(); // fallback por si no está en localStorage
+  // ------------------------ loadUsuario (useCallback para deps)
+  const loadUsuario = useCallback(async () => {
+    try {
+      const { user } = await getUsuarioAutenticado();
+      setUsuario(user);
+      localStorage.setItem("usuario", JSON.stringify(user));
+    } catch (err) {
+      console.error("No se pudo cargar el usuario:", err);
+      saveLocalAuth(null, null);
     }
   }, []);
 
+  // ------------------------ init
+  useEffect(() => {
+    const storedToken = localStorage.getItem("authToken");
+    const storedUser = localStorage.getItem("usuario");
+    if (storedToken) setAuthHeader(storedToken);
+    if (storedUser) {
+      setUsuario(JSON.parse(storedUser));
+    } else if (storedToken) {
+      loadUsuario();
+    }
+  }, [loadUsuario]);
+
+  // ------------------------ actions
   const login = async (
     email: string,
     password: string
   ): Promise<LoginResult> => {
     setLoading(true);
-
     try {
-      const response = await loginService(email, password);
-      const user: UsuarioAuth = response.user;
-      setUsuario(user);
-      localStorage.setItem("usuario", JSON.stringify(user));
-
+      const { token, user } = await loginService(email, password);
+      saveLocalAuth(user, token);
       localStorage.setItem("showLoginMessage", "true");
       router.push("/dashboard/inicio");
-
       return { success: true, message: "Inicio de sesión exitoso." };
-    } catch (error) {
-      let message = "Error desconocido";
-
-      if (error instanceof AxiosError && error.response?.data?.message) {
-        message = error.response.data.message;
-      }
-
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string }>;
+      const message = error.response?.data?.message ?? "Error desconocido";
       return { success: false, message };
     } finally {
       setLoading(false);
@@ -72,22 +94,12 @@ export const useAuth = () => {
   const logout = async () => {
     try {
       await logoutService();
-      setUsuario(null);
-      localStorage.removeItem("usuario");
+    } catch (err) {
+      console.error("Error cerrando sesión:", err);
+    } finally {
+      saveLocalAuth(null, null);
       localStorage.setItem("showLogoutMessage", "true");
       router.push("/login");
-    } catch (error) {
-      console.error("Error cerrando sesión:", error);
-    }
-  };
-
-  const loadUsuario = async () => {
-    try {
-      const response = await getUsuarioAutenticado();
-      setUsuario(response.user);
-      localStorage.setItem("usuario", JSON.stringify(response.user));
-    } catch (error) {
-      console.error("No se pudo cargar el usuario:", error);
     }
   };
 

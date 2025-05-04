@@ -5,7 +5,7 @@ import axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-interface AuthStatus {
+export interface AuthStatus {
   isAuthenticated: boolean;
   isLoading: boolean;
   id?: number;
@@ -16,25 +16,27 @@ interface AuthStatus {
 export const useAuthStatus = (): AuthStatus => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [id, setId] = useState<number | undefined>(undefined);
+  const [id, setId] = useState<number | undefined>();
   const [usuario_id, setUsuarioId] = useState<number | null>(null);
-  const [rol_id, setRolId] = useState<number | undefined>(undefined);
+  const [rol_id, setRolId] = useState<number | undefined>();
 
   useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    }
+
     const checkAuth = async () => {
       try {
         const { data } = await axios.get(`${API_URL}/api-beta/me`, {
           withCredentials: true,
         });
-
         const user = data.user;
-
         setIsAuthenticated(true);
         setId(user.id_auth_user);
         setUsuarioId(user.usuario_id);
         setRolId(user.rol_id);
-      } catch (error) {
-        console.error("No autenticado:", error);
+      } catch {
         setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
