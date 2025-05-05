@@ -14,12 +14,27 @@ import {
   Link,
 } from "@mui/material";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const { login, loading } = useAuth();
   const { open, message, severity, showSnackbar, handleClose } = useSnackbar();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // Verificar si hay un token válido al cargar la página
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    const user = localStorage.getItem("usuario");
+    
+    if (token && user) {
+      router.push("/dashboard/inicio");
+    } else {
+      setIsCheckingAuth(false);
+    }
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +49,11 @@ export default function LoginPage() {
       localStorage.removeItem("showLogoutMessage");
     }
   }, [showSnackbar]);
+
+  // Si estamos verificando la autenticación, no mostrar nada
+  if (isCheckingAuth) {
+    return null;
+  }
 
   return (
     <Box
@@ -117,7 +137,7 @@ export default function LoginPage() {
           color: "text.secondary",
         }}
       >
-        © 2025 Mercado House SPA · Desarrollado por{" "}
+        © 2025 Mercado House SPA · Desarrollado por{" "}
         <Link
           href="https://github.com/Nandem1"
           target="_blank"
