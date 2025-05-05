@@ -4,6 +4,7 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import { AuthProvider } from "@/context/AuthContext"; // 👈 importar el nuevo contexto
 import { Inter } from "next/font/google";
 import { CssBaseline } from "@mui/material";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,6 +24,7 @@ export default function RootLayout({
               <QueryProvider>
                 <CssBaseline />
                 {children}
+                <Analytics />
               </QueryProvider>
             </ThemeRegistry>
           </AuthProvider>
