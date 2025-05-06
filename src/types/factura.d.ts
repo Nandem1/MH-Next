@@ -9,6 +9,7 @@ export interface FacturaResponse {
   nombre_local: string;
   nombre_usuario: string;
   rut_proveedor?: string;
+  estado: number; // 1 = BODEGA, 2 = SALA
 }
 
 

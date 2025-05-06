@@ -5,6 +5,12 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('authToken')?.value
   const user = request.cookies.get('usuario')?.value
   const isLoginPage = request.nextUrl.pathname === '/login'
+  const isRootPage = request.nextUrl.pathname === '/'
+
+  // Si es la página raíz, redirigir a login
+  if (isRootPage) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
 
   // Si el usuario está autenticado y está en la página de login, redirigir al dashboard
   if (isLoginPage && token && user) {
@@ -20,5 +26,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/login', '/dashboard/:path*']
+  matcher: ['/', '/login', '/dashboard/:path*']
 } 

@@ -51,8 +51,7 @@ export function FacturaSearchBar({
       sx={{
         display: "flex",
         flexDirection: isSmall ? "column" : "row",
-        gap: 2,
-        mb: 1,
+        gap: 1,
         flexWrap: "wrap",
         alignItems: "stretch",
         justifyContent: "flex-start",
@@ -61,6 +60,7 @@ export function FacturaSearchBar({
       <TextField
         label="Buscar por Folio"
         variant="outlined"
+        size="small"
         value={folio}
         onChange={(e) => setFolio(e.target.value)}
         fullWidth={isSmall}
@@ -70,6 +70,7 @@ export function FacturaSearchBar({
         value={localActual}
         onChange={handleLocalChange}
         displayEmpty
+        size="small"
         fullWidth={isSmall}
         sx={{ minWidth: isSmall ? "100%" : 200 }}
       >

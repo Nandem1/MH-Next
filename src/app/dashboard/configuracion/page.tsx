@@ -8,16 +8,23 @@ import {
   Button,
   CircularProgress,
 } from "@mui/material";
-import { useAuthStatus } from "@/hooks/useAuthStatus";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Footer from "@/components/shared/Footer";
+import { PageTitle } from "@/components/shared/PageTitle";
 
 export default function ConfiguracionPage() {
-  const { isAuthenticated, isLoading, id, usuario_id, rol_id } =
-    useAuthStatus();
+  const { data: session, status } = useSession();
   const router = useRouter();
 
-  if (isLoading) {
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
+
+  if (status === "loading") {
     return (
       <Box
         sx={{
@@ -32,29 +39,44 @@ export default function ConfiguracionPage() {
     );
   }
 
-  if (!isAuthenticated) {
-    router.push("/login");
+  if (status === "unauthenticated") {
     return null;
   }
 
   return (
-    <Box sx={{ minHeight: "95vh", display: "flex", flexDirection: "column" }}>
-      <Box sx={{ px: { xs: 2, md: 3 }, pt: 10, pb: 4, flexGrow: 1 }}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
-          Configuración de Usuario
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        flexGrow: 1,
+        minHeight: "100%",
+      }}
+    >
+      <PageTitle 
+        title="Configuración" 
+        description="Configura los parámetros y preferencias de Mercado House"
+      />
+      <Box
+        sx={{
+          flexGrow: 1,
+          mt: 8,
+          px: { xs: 2, md: 3 },
+        }}
+      >
+        <Typography variant="h4" gutterBottom fontWeight="bold">
+          Configuración
         </Typography>
-
         <Typography variant="body1" sx={{ mt: 2 }}>
-          <strong>ID Auth:</strong> {id}
+          <strong>ID Auth:</strong> {session?.user?.id}
         </Typography>
         <Typography variant="body1">
-          <strong>ID Usuario:</strong> {usuario_id ?? "-"}
+          <strong>ID Usuario:</strong> {session?.user?.id_local ?? "-"}
         </Typography>
         <Typography variant="body1" gutterBottom>
           <strong>Rol:</strong>{" "}
-          {rol_id === 1
+          {session?.user?.role === "1"
             ? "Administrador"
-            : rol_id === 2
+            : session?.user?.role === "2"
             ? "Supervisor"
             : "Empleado"}
         </Typography>

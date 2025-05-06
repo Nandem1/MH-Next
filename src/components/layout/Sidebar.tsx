@@ -20,19 +20,18 @@ import ReceiptIcon from "@mui/icons-material/Receipt";
 import SettingsIcon from "@mui/icons-material/Settings";
 import PeopleIcon from "@mui/icons-material/People";
 import { useRouter, usePathname } from "next/navigation";
-import { useMediaQuery } from "@mui/material";
 import { drawerWidth } from "@/constants/layout";
 import { useAuth } from "@/hooks/useAuth";
 
 interface SidebarProps {
   mobileOpen: boolean;
   handleDrawerToggle: () => void;
+  isMobile: boolean;
 }
 
-export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
+export function Sidebar({ mobileOpen, handleDrawerToggle, isMobile }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const isMobile = useMediaQuery("(max-width:900px)");
   const { logout, usuario } = useAuth();
 
   const getNombreLocal = (id_local: number | null): string => {

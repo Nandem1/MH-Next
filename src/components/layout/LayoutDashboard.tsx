@@ -4,20 +4,20 @@ import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { Box, CircularProgress, useMediaQuery } from "@mui/material";
 import { useState, useCallback } from "react";
-import { useAuthStatus } from "@/hooks/useAuthStatus";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 export function LayoutDashboard({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width:900px)");
-  const { isAuthenticated, isLoading } = useAuthStatus();
+  const { status } = useSession();
   const router = useRouter();
 
   const handleDrawerToggle = useCallback(() => {
     setMobileOpen((prev) => !prev);
   }, []);
 
-  if (isLoading) {
+  if (status === "loading") {
     return (
       <Box
         sx={{
@@ -32,7 +32,7 @@ export function LayoutDashboard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (status === "unauthenticated") {
     router.push("/login");
     return null;
   }
@@ -50,6 +50,7 @@ export function LayoutDashboard({ children }: { children: React.ReactNode }) {
         <Sidebar
           mobileOpen={mobileOpen}
           handleDrawerToggle={handleDrawerToggle}
+          isMobile={isMobile}
         />
       </Box>
 

@@ -19,20 +19,21 @@ import { formatearRut } from "@/utils/formatearRut";
 interface FacturaTableDesktopProps {
   facturas: Factura[];
   onView: (factura: Factura) => void;
-  onChangeEstado: (id: string) => void;
+  onChangeEstado: (id: string, estado: "BODEGA" | "SALA") => void;
+  isUpdating: boolean;
 }
 
 export function FacturaTableDesktop({
   facturas,
   onView,
   onChangeEstado,
+  isUpdating,
 }: FacturaTableDesktopProps) {
   return (
     <TableContainer
       component={Paper}
       sx={{
         width: "100%",
-        mt: 2,
         backgroundColor: "background.paper",
         border: "1px solid",
         borderColor: "divider",
@@ -99,7 +100,8 @@ export function FacturaTableDesktop({
                     variant="contained"
                     color="success"
                     size="small"
-                    onClick={() => onChangeEstado(factura.id)}
+                    onClick={() => onChangeEstado(factura.id, factura.estado)}
+                    disabled={isUpdating}
                     aria-label="Cambiar estado"
                   >
                     <DoneIcon fontSize="small" />
@@ -109,6 +111,7 @@ export function FacturaTableDesktop({
                     color="primary"
                     size="small"
                     onClick={() => onView(factura)}
+                    disabled={isUpdating}
                     aria-label="Ver factura"
                   >
                     Ver

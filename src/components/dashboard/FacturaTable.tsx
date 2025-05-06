@@ -5,34 +5,39 @@ import { FacturaCard } from "./FacturaCard";
 import { FacturaTableDesktop } from "./FacturaTableDesktop";
 import { ViewFacturaModal } from "./ViewFacturaModal";
 import { ConfirmChangeEstadoModal } from "./ConfirmChangeEstadoModal";
-import { Box, Skeleton, Typography, Container } from "@mui/material";
+import { Box, Typography, Container, Alert, Snackbar, CircularProgress } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
+import { useUpdateEstado } from "@/hooks/useUpdateEstado";
 
 interface FacturaTableProps {
   facturas: Factura[];
   isLoading: boolean;
   error: boolean;
+  idUsuario: number | null;
 }
 
 export function FacturaTable({
   facturas,
   isLoading,
   error,
+  idUsuario,
 }: FacturaTableProps) {
+  const [mounted, setMounted] = useState(false);
   const isMobile = useResponsive("(max-width:600px)");
+  const updateEstado = useUpdateEstado(idUsuario);
 
-  // Forzar recálculo de layout al montar
   useEffect(() => {
-    window.dispatchEvent(new Event("resize"));
+    setMounted(true);
   }, []);
 
   const [openViewModal, setOpenViewModal] = useState(false);
   const [selectedFactura, setSelectedFactura] = useState<Factura | null>(null);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
-  const [selectedFacturaId, setSelectedFacturaId] = useState<string | null>(
-    null
-  );
+  const [selectedFacturaId, setSelectedFacturaId] = useState<string | null>(null);
+  const [selectedFacturaEstado, setSelectedFacturaEstado] = useState<"BODEGA" | "SALA" | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const handleOpenViewModal = (factura: Factura) => {
     setSelectedFactura(factura);
@@ -44,27 +49,42 @@ export function FacturaTable({
     setOpenViewModal(false);
   };
 
-  const handleOpenConfirmModal = (id: string) => {
+  const handleOpenConfirmModal = (id: string, estado: "BODEGA" | "SALA") => {
     setSelectedFacturaId(id);
+    setSelectedFacturaEstado(estado);
     setOpenConfirmModal(true);
   };
 
   const handleCloseConfirmModal = () => {
     setSelectedFacturaId(null);
+    setSelectedFacturaEstado(null);
     setOpenConfirmModal(false);
   };
 
-  const handleConfirmChangeEstado = () => {
-    console.log(`Cambiar estado de factura ID: ${selectedFacturaId}`);
-    handleCloseConfirmModal();
+  const handleConfirmChangeEstado = async () => {
+    if (!selectedFacturaId || !selectedFacturaEstado || !idUsuario) return;
+
+    try {
+      setIsUpdating(true);
+      const nuevoEstado = selectedFacturaEstado === "BODEGA" ? "SALA" : "BODEGA";
+      
+      await updateEstado.mutateAsync({
+        facturaId: selectedFacturaId,
+        nuevoEstado,
+      });
+      
+      handleCloseConfirmModal();
+    } catch (err) {
+      setErrorMessage("Error al actualizar el estado de la factura: " + err);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  if (isLoading) {
+  if (!mounted || isLoading) {
     return (
-      <Box sx={{ px: 3, py: 4, flexGrow: 1 }}>
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} variant="rectangular" height={40} sx={{ mb: 2 }} />
-        ))}
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px" }}>
+        <CircularProgress />
       </Box>
     );
   }
@@ -91,8 +111,8 @@ export function FacturaTable({
 
   return (
     <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
-      {isMobile ? (
-        <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+      {mounted && isMobile ? (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {facturas.map((factura) => (
             <FacturaCard
               key={factura.id}
@@ -105,7 +125,8 @@ export function FacturaTable({
         <FacturaTableDesktop
           facturas={facturas}
           onView={handleOpenViewModal}
-          onChangeEstado={handleOpenConfirmModal}
+          onChangeEstado={(id, estado) => handleOpenConfirmModal(id, estado)}
+          isUpdating={isUpdating}
         />
       )}
 
@@ -119,7 +140,19 @@ export function FacturaTable({
         open={openConfirmModal}
         onClose={handleCloseConfirmModal}
         onConfirm={handleConfirmChangeEstado}
+        estadoActual={selectedFacturaEstado || "BODEGA"}
+        isUpdating={isUpdating}
       />
+
+      <Snackbar
+        open={!!errorMessage}
+        autoHideDuration={6000}
+        onClose={() => setErrorMessage(null)}
+      >
+        <Alert severity="error" onClose={() => setErrorMessage(null)}>
+          {errorMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

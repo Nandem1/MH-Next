@@ -1,23 +1,26 @@
 "use client";
 
 import { Box } from "@mui/material";
-import Footer from "@/components/shared/Footer";
 import { ZebrAIGenerator } from "@/components/zebra/ZebrAIGenerator";
+import { PageTitle } from "@/components/shared/PageTitle";
+import Footer from "@/components/shared/Footer";
 
 export default function ZebrAIPage() {
   return (
     <Box
       sx={{
+        minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
-        flexGrow: 1,
-        minHeight: "100%",
       }}
     >
-      <Box sx={{ flexGrow: 1, mt: 8, px: { xs: 2, md: 3 } }}>
+      <PageTitle 
+        title="Zebra" 
+        description="Configura y gestiona las impresoras Zebra de Mercado House"
+      />
+      <Box sx={{ flex: 1, p: 3, mt: 8 }}>
         <ZebrAIGenerator />
       </Box>
-
       <Footer />
     </Box>
   );

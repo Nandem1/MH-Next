@@ -1,13 +1,11 @@
 // /app/dashboard/usuarios/page.tsx
 "use client";
 
+import { Box, Typography } from "@mui/material";
 import { useUsuariosFull } from "@/hooks/useUsuariosFull";
-import { useAuthStatus } from "@/hooks/useAuthStatus";
 import {
-  Box,
   Button,
   CircularProgress,
-  Typography,
   Paper,
   Table,
   TableHead,
@@ -18,19 +16,27 @@ import {
   Alert,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import NuevoUsuarioModal from "@/components/usuarios/NuevoUsuarioModal";
+import { PageTitle } from "@/components/shared/PageTitle";
 import Footer from "@/components/shared/Footer";
 
 export default function UsuariosPage() {
   const { usuarios, isLoading, isError } = useUsuariosFull();
-  const { isAuthenticated, isLoading: authLoading, rol_id } = useAuthStatus();
+  const { isAuthenticated, isAdmin } = useAuth();
   const router = useRouter();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-  if (isLoading || authLoading) {
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, router]);
+
+  if (isLoading) {
     return (
       <Box
         sx={{
@@ -46,20 +52,33 @@ export default function UsuariosPage() {
   }
 
   if (!isAuthenticated || isError) {
-    router.push("/login");
     return null;
   }
 
-  const esAdmin = rol_id === 1;
-
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "95vh" }}>
-      <Box sx={{ px: { xs: 2, md: 3 }, pt: 10, pb: 4, flexGrow: 1 }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
+      }}
+    >
+      <PageTitle 
+        title="Usuarios" 
+        description="Administra los usuarios y permisos de Mercado House"
+      />
+      <Box
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          mt: 8,
+        }}
+      >
         <Typography variant="h4" fontWeight="bold" gutterBottom>
-          Gestión de Usuarios
+          Gestion de Usuarios	
         </Typography>
 
-        {esAdmin && (
+        {isAdmin && (
           <Box sx={{ mb: 2 }}>
             <Button
               variant="contained"
@@ -117,10 +136,7 @@ export default function UsuariosPage() {
           </Alert>
         </Snackbar>
       </Box>
-
-      <Box>
-        <Footer />
-      </Box>
+      <Footer />
     </Box>
   );
 }

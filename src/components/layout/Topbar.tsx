@@ -11,9 +11,11 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import { useThemeContext } from "@/context/ThemeContext";
 import { Sun, Moon } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
 import { drawerWidth } from "@/constants/layout";
 import { useCallback, useEffect } from "react";
+import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useSnackbar } from "@/hooks/useSnackbar";
 
 interface TopbarProps {
   handleDrawerToggle: () => void;
@@ -22,12 +24,15 @@ interface TopbarProps {
 
 export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
   const { toggleTheme, mode } = useThemeContext();
-  const { logout, usuario, loadUsuario } = useAuth();
-  console.log("👤 Usuario:", usuario);
+  const { data: session } = useSession();
+  const router = useRouter();
+  const { showSnackbar } = useSnackbar();
 
-  const handleLogout = useCallback(() => {
-    logout();
-  }, [logout]);
+  const handleLogout = useCallback(async () => {
+    await signOut({ redirect: false });
+    localStorage.setItem("showLogoutMessage", "true");
+    router.push("/login");
+  }, [router]);
 
   const getNombreLocal = (id_local: number | null): string => {
     switch (id_local) {
@@ -43,17 +48,18 @@ export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
   };
 
   useEffect(() => {
-    if (!usuario) {
-      loadUsuario(); // 👈 Cargar usuario si aún no existe
+    if (localStorage.getItem("showLogoutMessage") === "true") {
+      showSnackbar("Sesión cerrada exitosamente", "success");
+      localStorage.removeItem("showLogoutMessage");
     }
-  }, [usuario, loadUsuario]);
+  }, [showSnackbar]);
 
   return (
     <AppBar
       position="fixed"
       elevation={1}
       sx={{
-        width: { md: `calc(100% - ${drawerWidth}px)` }, // Solo width, NO ml
+        width: { md: `calc(100% - ${drawerWidth}px)` },
         bgcolor: "background.paper",
         color: "text.primary",
         boxShadow: 1,
@@ -80,7 +86,7 @@ export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
         {/* DERECHA */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           {/* 👤 Usuario y Local - SOLO EN DESKTOP */}
-          {usuario?.nombre && (
+          {session?.user?.name && (
             <Box
               sx={{
                 display: { xs: "none", md: "flex" },
@@ -90,11 +96,11 @@ export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
               }}
             >
               <Typography variant="body2" fontWeight={500}>
-                Hola, {usuario.nombre}
+                Hola, {session.user.name}
               </Typography>
-              {usuario.id_local !== null && (
+              {session.user.id_local !== null && (
                 <Typography variant="caption" color="text.secondary">
-                  {getNombreLocal(usuario.id_local)}
+                  {getNombreLocal(session.user.id_local)}
                 </Typography>
               )}
             </Box>

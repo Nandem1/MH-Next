@@ -1,6 +1,5 @@
 "use client";
 
-import { useAuth } from "@/hooks/useAuth";
 import { useSnackbar } from "@/hooks/useSnackbar";
 import {
   Box,
@@ -15,31 +14,45 @@ import {
 } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { signIn, useSession } from "next-auth/react";
+import { PageTitle } from "@/components/shared/PageTitle";
 
 export default function LoginPage() {
-  const { login, loading } = useAuth();
+  const { status } = useSession();
   const { open, message, severity, showSnackbar, handleClose } = useSnackbar();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // Verificar si hay un token válido al cargar la página
+  // Verificar si hay una sesión válida al cargar la página
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    const user = localStorage.getItem("usuario");
-    
-    if (token && user) {
+    if (status === "authenticated") {
       router.push("/dashboard/inicio");
-    } else {
-      setIsCheckingAuth(false);
     }
-  }, [router]);
+  }, [status, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await login(email, password);
-    if (!result.success) showSnackbar(result.message, "error");
+    setLoading(true);
+    
+    try {
+      const result = await signIn("credentials", {
+        username: email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        showSnackbar("Credenciales inválidas", "error");
+      } else {
+        router.push("/dashboard/inicio");
+      }
+    } catch {
+      showSnackbar("Error al iniciar sesión", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* mensaje post‑logout --------------------------------------------------- */
@@ -50,8 +63,24 @@ export default function LoginPage() {
     }
   }, [showSnackbar]);
 
-  // Si estamos verificando la autenticación, no mostrar nada
-  if (isCheckingAuth) {
+  // Si la sesión está cargando, mostrar loading
+  if (status === "loading") {
+    return (
+      <Box
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // Si ya está autenticado, no mostrar nada (será redirigido)
+  if (status === "authenticated") {
     return null;
   }
 
@@ -61,42 +90,44 @@ export default function LoginPage() {
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
-        backgroundColor: "background.default",
       }}
     >
-      {/* ---------- main (centro) ---------- */}
+      <PageTitle 
+        title="Iniciar Sesión" 
+        description="Accede a tu cuenta de Mercado House"
+      />
       <Box
         sx={{
-          flexGrow: 1, // ocupa todo lo disponible
+          flex: 1,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          px: 2,
-          py: 4,
+          p: 3,
         }}
       >
         <Paper
-          elevation={4}
+          elevation={3}
           sx={{
-            width: { xs: "100%", sm: "420px", md: "380px" }, // ancho máx. responsive
-            maxWidth: "100%",
-            p: { xs: 3, sm: 4 },
-            borderRadius: 3,
+            p: 4,
+            width: "100%",
+            maxWidth: 400,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
           }}
         >
-          <Typography variant="h5" fontWeight={700} textAlign="center" mb={3}>
+          <Typography variant="h5" component="h1" gutterBottom align="center">
             Iniciar Sesión
           </Typography>
 
-          <Box component="form" onSubmit={handleSubmit} noValidate>
+          <form onSubmit={handleSubmit}>
             <TextField
-              label="Correo electrónico"
+              label="Email"
               type="email"
               fullWidth
               margin="normal"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
               required
             />
             <TextField
@@ -106,60 +137,34 @@ export default function LoginPage() {
               margin="normal"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
               required
             />
-
             <Button
               type="submit"
-              fullWidth
               variant="contained"
-              sx={{ mt: 3, py: 1.25, fontWeight: 600 }}
+              fullWidth
+              sx={{ mt: 2 }}
               disabled={loading}
             >
-              {loading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                "Entrar"
-              )}
+              {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
             </Button>
+          </form>
+
+          <Box sx={{ mt: 2, textAlign: "center" }}>
+            <Link href="/register" underline="hover">
+              ¿No tienes cuenta? Regístrate
+            </Link>
           </Box>
         </Paper>
       </Box>
 
-      {/* ---------- footer ---------- */}
-      <Box
-        component="footer"
-        sx={{
-          py: 2,
-          textAlign: "center",
-          fontSize: "0.8rem",
-          color: "text.secondary",
-        }}
-      >
-        © 2025 Mercado House SPA · Desarrollado por{" "}
-        <Link
-          href="https://github.com/Nandem1"
-          target="_blank"
-          underline="hover"
-        >
-          Nandev
-        </Link>
-      </Box>
-
-      {/* ---------- snackbar ---------- */}
       <Snackbar
         open={open}
         autoHideDuration={3000}
         onClose={handleClose}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert
-          onClose={handleClose}
-          severity={severity}
-          variant="filled"
-          sx={{ width: "100%" }}
-        >
+        <Alert onClose={handleClose} severity={severity} sx={{ width: "100%" }}>
           {message}
         </Alert>
       </Snackbar>

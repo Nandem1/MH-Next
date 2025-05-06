@@ -1,12 +1,14 @@
-import { ThemeProvider } from "@/context/ThemeContext";
-import { ThemeRegistry } from "@/providers/ThemeRegistry";
-import { QueryProvider } from "@/providers/QueryProvider";
-import { AuthProvider } from "@/context/AuthContext"; // 👈 importar el nuevo contexto
+import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { CssBaseline } from "@mui/material";
-import { Analytics } from "@vercel/analytics/next";
+import "./globals.css";
+import { Providers } from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "Mercado House",
+  description: "Sistema de gestión para Mercado House",
+};
 
 export default function RootLayout({
   children,
@@ -14,21 +16,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body className={inter.className}>
-        <ThemeProvider>
-          <AuthProvider>
-            {" "}
-            {/* ✅ Ahora tu contexto está activo */}
-            <ThemeRegistry>
-              <QueryProvider>
-                <CssBaseline />
-                {children}
-                <Analytics />
-              </QueryProvider>
-            </ThemeRegistry>
-          </AuthProvider>
-        </ThemeProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

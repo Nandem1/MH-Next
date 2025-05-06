@@ -58,7 +58,7 @@ export function ZebrAIGenerator() {
 ^FT423,237^A0N,17,18^FH\\^CI28^FDCOD. ITEM: 482270^FS^CI27
 ^PQ1,0,1,Y
 ^XZ
-      `; // tu ZPL completo aquí
+      `;
 
       const response = await fetch("/api/zebra", {
         method: "POST",

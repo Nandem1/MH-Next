@@ -11,12 +11,16 @@ const transformDriveUrl = (url: string) => {
 };
 
 export function adaptFactura(factura: FacturaResponse): Factura {
+  // Convertir el estado numérico a string
+  const estadoNumerico = factura.estado ?? 1;
+  const estado = estadoNumerico === 1 ? "BODEGA" : estadoNumerico === 2 ? "SALA" : "BODEGA";
+
   return {
-    id: `${factura.folio}-${factura.fecha_registro}`, // ahora es único y estable
+    id: factura.folio,
     folio: factura.folio,
     proveedor: factura.proveedor,
     local: factura.nombre_local || "Local desconocido",
-    estado: "BODEGA",
+    estado,
     fechaIngreso: factura.fecha_registro,
     image_url: transformDriveUrl(factura.image_url || ""),
     image_url_cloudinary: factura.image_url_cloudinary,
