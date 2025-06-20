@@ -53,11 +53,8 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
     { text: "Facturas", icon: <ReceiptIcon />, path: "/dashboard/facturas" },
     { text: "ZebrAI", icon: <ReceiptIcon />, path: "/dashboard/zebrai" },
     { text: "Usuarios", icon: <PeopleIcon />, path: "/dashboard/usuarios" },
-    {
-      text: "Configuración",
-      icon: <SettingsIcon />,
-      path: "/dashboard/configuracion",
-    },
+    { text: "Lector DTE", icon: <ReceiptIcon />, path: "/dashboard/lector-dte" },
+    { text: "Configuración", icon: <SettingsIcon />, path: "/dashboard/configuracion" },
   ];
 
   const drawerContent = (
