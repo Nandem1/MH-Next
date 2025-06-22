@@ -6,13 +6,30 @@ import { useRouter } from "next/navigation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+export interface Usuario {
+  id_auth_user: number;
+  usuario_id: number | null;
+  rol_id: number;
+  nombre: string;
+  email: string;
+  local_id: number;
+  local_nombre: string;
+}
+
 export interface AuthStatus {
   isAuthenticated: boolean;
   isLoading: boolean;
+  usuario?: Usuario;
   id?: number;
   usuario_id?: number | null;
   rol_id?: number;
 }
+
+export const locales = [
+  { id: 1, nombre: "LA CANTERA 3055" },
+  { id: 2, nombre: "LIBERTADOR 1476" },
+  { id: 3, nombre: "BALMACEDA 599" },
+];
 
 const clearAuthData = () => {
   // Limpiar localStorage
@@ -30,6 +47,7 @@ const clearAuthData = () => {
 export const useAuthStatus = (): AuthStatus => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [usuario, setUsuario] = useState<Usuario | undefined>();
   const [id, setId] = useState<number | undefined>();
   const [usuario_id, setUsuarioId] = useState<number | null>(null);
   const [rol_id, setRolId] = useState<number | undefined>();
@@ -47,7 +65,20 @@ export const useAuthStatus = (): AuthStatus => {
           withCredentials: true,
         });
         const user = data.user;
+        
+        // Crear objeto usuario completo
+        const usuarioCompleto: Usuario = {
+          id_auth_user: user.id_auth_user,
+          usuario_id: user.usuario_id,
+          rol_id: user.rol_id,
+          nombre: user.nombre || user.name || "Usuario",
+          email: user.email || "",
+          local_id: user.local_id || 1,
+          local_nombre: user.local_nombre || "LA CANTERA 3055",
+        };
+        
         setIsAuthenticated(true);
+        setUsuario(usuarioCompleto);
         setId(user.id_auth_user);
         setUsuarioId(user.usuario_id);
         setRolId(user.rol_id);
@@ -67,5 +98,5 @@ export const useAuthStatus = (): AuthStatus => {
     checkAuth();
   }, [router]);
 
-  return { isAuthenticated, isLoading, id, usuario_id, rol_id };
+  return { isAuthenticated, isLoading, usuario, id, usuario_id, rol_id };
 };
