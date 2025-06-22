@@ -13,6 +13,7 @@ import {
   Stack,
 } from "@mui/material";
 import DoneIcon from "@mui/icons-material/Done";
+import PrintIcon from "@mui/icons-material/Print";
 import { Factura } from "@/types/factura";
 import { formatearRut } from "@/utils/formatearRut";
 
@@ -20,12 +21,14 @@ interface FacturaTableDesktopProps {
   facturas: Factura[];
   onView: (factura: Factura) => void;
   onChangeEstado: (id: string) => void;
+  onPrint: (factura: Factura) => void;
 }
 
 export function FacturaTableDesktop({
   facturas,
   onView,
   onChangeEstado,
+  onPrint,
 }: FacturaTableDesktopProps) {
   return (
     <TableContainer
@@ -112,6 +115,15 @@ export function FacturaTableDesktop({
                     aria-label="Ver factura"
                   >
                     Ver
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    size="small"
+                    onClick={() => onPrint(factura)}
+                    aria-label="Imprimir factura"
+                  >
+                    <PrintIcon fontSize="small" />
                   </Button>
                 </Stack>
               </TableCell>

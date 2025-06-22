@@ -11,24 +11,30 @@ import {
 } from "@mui/material";
 import PrintIcon from "@mui/icons-material/Print";
 import Image from "next/image";
-import { Factura } from "@/types/factura";
-import { formatearRut } from "@/utils/formatearRut";
 
-interface ViewFacturaModalProps {
-  open: boolean;
-  onClose: () => void;
-  factura: Factura | null;
+interface FacturaAsociada {
+  folio: string;
+  proveedor: string;
+  estado: string;
+  fechaIngreso: string;
+  image_url_cloudinary: string;
 }
 
-export function ViewFacturaModal({
+interface ViewFacturaAsociadaModalProps {
+  open: boolean;
+  onClose: () => void;
+  facturaAsociada: FacturaAsociada | null;
+}
+
+export function ViewFacturaAsociadaModal({
   open,
   onClose,
-  factura,
-}: ViewFacturaModalProps) {
+  facturaAsociada,
+}: ViewFacturaAsociadaModalProps) {
   const theme = useTheme();
 
   const handlePrint = () => {
-    if (!factura) return;
+    if (!facturaAsociada) return;
 
     // Crear un elemento temporal para la impresión
     const printElement = document.createElement('div');
@@ -66,7 +72,7 @@ export function ViewFacturaModal({
           }
         }
       </style>
-      <img src="${factura.image_url_cloudinary}" alt="Factura ${factura.folio}" />
+      <img src="${facturaAsociada.image_url_cloudinary}" alt="Factura Asociada ${facturaAsociada.folio}" />
     `;
 
     // Remover elemento anterior si existe
@@ -102,11 +108,9 @@ export function ViewFacturaModal({
         }}
       >
         <Typography variant="subtitle2" fontWeight={600}>
-          {factura
-            ? `FA ${factura.folio} · ${factura.proveedor} · ${formatearRut(
-                factura.rut_proveedor || ""
-              )}`
-            : "Factura"}
+          {facturaAsociada
+            ? `📄 Factura Asociada F-${facturaAsociada.folio} · ${facturaAsociada.proveedor}`
+            : "Factura Asociada"}
         </Typography>
       </DialogTitle>
 
@@ -118,10 +122,10 @@ export function ViewFacturaModal({
           py: { xs: 2, sm: 3 },
         }}
       >
-        {factura && (
+        {facturaAsociada && (
           <Image
-            src={factura.image_url_cloudinary}
-            alt={`Imagen de factura ${factura.folio} de ${factura.proveedor}`}
+            src={facturaAsociada.image_url_cloudinary}
+            alt={`Imagen de factura asociada ${facturaAsociada.folio} de ${facturaAsociada.proveedor}`}
             width={800}
             height={1000}
             style={{
@@ -142,7 +146,7 @@ export function ViewFacturaModal({
           color="primary"
           variant="contained"
           startIcon={<PrintIcon />}
-          disabled={!factura}
+          disabled={!facturaAsociada}
         >
           Imprimir
         </Button>
@@ -152,4 +156,4 @@ export function ViewFacturaModal({
       </DialogActions>
     </Dialog>
   );
-}
+} 

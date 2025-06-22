@@ -1,4 +1,3 @@
-// src/components/layout/Sidebar.tsx
 "use client";
 
 import {
@@ -8,6 +7,7 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Collapse,
   Toolbar,
   Divider,
   Box,
@@ -19,10 +19,17 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import SettingsIcon from "@mui/icons-material/Settings";
 import PeopleIcon from "@mui/icons-material/People";
+import ExpandLess from "@mui/icons-material/ExpandLess";
+import ExpandMore from "@mui/icons-material/ExpandMore";
+import DescriptionIcon from "@mui/icons-material/Description";
+import RotateLeftIcon from "@mui/icons-material/RotateLeft";
+import ChecklistIcon from "@mui/icons-material/Checklist";
+
 import { useRouter, usePathname } from "next/navigation";
 import { useMediaQuery } from "@mui/material";
 import { drawerWidth } from "@/constants/layout";
 import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -34,6 +41,14 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
   const pathname = usePathname();
   const isMobile = useMediaQuery("(max-width:900px)");
   const { logout, usuario } = useAuth();
+  const [openDTE, setOpenDTE] = useState(false);
+
+  const handleSubmenuClick = () => setOpenDTE(!openDTE);
+
+  const goTo = (path: string) => {
+    router.push(path);
+    if (isMobile) handleDrawerToggle();
+  };
 
   const getNombreLocal = (id_local: number | null): string => {
     switch (id_local) {
@@ -47,15 +62,6 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
         return "Local desconocido";
     }
   };
-
-  const navItems = [
-    { text: "Inicio", icon: <DashboardIcon />, path: "/dashboard/inicio" },
-    { text: "Facturas", icon: <ReceiptIcon />, path: "/dashboard/facturas" },
-    { text: "ZebrAI", icon: <ReceiptIcon />, path: "/dashboard/zebrai" },
-    { text: "Usuarios", icon: <PeopleIcon />, path: "/dashboard/usuarios" },
-    { text: "Lector DTE", icon: <ReceiptIcon />, path: "/dashboard/lector-dte" },
-    { text: "Configuración", icon: <SettingsIcon />, path: "/dashboard/configuracion" },
-  ];
 
   const drawerContent = (
     <Box display="flex" flexDirection="column" height="100%">
@@ -94,41 +100,126 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
           </Button>
         </Box>
       )}
+
       <Divider />
       <Box flexGrow={1}>
         <List>
-          {navItems.map((item) => (
-            <ListItem key={item.text} disablePadding>
+          {/* INICIO */}
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={pathname === "/dashboard/inicio"}
+              onClick={() => goTo("/dashboard/inicio")}
+              sx={navButtonStyle()}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <DashboardIcon />
+              </ListItemIcon>
+              <ListItemText primary="Inicio" />
+            </ListItemButton>
+          </ListItem>
+
+          {/* DTE MH (submenu) */}
+          <ListItem disablePadding>
+            <ListItemButton onClick={handleSubmenuClick}>
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <ReceiptIcon />
+              </ListItemIcon>
+              <ListItemText primary="Documentos" />
+              {openDTE ? <ExpandLess /> : <ExpandMore />}
+            </ListItemButton>
+          </ListItem>
+          <Collapse in={openDTE} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
               <ListItemButton
-                onClick={() => {
-                  router.push(item.path);
-                  if (isMobile) handleDrawerToggle();
-                }}
-                selected={pathname === item.path}
-                sx={{
-                  "&.Mui-selected": {
-                    backgroundColor: "primary.main",
-                    color: "#0a0a0a",
-                    "&:hover": { backgroundColor: "#e6c235" },
-                  },
-                  "&:hover": {
-                    bgcolor: "rgba(255, 217, 61, 0.08)",
-                    transition: "background-color 0.3s ease",
-                  },
-                }}
+                sx={{ pl: 4 }}
+                selected={pathname === "/dashboard/facturas"}
+                onClick={() => goTo("/dashboard/facturas")}
               >
-                <ListItemIcon
-                  sx={{
-                    color: pathname === item.path ? "#fff" : "inherit",
-                    minWidth: 40,
-                  }}
-                >
-                  {item.icon}
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <DescriptionIcon fontSize="small" />
                 </ListItemIcon>
-                <ListItemText primary={item.text} />
+                <ListItemText primary="Facturas Electrónicas" />
               </ListItemButton>
-            </ListItem>
-          ))}
+
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={pathname === "/dashboard/notas-credito"}
+                onClick={() => goTo("/dashboard/notas-credito")}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <RotateLeftIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Notas de Crédito" />
+              </ListItemButton>
+
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={pathname === "/dashboard/nominas"}
+                onClick={() => goTo("/dashboard/nominas")}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <ChecklistIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Nóminas" />
+              </ListItemButton>
+            </List>
+          </Collapse>
+
+          {/* ZebrAI */}
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={pathname === "/dashboard/zebrai"}
+              onClick={() => goTo("/dashboard/zebrai")}
+              sx={navButtonStyle()}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <ReceiptIcon />
+              </ListItemIcon>
+              <ListItemText primary="ZebrAI" />
+            </ListItemButton>
+          </ListItem>
+
+          {/* Lector DTE */}
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={pathname === "/dashboard/lector-dte"}
+              onClick={() => goTo("/dashboard/lector-dte")}
+              sx={navButtonStyle()}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <ReceiptIcon />
+              </ListItemIcon>
+              <ListItemText primary="Lector DTE" />
+            </ListItemButton>
+          </ListItem>
+
+          {/* Usuarios */}
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={pathname === "/dashboard/usuarios"}
+              onClick={() => goTo("/dashboard/usuarios")}
+              sx={navButtonStyle()}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <PeopleIcon />
+              </ListItemIcon>
+              <ListItemText primary="Usuarios" />
+            </ListItemButton>
+          </ListItem>
+
+          {/* Configuración */}
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={pathname === "/dashboard/configuracion"}
+              onClick={() => goTo("/dashboard/configuracion")}
+              sx={navButtonStyle()}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <SettingsIcon />
+              </ListItemIcon>
+              <ListItemText primary="Configuración" />
+            </ListItemButton>
+          </ListItem>
         </List>
       </Box>
 
@@ -181,4 +272,18 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
       {drawerContent}
     </Drawer>
   );
+}
+
+function navButtonStyle() {
+  return {
+    "&.Mui-selected": {
+      backgroundColor: "primary.main",
+      color: "#0a0a0a",
+      "&:hover": { backgroundColor: "#e6c235" },
+    },
+    "&:hover": {
+      bgcolor: "rgba(255, 217, 61, 0.08)",
+      transition: "background-color 0.3s ease",
+    },
+  };
 }

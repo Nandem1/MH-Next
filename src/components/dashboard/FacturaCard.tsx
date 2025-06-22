@@ -10,15 +10,17 @@ import {
   Stack,
   Divider,
 } from "@mui/material";
+import PrintIcon from "@mui/icons-material/Print";
 import { Factura } from "@/types/factura";
 import { formatearRut } from "@/utils/formatearRut";
 
 interface FacturaCardProps {
   factura: Factura;
   onView: () => void;
+  onPrint: () => void;
 }
 
-export function FacturaCard({ factura, onView }: FacturaCardProps) {
+export function FacturaCard({ factura, onView, onPrint }: FacturaCardProps) {
   return (
     <Card
       sx={{
@@ -96,16 +98,27 @@ export function FacturaCard({ factura, onView }: FacturaCardProps) {
           </Box>
 
           <Box sx={{ mt: "auto" }}>
-            <Button
-              onClick={onView}
-              size="small"
-              variant="contained"
-              color="primary"
-              fullWidth
-              sx={{ borderRadius: 2 }}
-            >
-              Ver Factura
-            </Button>
+            <Stack direction="row" spacing={1}>
+              <Button
+                onClick={onView}
+                size="small"
+                variant="contained"
+                color="primary"
+                sx={{ flex: 1, borderRadius: 2 }}
+              >
+                Ver Factura
+              </Button>
+              <Button
+                onClick={onPrint}
+                size="small"
+                variant="contained"
+                color="secondary"
+                startIcon={<PrintIcon />}
+                sx={{ borderRadius: 2 }}
+              >
+                Imprimir
+              </Button>
+            </Stack>
           </Box>
         </Stack>
       </CardContent>

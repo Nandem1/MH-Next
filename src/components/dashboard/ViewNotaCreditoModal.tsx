@@ -11,24 +11,24 @@ import {
 } from "@mui/material";
 import PrintIcon from "@mui/icons-material/Print";
 import Image from "next/image";
-import { Factura } from "@/types/factura";
+import { NotaCredito } from "@/types/notaCredito";
 import { formatearRut } from "@/utils/formatearRut";
 
-interface ViewFacturaModalProps {
+interface ViewNotaCreditoModalProps {
   open: boolean;
   onClose: () => void;
-  factura: Factura | null;
+  notaCredito: NotaCredito | null;
 }
 
-export function ViewFacturaModal({
+export function ViewNotaCreditoModal({
   open,
   onClose,
-  factura,
-}: ViewFacturaModalProps) {
+  notaCredito,
+}: ViewNotaCreditoModalProps) {
   const theme = useTheme();
 
   const handlePrint = () => {
-    if (!factura) return;
+    if (!notaCredito) return;
 
     // Crear un elemento temporal para la impresión
     const printElement = document.createElement('div');
@@ -66,7 +66,7 @@ export function ViewFacturaModal({
           }
         }
       </style>
-      <img src="${factura.image_url_cloudinary}" alt="Factura ${factura.folio}" />
+      <img src="${notaCredito.image_url_cloudinary}" alt="Nota de Crédito ${notaCredito.folio}" />
     `;
 
     // Remover elemento anterior si existe
@@ -102,11 +102,11 @@ export function ViewFacturaModal({
         }}
       >
         <Typography variant="subtitle2" fontWeight={600}>
-          {factura
-            ? `FA ${factura.folio} · ${factura.proveedor} · ${formatearRut(
-                factura.rut_proveedor || ""
+          {notaCredito
+            ? `NC ${notaCredito.folio} · ${notaCredito.proveedor} · ${formatearRut(
+                notaCredito.rut_proveedor || ""
               )}`
-            : "Factura"}
+            : "Nota de Crédito"}
         </Typography>
       </DialogTitle>
 
@@ -118,10 +118,10 @@ export function ViewFacturaModal({
           py: { xs: 2, sm: 3 },
         }}
       >
-        {factura && (
+        {notaCredito && (
           <Image
-            src={factura.image_url_cloudinary}
-            alt={`Imagen de factura ${factura.folio} de ${factura.proveedor}`}
+            src={notaCredito.image_url_cloudinary}
+            alt={`Imagen de nota de crédito ${notaCredito.folio} de ${notaCredito.proveedor}`}
             width={800}
             height={1000}
             style={{
@@ -142,7 +142,7 @@ export function ViewFacturaModal({
           color="primary"
           variant="contained"
           startIcon={<PrintIcon />}
-          disabled={!factura}
+          disabled={!notaCredito}
         >
           Imprimir
         </Button>
@@ -152,4 +152,4 @@ export function ViewFacturaModal({
       </DialogActions>
     </Dialog>
   );
-}
+} 
