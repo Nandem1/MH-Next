@@ -258,7 +258,7 @@ export function XMLUploader() {
         [
           item.codigo,
           item.nombre,
-          "",
+          item.descripcion,
           "",
           "",
           item.montoItem,
@@ -424,6 +424,7 @@ export function XMLUploader() {
                       <TableCell>{detalle.codigo}</TableCell>
                       <TableCell>
                         <Typography>{detalle.nombre}</Typography>
+                        <Typography variant="caption">{detalle.descripcion}</Typography>
                       </TableCell>
                       <TableCell>{detalle.cantidad}</TableCell>
                       <TableCell>{formatCurrency(detalle.montoItem)}</TableCell>

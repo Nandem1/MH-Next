@@ -24,6 +24,7 @@ import ExpandMore from "@mui/icons-material/ExpandMore";
 import DescriptionIcon from "@mui/icons-material/Description";
 import RotateLeftIcon from "@mui/icons-material/RotateLeft";
 import ChecklistIcon from "@mui/icons-material/Checklist";
+import AssessmentIcon from "@mui/icons-material/Assessment";
 
 import { useRouter, usePathname } from "next/navigation";
 import { useMediaQuery } from "@mui/material";
@@ -164,6 +165,20 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
               </ListItemButton>
             </List>
           </Collapse>
+
+          {/* Auditoría de Cartelería */}
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={pathname === "/dashboard/auditoria-carteleria"}
+              onClick={() => goTo("/dashboard/auditoria-carteleria")}
+              sx={navButtonStyle()}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <AssessmentIcon />
+              </ListItemIcon>
+              <ListItemText primary="Auditoría de Cartelería" />
+            </ListItemButton>
+          </ListItem>
 
           {/* ZebrAI */}
           <ListItem disablePadding>
