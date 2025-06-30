@@ -4,11 +4,30 @@ export interface Carteleria {
   tipo_carteleria: string;
   carteleria_precio_detalle: number;
   carteleria_precio_mayorista: number;
-  codigo: string;
-  nombre: string;
-  lista_precio_detalle: number;
-  lista_precio_mayorista: number;
-  lista_updated_at: string;
+
+  // Producto
+  codigo?: string | null | undefined;
+  nombre?: string | null | undefined;
+  nombre_producto?: string | null | undefined;
+  codigo_producto?: string | null | undefined;
+
+  // Pack_listados
+  codigo_pack?: string | null | undefined;
+  cod_barra_pack?: string | null | undefined;
+  nombre_pack?: string | null | undefined;
+  precio_base?: number | null | undefined;
+  cantidad_articulo?: number | null | undefined;
+  codigo_articulo?: string | null | undefined;
+  cod_barra_articulo?: string | null | undefined;
+  nombre_articulo?: string | null | undefined;
+
+  // Lista precios
+  lista_precio_detalle?: number | null | undefined;
+  lista_precio_mayorista?: number | null | undefined;
+  lista_updated_at?: string | null | undefined;
+
+  // Origen indicador
+  origen?: "producto" | "pack" | "sin_origen" | null | undefined;
 }
 
 export interface CarteleriaAuditResult {
@@ -17,4 +36,5 @@ export interface CarteleriaAuditResult {
   precioMayoristaCoincide: boolean;
   diferenciaDetalle: number;
   diferenciaMayorista: number;
-} 
+}
+

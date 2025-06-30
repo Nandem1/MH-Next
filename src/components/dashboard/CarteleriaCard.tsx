@@ -19,8 +19,14 @@ interface CarteleriaCardProps {
 }
 
 export function CarteleriaCard({ item }: CarteleriaCardProps) {
-  const { carteleria, precioDetalleCoincide, precioMayoristaCoincide, diferenciaDetalle, diferenciaMayorista } = item;
-  
+  const {
+    carteleria,
+    precioDetalleCoincide,
+    precioMayoristaCoincide,
+    diferenciaDetalle,
+    diferenciaMayorista,
+  } = item;
+
   const hasDiscrepancia = !precioDetalleCoincide || !precioMayoristaCoincide;
 
   const formatPrice = (price: number) => {
@@ -42,38 +48,56 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
   };
 
   return (
-    <Card 
+    <Card
       elevation={hasDiscrepancia ? 3 : 1}
-      sx={{ 
+      sx={{
         mb: 2,
         border: hasDiscrepancia ? 2 : 1,
         borderColor: hasDiscrepancia ? "error.main" : "divider",
         "&:hover": {
           boxShadow: hasDiscrepancia ? 6 : 3,
-        }
+        },
       }}
     >
       <CardContent>
         {/* Header con información básica */}
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="flex-start"
+          mb={2}
+        >
           <Box flex={1}>
             <Typography variant="h6" component="h3" gutterBottom>
-              {carteleria.nombre}
+              {carteleria.nombre_producto ||
+                carteleria.nombre_pack ||
+                carteleria.nombre_articulo ||
+                "Sin nombre"}
             </Typography>
             <Typography variant="body2" color="text.secondary" gutterBottom>
-              Código: {carteleria.codigo} | Código de Barras: {carteleria.codigo_barras}
+              Código:{" "}
+              {carteleria.codigo_producto ||
+                carteleria.codigo_pack ||
+                carteleria.codigo_articulo ||
+                "N/A"}{" "}
+              | Código de Barras: {carteleria.codigo_barras}
             </Typography>
           </Box>
-          <Box display="flex" gap={1} flexDirection="column" alignItems="flex-end">
-            <Chip 
-              label={carteleria.tipo_carteleria} 
-              size="small" 
-              color="primary" 
+          <Box
+            display="flex"
+            gap={1}
+            flexDirection="column"
+            alignItems="flex-end"
+          >
+            <Chip
+              label={carteleria.tipo_carteleria}
+              size="small"
+              color="primary"
               variant="outlined"
             />
-            <Chip 
-              label={`ID: ${carteleria.carteleria_id}`} 
-              size="small" 
+            <Chip
+              label={`ID: ${carteleria.carteleria_id}`}
+              size="small"
               variant="outlined"
             />
           </Box>
@@ -86,24 +110,36 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
             <Box display="flex" flexDirection="column" gap={1}>
               {!precioDetalleCoincide && (
                 <Typography variant="body2">
-                  <WarningIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }} />
-                  Precio detalle: {formatPrice(carteleria.carteleria_precio_detalle)} vs {formatPrice(carteleria.lista_precio_detalle)}
-                  <Chip 
-                    label={`Diferencia: ${formatPrice(Math.abs(diferenciaDetalle))}`} 
-                    size="small" 
-                    color="error" 
+                  <WarningIcon
+                    sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }}
+                  />
+                  Precio detalle:{" "}
+                  {formatPrice(carteleria.carteleria_precio_detalle)} vs{" "}
+                  {formatPrice(carteleria.lista_precio_detalle || 0)}
+                  <Chip
+                    label={`Diferencia: ${formatPrice(
+                      Math.abs(diferenciaDetalle)
+                    )}`}
+                    size="small"
+                    color="error"
                     sx={{ ml: 1 }}
                   />
                 </Typography>
               )}
               {!precioMayoristaCoincide && (
                 <Typography variant="body2">
-                  <WarningIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }} />
-                  Precio mayorista: {formatPrice(carteleria.carteleria_precio_mayorista)} vs {formatPrice(carteleria.lista_precio_mayorista)}
-                  <Chip 
-                    label={`Diferencia: ${formatPrice(Math.abs(diferenciaMayorista))}`} 
-                    size="small" 
-                    color="error" 
+                  <WarningIcon
+                    sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }}
+                  />
+                  Precio mayorista:{" "}
+                  {formatPrice(carteleria.carteleria_precio_mayorista)} vs{" "}
+                  {formatPrice(carteleria.lista_precio_mayorista || 0)}
+                  <Chip
+                    label={`Diferencia: ${formatPrice(
+                      Math.abs(diferenciaMayorista)
+                    )}`}
+                    size="small"
+                    color="error"
                     sx={{ ml: 1 }}
                   />
                 </Typography>
@@ -123,12 +159,19 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
                 <Typography variant="body2" color="text.secondary">
                   Detalle
                 </Typography>
-                <Typography variant="h6" color={precioDetalleCoincide ? "success.main" : "error.main"}>
+                <Typography
+                  variant="h6"
+                  color={precioDetalleCoincide ? "success.main" : "error.main"}
+                >
                   {formatPrice(carteleria.carteleria_precio_detalle)}
                   {precioDetalleCoincide ? (
-                    <CheckCircleIcon sx={{ fontSize: 16, ml: 0.5, verticalAlign: "middle" }} />
+                    <CheckCircleIcon
+                      sx={{ fontSize: 16, ml: 0.5, verticalAlign: "middle" }}
+                    />
                   ) : (
-                    <WarningIcon sx={{ fontSize: 16, ml: 0.5, verticalAlign: "middle" }} />
+                    <WarningIcon
+                      sx={{ fontSize: 16, ml: 0.5, verticalAlign: "middle" }}
+                    />
                   )}
                 </Typography>
               </Box>
@@ -136,12 +179,21 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
                 <Typography variant="body2" color="text.secondary">
                   Mayorista
                 </Typography>
-                <Typography variant="h6" color={precioMayoristaCoincide ? "success.main" : "error.main"}>
+                <Typography
+                  variant="h6"
+                  color={
+                    precioMayoristaCoincide ? "success.main" : "error.main"
+                  }
+                >
                   {formatPrice(carteleria.carteleria_precio_mayorista)}
                   {precioMayoristaCoincide ? (
-                    <CheckCircleIcon sx={{ fontSize: 16, ml: 0.5, verticalAlign: "middle" }} />
+                    <CheckCircleIcon
+                      sx={{ fontSize: 16, ml: 0.5, verticalAlign: "middle" }}
+                    />
                   ) : (
-                    <WarningIcon sx={{ fontSize: 16, ml: 0.5, verticalAlign: "middle" }} />
+                    <WarningIcon
+                      sx={{ fontSize: 16, ml: 0.5, verticalAlign: "middle" }}
+                    />
                   )}
                 </Typography>
               </Box>
@@ -160,7 +212,7 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
                   Detalle
                 </Typography>
                 <Typography variant="h6">
-                  {formatPrice(carteleria.lista_precio_detalle)}
+                  {formatPrice(carteleria.lista_precio_detalle || 0)}
                 </Typography>
               </Box>
               <Box>
@@ -168,7 +220,7 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
                   Mayorista
                 </Typography>
                 <Typography variant="h6">
-                  {formatPrice(carteleria.lista_precio_mayorista)}
+                  {formatPrice(carteleria.lista_precio_mayorista || 0)}
                 </Typography>
               </Box>
             </Box>
@@ -178,11 +230,12 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
 
           <Box>
             <Typography variant="caption" color="text.secondary">
-              Última actualización de lista: {formatDate(carteleria.lista_updated_at)}
+              Última actualización de lista:{" "}
+              {formatDate(carteleria.lista_updated_at || "")}
             </Typography>
           </Box>
         </Box>
       </CardContent>
     </Card>
   );
-} 
+}

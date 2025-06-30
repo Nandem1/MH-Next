@@ -23,15 +23,35 @@ export const useCarteleria = () => {
   // Función para procesar los datos y calcular discrepancias
   const processAuditData = (data: Carteleria[]): CarteleriaAuditResult[] => {
     return data.map((item) => {
-      const precioDetalleCoincide = item.carteleria_precio_detalle === item.lista_precio_detalle;
-      const precioMayoristaCoincide = item.carteleria_precio_mayorista === item.lista_precio_mayorista;
+      // Casos especiales donde los precios se consideran iguales
+      const isPalletUnico = item.tipo_carteleria === "PALLET UNICO";
+      const isUnico = item.tipo_carteleria === "UNICO";
+      
+      // Si es PALLET UNICO o UNICO, los precios se consideran iguales
+      if (isPalletUnico || isUnico) {
+        return {
+          carteleria: item,
+          precioDetalleCoincide: true,
+          precioMayoristaCoincide: true,
+          diferenciaDetalle: 0,
+          diferenciaMayorista: 0,
+        };
+      }
+      
+      // Obtener precios de lista con manejo de null
+      const listaPrecioDetalle = item.lista_precio_detalle ?? 0;
+      const listaPrecioMayorista = item.lista_precio_mayorista ?? 0;
+      
+      // Si no hay precio configurado en la lista (0), se considera correcto
+      const precioDetalleCoincide = listaPrecioDetalle === 0 || item.carteleria_precio_detalle === listaPrecioDetalle;
+      const precioMayoristaCoincide = listaPrecioMayorista === 0 || item.carteleria_precio_mayorista === listaPrecioMayorista;
       
       return {
         carteleria: item,
         precioDetalleCoincide,
         precioMayoristaCoincide,
-        diferenciaDetalle: item.carteleria_precio_detalle - item.lista_precio_detalle,
-        diferenciaMayorista: item.carteleria_precio_mayorista - item.lista_precio_mayorista,
+        diferenciaDetalle: item.carteleria_precio_detalle - listaPrecioDetalle,
+        diferenciaMayorista: item.carteleria_precio_mayorista - listaPrecioMayorista,
       };
     });
   };
@@ -39,8 +59,8 @@ export const useCarteleria = () => {
   // Filtrar datos procesados
   const filteredData = carteleriaData ? processAuditData(carteleriaData).filter((item) => {
     const matchesSearch = 
-      item.carteleria.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.carteleria.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.carteleria.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+      (item.carteleria.codigo?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
       item.carteleria.codigo_barras.includes(searchTerm);
 
     const matchesTipo = filterTipo === "" || item.carteleria.tipo_carteleria === filterTipo;
