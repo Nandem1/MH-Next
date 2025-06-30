@@ -23,6 +23,18 @@ export const useCarteleria = () => {
   // Función para procesar los datos y calcular discrepancias
   const processAuditData = (data: Carteleria[]): CarteleriaAuditResult[] => {
     return data.map((item) => {
+      // Validar que el item y sus propiedades existan
+      if (!item || !item.carteleria_precio_detalle || !item.lista_precio_detalle || 
+          !item.carteleria_precio_mayorista || !item.lista_precio_mayorista) {
+        return {
+          carteleria: item,
+          precioDetalleCoincide: false,
+          precioMayoristaCoincide: false,
+          diferenciaDetalle: 0,
+          diferenciaMayorista: 0,
+        };
+      }
+
       const precioDetalleCoincide = item.carteleria_precio_detalle === item.lista_precio_detalle;
       const precioMayoristaCoincide = item.carteleria_precio_mayorista === item.lista_precio_mayorista;
       
@@ -38,10 +50,21 @@ export const useCarteleria = () => {
 
   // Filtrar datos procesados
   const filteredData = carteleriaData ? processAuditData(carteleriaData).filter((item) => {
+    // Asegurar que searchTerm sea siempre una cadena
+    const safeSearchTerm = String(searchTerm || "");
+    const searchTermLower = safeSearchTerm.toLowerCase();
+    
     const matchesSearch = 
-      item.carteleria.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.carteleria.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.carteleria.codigo_barras.includes(searchTerm);
+      (item.carteleria.nombre?.toLowerCase() || "").includes(searchTermLower) ||
+      (item.carteleria.codigo?.toLowerCase() || "").includes(searchTermLower) ||
+      (item.carteleria.codigo_barras || "").includes(safeSearchTerm) ||
+      // Incluir búsqueda en campos del pack/display
+      (item.carteleria.nombre_pack?.toLowerCase() || "").includes(searchTermLower) ||
+      (item.carteleria.codigo_pack?.toLowerCase() || "").includes(searchTermLower) ||
+      (item.carteleria.cod_barra_pack || "").includes(safeSearchTerm) ||
+      (item.carteleria.nombre_articulo?.toLowerCase() || "").includes(searchTermLower) ||
+      (item.carteleria.codigo_articulo?.toLowerCase() || "").includes(searchTermLower) ||
+      (item.carteleria.cod_barra_articulo || "").includes(safeSearchTerm);
 
     const matchesTipo = filterTipo === "" || item.carteleria.tipo_carteleria === filterTipo;
 

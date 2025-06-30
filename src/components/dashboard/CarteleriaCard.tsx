@@ -23,7 +23,13 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
   
   const hasDiscrepancia = !precioDetalleCoincide || !precioMayoristaCoincide;
 
-  const formatPrice = (price: number) => {
+  // Determinar si es un pack/display (cuando codigo y nombre son null o vacíos)
+  const isPack = (!carteleria.codigo || carteleria.codigo === "") && 
+                 (!carteleria.nombre || carteleria.nombre === "") && 
+                 carteleria.codigo_pack;
+
+  const formatPrice = (price: number | null) => {
+    if (price === null) return "N/A";
     return new Intl.NumberFormat("es-CL", {
       style: "currency",
       currency: "CLP",
@@ -31,7 +37,8 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
     }).format(price);
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("es-CL", {
       year: "numeric",
       month: "short",
@@ -58,11 +65,28 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
         <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
           <Box flex={1}>
             <Typography variant="h6" component="h3" gutterBottom>
-              {carteleria.nombre}
+              {carteleria.nombre || carteleria.nombre_pack || "Sin nombre"}
             </Typography>
             <Typography variant="body2" color="text.secondary" gutterBottom>
-              Código: {carteleria.codigo} | Código de Barras: {carteleria.codigo_barras}
+              Código: {(carteleria.codigo && carteleria.codigo !== "") ? carteleria.codigo : (carteleria.codigo_pack || "Sin código")} | 
+              Código de Barras: {carteleria.codigo_barras}
             </Typography>
+            {/* Debug info temporal */}
+            <Typography variant="caption" color="error" gutterBottom>
+              Debug: codigo={carteleria.codigo}, nombre={carteleria.nombre}, codigo_pack={carteleria.codigo_pack}, isPack={String(isPack)}
+            </Typography>
+            {/* Mostrar información del pack si existe */}
+            {carteleria.nombre_pack && (
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Pack: {carteleria.nombre_pack} ({carteleria.cantidad_articulo} unidades)
+              </Typography>
+            )}
+            {/* Mostrar información del artículo unitario si existe */}
+            {carteleria.nombre_articulo && (
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Artículo: {carteleria.nombre_articulo} ({carteleria.codigo_articulo})
+              </Typography>
+            )}
           </Box>
           <Box display="flex" gap={1} flexDirection="column" alignItems="flex-end">
             <Chip 
@@ -87,7 +111,7 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
               {!precioDetalleCoincide && (
                 <Typography variant="body2">
                   <WarningIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }} />
-                  Precio detalle: {formatPrice(carteleria.carteleria_precio_detalle)} vs {formatPrice(carteleria.lista_precio_detalle)}
+                  Precio detalle: {formatPrice(isPack ? carteleria.precio_base : carteleria.carteleria_precio_detalle)} vs {formatPrice(isPack ? carteleria.precio_base : carteleria.lista_precio_detalle)}
                   <Chip 
                     label={`Diferencia: ${formatPrice(Math.abs(diferenciaDetalle))}`} 
                     size="small" 
@@ -99,7 +123,7 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
               {!precioMayoristaCoincide && (
                 <Typography variant="body2">
                   <WarningIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: "middle" }} />
-                  Precio mayorista: {formatPrice(carteleria.carteleria_precio_mayorista)} vs {formatPrice(carteleria.lista_precio_mayorista)}
+                  Precio mayorista: {formatPrice(isPack ? carteleria.precio_base : carteleria.carteleria_precio_mayorista)} vs {formatPrice(isPack ? carteleria.precio_base : carteleria.lista_precio_mayorista)}
                   <Chip 
                     label={`Diferencia: ${formatPrice(Math.abs(diferenciaMayorista))}`} 
                     size="small" 
@@ -124,7 +148,7 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
                   Detalle
                 </Typography>
                 <Typography variant="h6" color={precioDetalleCoincide ? "success.main" : "error.main"}>
-                  {formatPrice(carteleria.carteleria_precio_detalle)}
+                  {formatPrice(isPack ? carteleria.precio_base : carteleria.carteleria_precio_detalle)}
                   {precioDetalleCoincide ? (
                     <CheckCircleIcon sx={{ fontSize: 16, ml: 0.5, verticalAlign: "middle" }} />
                   ) : (
@@ -137,7 +161,7 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
                   Mayorista
                 </Typography>
                 <Typography variant="h6" color={precioMayoristaCoincide ? "success.main" : "error.main"}>
-                  {formatPrice(carteleria.carteleria_precio_mayorista)}
+                  {formatPrice(isPack ? carteleria.precio_base : carteleria.carteleria_precio_mayorista)}
                   {precioMayoristaCoincide ? (
                     <CheckCircleIcon sx={{ fontSize: 16, ml: 0.5, verticalAlign: "middle" }} />
                   ) : (
@@ -160,7 +184,7 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
                   Detalle
                 </Typography>
                 <Typography variant="h6">
-                  {formatPrice(carteleria.lista_precio_detalle)}
+                  {formatPrice(isPack ? carteleria.precio_base : carteleria.lista_precio_detalle)}
                 </Typography>
               </Box>
               <Box>
@@ -168,7 +192,7 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
                   Mayorista
                 </Typography>
                 <Typography variant="h6">
-                  {formatPrice(carteleria.lista_precio_mayorista)}
+                  {formatPrice(isPack ? carteleria.precio_base : carteleria.lista_precio_mayorista)}
                 </Typography>
               </Box>
             </Box>
