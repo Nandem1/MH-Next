@@ -71,8 +71,8 @@ export default function NuevoUsuarioModal({
       const axiosError = error as AxiosError<{ message?: string }>;
       const message = axiosError.response?.data?.message || "❌ Error al registrar.";
 
-      if (message.toLowerCase().includes("correo")) setErrorEmail(message);
-      else if (message.toLowerCase().includes("contraseña")) setErrorPassword(message);
+      if (message?.toLowerCase().includes("correo")) setErrorEmail(message);
+      else if (message?.toLowerCase().includes("contraseña")) setErrorPassword(message);
     } finally {
       setLoading(false);
     }

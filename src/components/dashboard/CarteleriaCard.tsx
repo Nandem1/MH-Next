@@ -29,7 +29,13 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
 
   const hasDiscrepancia = !precioDetalleCoincide || !precioMayoristaCoincide;
 
-  const formatPrice = (price: number) => {
+  // Determinar si es un pack/display (cuando codigo y nombre son null o vacíos)
+  const isPack = (!carteleria.codigo || carteleria.codigo === "") && 
+                 (!carteleria.nombre || carteleria.nombre === "") && 
+                 carteleria.codigo_pack;
+
+  const formatPrice = (price: number | null) => {
+    if (price === null) return "N/A";
     return new Intl.NumberFormat("es-CL", {
       style: "currency",
       currency: "CLP",
@@ -37,7 +43,8 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
     }).format(price);
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("es-CL", {
       year: "numeric",
       month: "short",
@@ -82,6 +89,22 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
                 "N/A"}{" "}
               | Código de Barras: {carteleria.codigo_barras}
             </Typography>
+            {/* Debug info temporal */}
+            <Typography variant="caption" color="error" gutterBottom>
+              Debug: codigo={carteleria.codigo}, nombre={carteleria.nombre}, codigo_pack={carteleria.codigo_pack}, isPack={String(isPack)}
+            </Typography>
+            {/* Mostrar información del pack si existe */}
+            {carteleria.nombre_pack && (
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Pack: {carteleria.nombre_pack} ({carteleria.cantidad_articulo} unidades)
+              </Typography>
+            )}
+            {/* Mostrar información del artículo unitario si existe */}
+            {carteleria.nombre_articulo && (
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Artículo: {carteleria.nombre_articulo} ({carteleria.codigo_articulo})
+              </Typography>
+            )}
           </Box>
           <Box
             display="flex"

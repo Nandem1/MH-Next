@@ -58,6 +58,7 @@ export const useCarteleria = () => {
 
   // Filtrar datos procesados
   const filteredData = carteleriaData ? processAuditData(carteleriaData).filter((item) => {
+    
     const matchesSearch = 
       (item.carteleria.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
       (item.carteleria.codigo?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
