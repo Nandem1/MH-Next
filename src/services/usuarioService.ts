@@ -12,10 +12,43 @@ export interface UsuarioFull {
   whatsapp_id: string | null;
 }
 
+export interface Usuario {
+  id: number;
+  nombre: string;
+  whatsapp_id: string;
+  nombre_local: string;
+}
+
+export interface Proveedor {
+  id: number;
+  nombre: string;
+  rut?: string;
+}
+
 // 🚀 Servicio para obtener todos los usuarios combinados
 export const getUsuariosFull = async (): Promise<UsuarioFull[]> => {
   const response = await axios.get<UsuarioFull[]>(`${API_URL}/api-beta/usuarios/full`, {
     withCredentials: true, // 👈 No olvidar para enviar cookie
   });
   return response.data;
+};
+
+export const getUsuarios = async (): Promise<Usuario[]> => {
+  try {
+    const response = await axios.get<Usuario[]>(`${API_URL}/api-beta/usuarios`);
+    return response.data;
+  } catch (error) {
+    console.error("Error obteniendo usuarios:", error);
+    throw new Error("No se pudieron cargar los usuarios");
+  }
+};
+
+export const getProveedores = async (): Promise<Proveedor[]> => {
+  try {
+    const response = await axios.get<Proveedor[]>(`${API_URL}/api-beta/proveedores`);
+    return response.data;
+  } catch (error) {
+    console.error("Error obteniendo proveedores:", error);
+    throw new Error("No se pudieron cargar los proveedores");
+  }
 };

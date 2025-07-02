@@ -10,11 +10,13 @@ interface NotasCreditoQueryResult {
 export const useNotasCredito = (
   page: number,
   limit: number,
-  local?: string
+  local?: string,
+  usuario?: string,
+  proveedor?: string
 ): UseQueryResult<NotasCreditoQueryResult, Error> => {
   return useQuery<NotasCreditoQueryResult, Error>({
-    queryKey: ["notasCredito", page, limit, local ?? ""],
-    queryFn: () => getNotasCredito(page, limit, local),
+    queryKey: ["notasCredito", page, limit, local ?? "", usuario ?? "", proveedor ?? ""],
+    queryFn: () => getNotasCredito(page, limit, local, usuario, proveedor),
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: 1,

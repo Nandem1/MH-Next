@@ -21,11 +21,15 @@ export function FacturaPageContent() {
     null
   );
   const [localActivo, setLocalActivo] = useState<string>("");
+  const [usuarioActivo, setUsuarioActivo] = useState<string>("");
+  const [proveedorActivo, setProveedorActivo] = useState<string>("");
 
   const { data, isLoading, isFetching, error } = useFacturas(
     page,
     limit,
-    localActivo
+    localActivo,
+    usuarioActivo,
+    proveedorActivo
   );
   const facturas = data?.facturas ?? [];
   const totalFacturas = data?.total ?? 0;
@@ -64,9 +68,23 @@ export function FacturaPageContent() {
     setPage(1);
   };
 
+  const handleUsuarioChange = (nuevoUsuario: string) => {
+    setFacturaFiltrada(null);
+    setUsuarioActivo(nuevoUsuario);
+    setPage(1);
+  };
+
+  const handleProveedorChange = (nuevoProveedor: string) => {
+    setFacturaFiltrada(null);
+    setProveedorActivo(nuevoProveedor);
+    setPage(1);
+  };
+
   const handleClearSearch = () => {
     setFacturaFiltrada(null);
     setLocalActivo("");
+    setUsuarioActivo("");
+    setProveedorActivo("");
     setPage(1);
   };
 
@@ -92,7 +110,11 @@ export function FacturaPageContent() {
         onSearch={handleSearch}
         onClear={handleClearSearch}
         onLocalChange={handleLocalChange}
+        onUsuarioChange={handleUsuarioChange}
+        onProveedorChange={handleProveedorChange}
         localActual={localActivo}
+        usuarioActual={usuarioActivo}
+        proveedorActual={proveedorActivo}
       />
 
       {isLoading || isFetching ? (

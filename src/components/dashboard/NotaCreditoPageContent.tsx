@@ -21,11 +21,15 @@ export function NotaCreditoPageContent() {
     null
   );
   const [localActivo, setLocalActivo] = useState<string>("");
+  const [usuarioActivo, setUsuarioActivo] = useState<string>("");
+  const [proveedorActivo, setProveedorActivo] = useState<string>("");
 
   const { data, isLoading, isFetching, error } = useNotasCredito(
     page,
     limit,
-    localActivo
+    localActivo,
+    usuarioActivo,
+    proveedorActivo
   );
   const notasCredito = data?.notasCredito ?? [];
   const totalNotasCredito = data?.total ?? 0;
@@ -64,9 +68,23 @@ export function NotaCreditoPageContent() {
     setPage(1);
   };
 
+  const handleUsuarioChange = (nuevoUsuario: string) => {
+    setNotaCreditoFiltrada(null);
+    setUsuarioActivo(nuevoUsuario);
+    setPage(1);
+  };
+
+  const handleProveedorChange = (nuevoProveedor: string) => {
+    setNotaCreditoFiltrada(null);
+    setProveedorActivo(nuevoProveedor);
+    setPage(1);
+  };
+
   const handleClearSearch = () => {
     setNotaCreditoFiltrada(null);
     setLocalActivo("");
+    setUsuarioActivo("");
+    setProveedorActivo("");
     setPage(1);
   };
 
@@ -92,7 +110,11 @@ export function NotaCreditoPageContent() {
         onSearch={handleSearch}
         onClear={handleClearSearch}
         onLocalChange={handleLocalChange}
+        onUsuarioChange={handleUsuarioChange}
+        onProveedorChange={handleProveedorChange}
         localActual={localActivo}
+        usuarioActual={usuarioActivo}
+        proveedorActual={proveedorActivo}
       />
 
       {isLoading || isFetching ? (

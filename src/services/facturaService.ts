@@ -15,7 +15,9 @@ interface FacturaAPIResponse {
 export const getFacturas = async (
   page: number = 1,
   limit: number = 10,
-  local?: string // ✅ Nuevo parámetro
+  local?: string,
+  usuario?: string,
+  proveedor?: string
 ): Promise<{ facturas: Factura[]; total: number }> => {
   try {
     const localMap: Record<string, number> = {
@@ -30,7 +32,9 @@ export const getFacturas = async (
       params: {
         limit,
         offset: (page - 1) * limit,
-        ...(id_local ? { id_local } : {}), // ✅ solo si aplica
+        ...(id_local ? { id_local } : {}),
+        ...(usuario ? { id_usuario: usuario } : {}),
+        ...(proveedor ? { id_proveedor: proveedor } : {}),
       },
     });
 

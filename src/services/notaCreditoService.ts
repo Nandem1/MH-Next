@@ -14,7 +14,9 @@ interface NotaCreditoAPIResponse {
 export const getNotasCredito = async (
   page: number = 1,
   limit: number = 10,
-  local?: string
+  local?: string,
+  usuario?: string,
+  proveedor?: string
 ): Promise<{ notasCredito: NotaCredito[]; total: number }> => {
   try {
     const localMap: Record<string, number> = {
@@ -30,6 +32,8 @@ export const getNotasCredito = async (
         limit,
         offset: (page - 1) * limit,
         ...(id_local ? { id_local } : {}),
+        ...(usuario ? { id_usuario: usuario } : {}),
+        ...(proveedor ? { id_proveedor: proveedor } : {}),
       },
     });
 
