@@ -10,6 +10,8 @@ export interface Carteleria {
   nombre?: string | null | undefined;
   nombre_producto?: string | null | undefined;
   codigo_producto?: string | null | undefined;
+  producto?: string | null | undefined;
+  descripcion?: string | null | undefined;
 
   // Pack_listados
   codigo_pack?: string | null | undefined;

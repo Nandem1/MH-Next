@@ -9,16 +9,28 @@ import {
   Divider,
   Alert,
   AlertTitle,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogActions,
+  IconButton,
 } from "@mui/material";
 import { CarteleriaAuditResult } from "@/types/carteleria";
 import WarningIcon from "@mui/icons-material/Warning";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import { useState, useRef } from "react";
+import html2canvas from "html2canvas";
+import { CarteleriaPreview } from "./CarteleriaPreview";
 
 interface CarteleriaCardProps {
   item: CarteleriaAuditResult;
 }
 
 export function CarteleriaCard({ item }: CarteleriaCardProps) {
+  const [openPreview, setOpenPreview] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
+
   const {
     carteleria,
     precioDetalleCoincide,
@@ -28,6 +40,31 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
   } = item;
 
   const hasDiscrepancia = !precioDetalleCoincide || !precioMayoristaCoincide;
+
+  const handleOpenPreview = () => {
+    setOpenPreview(true);
+  };
+
+  const handleClosePreview = () => {
+    setOpenPreview(false);
+  };
+
+  const handleDownloadPNG = async () => {
+    if (previewRef.current) {
+      try {
+        const canvas = await html2canvas(previewRef.current, {
+          background: "white",
+        });
+        
+        const link = document.createElement("a");
+        link.download = `carteleria-${carteleria.carteleria_id}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+      } catch (error) {
+        console.error("Error al generar la imagen:", error);
+      }
+    }
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("es-CL", {
@@ -260,16 +297,51 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
 
           <Divider />
 
-          <Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Typography variant="caption" color="text.secondary">
               Última actualización de lista:{" "}
               {carteleria.lista_updated_at
                 ? formatDate(carteleria.lista_updated_at)
                 : "Sin fecha"}
             </Typography>
+            <IconButton
+              size="small"
+              onClick={handleOpenPreview}
+              sx={{
+                color: "text.secondary",
+                padding: "4px",
+                "&:hover": {
+                  backgroundColor: "rgba(0, 0, 0, 0.04)",
+                },
+              }}
+            >
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
           </Box>
         </Box>
       </CardContent>
+
+      {/* Diálogo de previsualización */}
+      <Dialog
+        open={openPreview}
+        onClose={handleClosePreview}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogContent sx={{ p: 0 }}>
+          <Box ref={previewRef}>
+            <CarteleriaPreview item={item} />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDownloadPNG} variant="contained">
+            Descargar PNG
+          </Button>
+          <Button onClick={handleClosePreview}>
+            Cerrar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Card>
   );
 }
