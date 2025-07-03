@@ -9,7 +9,7 @@ export const useCarteleria = () => {
   const [filterDiscrepancia, setFilterDiscrepancia] = useState<string>("");
 
   const {
-    data: carteleriaData,
+    data: carteleriaDataRaw,
     isLoading,
     error,
     refetch,
@@ -19,6 +19,20 @@ export const useCarteleria = () => {
     queryFn: carteleriaService.getAuditoriaCarteleria,
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
+
+  // Deduplicar datos por carteleria_id (solución temporal para el problema del backend)
+  const carteleriaData = carteleriaDataRaw ? (() => {
+    const seen = new Set();
+    return carteleriaDataRaw.filter(item => {
+      if (seen.has(item.carteleria_id)) {
+        return false;
+      }
+      seen.add(item.carteleria_id);
+      return true;
+    });
+  })() : undefined;
+
+
 
   // Función para procesar los datos y calcular discrepancias
   const processAuditData = (data: Carteleria[]): CarteleriaAuditResult[] => {
@@ -57,12 +71,24 @@ export const useCarteleria = () => {
   };
 
   // Filtrar datos procesados
-  const filteredData = carteleriaData ? processAuditData(carteleriaData).filter((item) => {
+  const processedData = carteleriaData ? processAuditData(carteleriaData) : [];
+  
+
+  
+  const filteredData = processedData.filter((item) => {
+    
+    const searchTermLower = searchTerm.toLowerCase();
     
     const matchesSearch = 
-      (item.carteleria.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
-      (item.carteleria.codigo?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
-      item.carteleria.codigo_barras.includes(searchTerm);
+      (item.carteleria.nombre?.toLowerCase().includes(searchTermLower) ?? false) ||
+      (item.carteleria.codigo?.toLowerCase().includes(searchTermLower) ?? false) ||
+      (item.carteleria.codigo_barras?.toString().toLowerCase().includes(searchTermLower) ?? false) ||
+      (item.carteleria.nombre_producto?.toLowerCase().includes(searchTermLower) ?? false) ||
+      (item.carteleria.codigo_producto?.toLowerCase().includes(searchTermLower) ?? false) ||
+      (item.carteleria.nombre_pack?.toLowerCase().includes(searchTermLower) ?? false) ||
+      (item.carteleria.codigo_pack?.toLowerCase().includes(searchTermLower) ?? false) ||
+      (item.carteleria.codigo_articulo?.toLowerCase().includes(searchTermLower) ?? false) ||
+      (item.carteleria.nombre_articulo?.toLowerCase().includes(searchTermLower) ?? false);
 
     const matchesTipo = filterTipo === "" || item.carteleria.tipo_carteleria === filterTipo;
 
@@ -78,7 +104,7 @@ export const useCarteleria = () => {
     })();
 
     return matchesSearch && matchesTipo && matchesDiscrepancia;
-  }) : [];
+  });
 
   // Obtener tipos únicos para el filtro
   const tiposUnicos = carteleriaData 

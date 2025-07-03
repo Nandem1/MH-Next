@@ -7,15 +7,46 @@ import {
   Divider,
   Button,
   CircularProgress,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import { useAuthStatus } from "@/hooks/useAuthStatus";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Footer from "@/components/shared/Footer";
+import { ListaPreciosImporter } from "@/components/configuracion/ListaPreciosImporter";
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`config-tabpanel-${index}`}
+      aria-labelledby={`config-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+    </div>
+  );
+}
 
 export default function ConfiguracionPage() {
   const { isAuthenticated, isLoading, id, usuario_id, rol_id } =
     useAuthStatus();
   const router = useRouter();
+  const [tabValue, setTabValue] = useState(0);
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
 
   if (isLoading) {
     return (
@@ -41,35 +72,52 @@ export default function ConfiguracionPage() {
     <Box sx={{ minHeight: "95vh", display: "flex", flexDirection: "column" }}>
       <Box sx={{ px: { xs: 2, md: 3 }, pt: 10, pb: 4, flexGrow: 1 }}>
         <Typography variant="h4" fontWeight="bold" gutterBottom>
-          Configuración de Usuario
+          Configuración
         </Typography>
 
-        <Typography variant="body1" sx={{ mt: 2 }}>
-          <strong>ID Auth:</strong> {id}
-        </Typography>
-        <Typography variant="body1">
-          <strong>ID Usuario:</strong> {usuario_id ?? "-"}
-        </Typography>
-        <Typography variant="body1" gutterBottom>
-          <strong>Rol:</strong>{" "}
-          {rol_id === 1
-            ? "Administrador"
-            : rol_id === 2
-            ? "Supervisor"
-            : "Empleado"}
-        </Typography>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mt: 3 }}>
+          <Tabs value={tabValue} onChange={handleTabChange}>
+            <Tab label="Información de Usuario" />
+            <Tab label="Importar Lista de Precios" />
+          </Tabs>
+        </Box>
 
-        <Divider sx={{ my: 3 }} />
+        <TabPanel value={tabValue} index={0}>
+          <Typography variant="h6" gutterBottom>
+            Información de Usuario
+          </Typography>
+          
+          <Typography variant="body1" sx={{ mt: 2 }}>
+            <strong>ID Auth:</strong> {id}
+          </Typography>
+          <Typography variant="body1">
+            <strong>ID Usuario:</strong> {usuario_id ?? "-"}
+          </Typography>
+          <Typography variant="body1" gutterBottom>
+            <strong>Rol:</strong>{" "}
+            {rol_id === 1
+              ? "Administrador"
+              : rol_id === 2
+              ? "Supervisor"
+              : "Empleado"}
+          </Typography>
 
-        <Typography variant="h6" gutterBottom>
-          Acciones Disponibles
-        </Typography>
-        <Button variant="outlined" fullWidth sx={{ mb: 2 }} disabled>
-          Cambiar contraseña (próximamente)
-        </Button>
-        <Button variant="outlined" fullWidth disabled>
-          Cambiar local asignado (próximamente)
-        </Button>
+          <Divider sx={{ my: 3 }} />
+
+          <Typography variant="h6" gutterBottom>
+            Acciones Disponibles
+          </Typography>
+          <Button variant="outlined" fullWidth sx={{ mb: 2 }} disabled>
+            Cambiar contraseña (próximamente)
+          </Button>
+          <Button variant="outlined" fullWidth disabled>
+            Cambiar local asignado (próximamente)
+          </Button>
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={1}>
+          <ListaPreciosImporter />
+        </TabPanel>
       </Box>
       <Footer />
     </Box>

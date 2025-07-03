@@ -9,14 +9,18 @@ import {
   AlertTitle,
   Chip,
   Grid,
+  Button,
 } from "@mui/material";
 import { useCarteleria } from "@/hooks/useCarteleria";
 import { CarteleriaSearchBar } from "./CarteleriaSearchBar";
 import { CarteleriaCard } from "./CarteleriaCard";
 import WarningIcon from "@mui/icons-material/Warning";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import SettingsIcon from "@mui/icons-material/Settings";
+import { useRouter } from "next/navigation";
 
 export function CarteleriaPageContent() {
+  const router = useRouter();
   const {
     data,
     isLoading,
@@ -72,30 +76,41 @@ export function CarteleriaPageContent() {
         <Typography variant="h6" gutterBottom>
           Resumen
         </Typography>
-        <Box display="flex" gap={2} flexWrap="wrap">
-          <Chip
-            icon={<CheckCircleIcon />}
-            label={`Total: ${estadisticas.total}`}
-            color="primary"
+        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+          <Box display="flex" gap={2} flexWrap="wrap">
+            <Chip
+              icon={<CheckCircleIcon />}
+              label={`Total: ${estadisticas.total}`}
+              color="primary"
+              variant="outlined"
+            />
+            <Chip
+              icon={<CheckCircleIcon />}
+              label={`Coinciden: ${estadisticas.coinciden}`}
+              color="success"
+              variant="outlined"
+            />
+            <Chip
+              icon={<WarningIcon />}
+              label={`Con Discrepancia: ${estadisticas.conDiscrepancia}`}
+              color="warning"
+              variant="outlined"
+            />
+            <Chip
+              label={`${estadisticas.porcentajeDiscrepancia}% con discrepancia`}
+              color={estadisticas.conDiscrepancia > 0 ? "error" : "success"}
+              variant="filled"
+            />
+          </Box>
+          <Button
+            size="small"
             variant="outlined"
-          />
-          <Chip
-            icon={<CheckCircleIcon />}
-            label={`Coinciden: ${estadisticas.coinciden}`}
-            color="success"
-            variant="outlined"
-          />
-          <Chip
-            icon={<WarningIcon />}
-            label={`Con Discrepancia: ${estadisticas.conDiscrepancia}`}
-            color="warning"
-            variant="outlined"
-          />
-          <Chip
-            label={`${estadisticas.porcentajeDiscrepancia}% con discrepancia`}
-            color={estadisticas.conDiscrepancia > 0 ? "error" : "success"}
-            variant="filled"
-          />
+            startIcon={<SettingsIcon />}
+            onClick={() => router.push("/dashboard/configuracion")}
+            sx={{ minWidth: "auto", px: 2, alignSelf: "flex-start" }}
+          >
+            Importar Listas
+          </Button>
         </Box>
       </Paper>
 
