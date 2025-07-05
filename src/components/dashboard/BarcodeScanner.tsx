@@ -16,6 +16,7 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [quaggaAvailable, setQuaggaAvailable] = useState(true);
   const [isLiveStreamFailed, setIsLiveStreamFailed] = useState(false);
+  const [detectedCode, setDetectedCode] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -148,7 +149,12 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
 
           if (stableCount >= REQUIRED) {
             clearWatchdog(); // Limpiar watchdog al detectar código válido
+            
+            // Detener Quagga y mostrar el código detectado
             Quagga.stop();
+            setDetectedCode(code);
+            
+            // Procesar el código exitosamente
             onSuccess(code);
           } else {
             // Reiniciar watchdog en cada detección válida
@@ -241,6 +247,25 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
       <Alert severity="error" sx={{ mb: 2 }}>
         {error}
       </Alert>
+    );
+  }
+
+  // Si se detectó un código, mostrar confirmación
+  if (detectedCode) {
+    return (
+      <Box sx={{ textAlign: "center" }}>
+        <Alert severity="success" sx={{ mb: 2 }}>
+          <Typography variant="h6" color="success.main">
+            ¡Código detectado!
+          </Typography>
+          <Typography variant="body1" sx={{ mt: 1, fontFamily: "monospace", fontSize: "1.2rem" }}>
+            {detectedCode}
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            El código ha sido agregado al formulario. Puedes cerrar esta ventana.
+          </Typography>
+        </Alert>
+      </Box>
     );
   }
 
