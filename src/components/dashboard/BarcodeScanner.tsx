@@ -15,6 +15,8 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
   const [isClient, setIsClient] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [quaggaAvailable, setQuaggaAvailable] = useState(true);
+  const [lastScannedCode, setLastScannedCode] = useState<string>("");
+  const [scanCount, setScanCount] = useState(0);
 
   useEffect(() => {
     setIsMounted(true);
@@ -53,11 +55,11 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
               },
             },
             locator: {
-              patchSize: "medium",
-              halfSample: true,
+              patchSize: "large", // Cambiar a large para mejor precisión
+              halfSample: false, // Desactivar para mejor calidad
             },
-            numOfWorkers: 2,
-            frequency: 10,
+            numOfWorkers: 1, // Reducir workers para menos procesamiento
+            frequency: 3, // Reducir frecuencia de 10 a 3 para lectura más lenta
             decoder: {
               readers: [
                 "code_128_reader",
@@ -86,11 +88,27 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
 
         Quagga.start();
 
-        Quagga.onDetected((result: { codeResult: { code: string } }) => {
+        Quagga.onDetected((result: { codeResult: { code: string; confidence: number } }) => {
           const code = result.codeResult.code;
-          if (code) {
-            Quagga.stop();
-            onSuccess(code);
+          const confidence = result.codeResult.confidence;
+          
+          // Validar que el código tenga al menos 8 caracteres y confianza alta
+          if (code && code.length >= 8 && confidence > 0.7) {
+            // Verificar si es el mismo código que se leyó antes (evitar duplicados)
+            if (code === lastScannedCode) {
+              setScanCount(prev => prev + 1);
+              
+              // Solo procesar si se leyó el mismo código al menos 2 veces
+              if (scanCount >= 1) {
+                Quagga.stop();
+                onSuccess(code);
+                return;
+              }
+            } else {
+              // Nuevo código detectado, reiniciar contador
+              setLastScannedCode(code);
+              setScanCount(0);
+            }
           }
         });
 
@@ -131,7 +149,7 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
         }
       }
     };
-  }, [isClient, isMounted, onSuccess, onError]);
+  }, [isClient, isMounted, onSuccess, onError, lastScannedCode, scanCount]);
 
   // No renderizar nada hasta que esté montado
   if (!isMounted) {
@@ -196,8 +214,14 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
       />
       
       <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-        Apunta la cámara hacia el código de barras
+        Apunta la cámara hacia el código de barras y manténlo estable
       </Typography>
+      
+      {lastScannedCode && (
+        <Typography variant="body2" color="primary" sx={{ mt: 1 }}>
+          Código detectado: {lastScannedCode} (Confianza: {scanCount + 1}/2)
+        </Typography>
+      )}
     </Box>
   );
 } 
