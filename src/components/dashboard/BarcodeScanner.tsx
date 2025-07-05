@@ -1,23 +1,49 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Box, Typography, Alert, CircularProgress } from "@mui/material";
+import { Box, Typography, Alert, CircularProgress, Button, Stack } from "@mui/material";
 
 interface BarcodeScannerProps {
   onSuccess: (result: string) => void;
   onError: (error: string) => void;
 }
 
+// Tipo para Quagga
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface QuaggaType {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  init: (config: any, callback: (err: Error | null) => void) => void;
+  start: () => void;
+  stop: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onDetected: (callback: (result: any) => void) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onProcessed: (callback: (result: any) => void) => void;
+  offDetected: () => void;
+  offProcessed: () => void;
+  canvas: {
+    dom: {
+      overlay: HTMLCanvasElement;
+    };
+  };
+  ImageDebug: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    drawPath: (line: any, coords: any, ctx: CanvasRenderingContext2D, options: any) => void;
+  };
+}
+
 export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
   const scannerRef = useRef<HTMLDivElement>(null);
+  const quaggaRef = useRef<QuaggaType | null>(null);
+  const startWatchdogRef = useRef<(() => void) | undefined>(undefined);
+
   const [isInitializing, setIsInitializing] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [quaggaAvailable, setQuaggaAvailable] = useState(true);
-  const [isLiveStreamFailed, setIsLiveStreamFailed] = useState(false);
   const [detectedCode, setDetectedCode] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [isLiveStreamFailed, setIsLiveStreamFailed] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -25,124 +51,95 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
   }, []);
 
   useEffect(() => {
-    if (!isClient || !scannerRef.current || !isMounted) return;
+    if (!isClient || !scannerRef.current) return;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let Quagga: any;
     let lastCode: string | null = null;
     let stableCount = 0;
     let watchdogTimer: NodeJS.Timeout | null = null;
-    let restartTimer: NodeJS.Timeout | null = null;
     const THRESHOLD = 0.6;
     const REQUIRED = 3;
-    const WATCHDOG_TIMEOUT = 10000; // 10 segundos
+    const WATCHDOG_TIMEOUT = 10000; // 10s
 
     const startWatchdog = () => {
-      // Limpiar watchdog anterior si existe
-      if (watchdogTimer) {
-        clearTimeout(watchdogTimer);
-      }
-      
-      // Iniciar nuevo watchdog
+      if (watchdogTimer) clearTimeout(watchdogTimer);
       watchdogTimer = setTimeout(() => {
-        console.log("Watchdog: Reiniciando Quagga por timeout");
-        if (Quagga) {
-          try {
-            Quagga.stop();
-            setTimeout(() => {
-              Quagga.start();
-              startWatchdog(); // Reiniciar watchdog después del restart
-            }, 500); // Pequeño delay antes de reiniciar
-          } catch (err) {
-            console.error("Error restarting Quagga:", err);
-          }
+        console.log("Watchdog: reiniciando...");
+        if (quaggaRef.current) {
+          quaggaRef.current.stop();
+          setTimeout(() => {
+            quaggaRef.current?.start();
+            startWatchdog();
+          }, 500);
         }
       }, WATCHDOG_TIMEOUT);
     };
 
+    startWatchdogRef.current = startWatchdog;
+
     const clearWatchdog = () => {
-      if (watchdogTimer) {
-        clearTimeout(watchdogTimer);
-        watchdogTimer = null;
-      }
+      if (watchdogTimer) clearTimeout(watchdogTimer);
     };
 
     const initializeScanner = async () => {
       try {
-        // Verificar que estamos en el navegador
         if (typeof window === 'undefined') {
           throw new Error('Quagga solo funciona en el navegador');
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        Quagga = (await import('quagga')).default;
+        quaggaRef.current = Quagga;
 
-        // Importar Quagga dinámicamente solo en el cliente
-        Quagga = (await import("quagga")).default;
-        
+        // detach previous handlers
+        Quagga.offDetected();
+        Quagga.offProcessed();
+
         setIsInitializing(true);
         setError(null);
 
-        Quagga.init(
-          {
-            inputStream: {
-              name: "Live",
-              type: "LiveStream",
-              target: scannerRef.current,
-              constraints: {
-                width: { min: 640 },
-                height: { min: 480 },
-                facingMode: "environment", // Usar cámara trasera en móviles
-                // Asegurar autofocus activo
-                advanced: {
-                  focusMode: "continuous",
-                  exposureMode: "continuous",
-                  whiteBalanceMode: "continuous",
-                },
-              },
-              area: {    // Región de interés - solo procesa el área central
-                top:    "25%",
-                right:  "5%",
-                left:   "5%",
-                bottom: "25%",
-              },
-            },
-            locator: {
-              patchSize: "small", // Buscar patrones finos
-              halfSample: true, // Acelerar preprocesado
-            },
-            numOfWorkers: 4, // Mantener 4 workers para mejor rendimiento
-            frequency: 3, // Solo 3 intentos por segundo - más tiempo para enfocar
-            decoder: {
-              readers: [
-                "ean_reader",      // EAN-13 (13 dígitos) - formato más común
-                "code_128_reader", // Code 128 (alfanumérico) - formato versátil
-                // Eliminados readers innecesarios: codabar_reader, i2of5_reader, etc.
+        Quagga.init({
+          inputStream: {
+            name: 'Live',
+            type: 'LiveStream',
+            target: scannerRef.current!,
+            constraints: {
+              width: { min: 640 },
+              height: { min: 480 },
+              facingMode: 'environment',
+              advanced: [
+                { focusMode: 'continuous' },
+                { exposureMode: 'continuous' },
+                { whiteBalanceMode: 'continuous' },
               ],
             },
-            locate: true,
+            area: {
+              top: '25%', right: '5%', left: '5%', bottom: '25%'
+            },
           },
-          (err: Error | null) => {
-            setIsInitializing(false);
-            if (err) {
-              console.error("Quagga init error:", err);
-              setIsLiveStreamFailed(true);
-              const errorMessage = "Error al inicializar la cámara. Asegúrate de dar permisos de cámara.";
-              setError(errorMessage);
-              onError(errorMessage);
-            } else {
-              // Iniciar watchdog después de inicialización exitosa
-              startWatchdog();
-            }
+          locator: { patchSize: 'small', halfSample: true },
+          numOfWorkers: 4,
+          frequency: 3,
+          decoder: { readers: ['ean_reader', 'code_128_reader'] },
+          locate: true,
+        }, (err: Error | null) => {
+          setIsInitializing(false);
+          if (err) {
+            console.error('Init error:', err);
+            setError('Error al inicializar la cámara.');
+            onError('Error al inicializar la cámara.');
+            setIsLiveStreamFailed(true);
+          } else {
+            startWatchdog();
           }
-        );
+        });
 
         Quagga.start();
 
-        Quagga.onDetected((result: { codeResult: { code: string; confidence: number } }) => {
-          // Si está pausado, no procesar detecciones
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        Quagga.onDetected((result: any) => {
           if (isPaused) return;
-          
           const { code, confidence } = result.codeResult;
-          
-          // Solo procesar códigos con longitud mínima y confianza alta
           if (!code || code.length < 8 || confidence < THRESHOLD) return;
 
           if (code === lastCode) {
@@ -153,244 +150,111 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
           }
 
           if (stableCount >= REQUIRED) {
-            clearWatchdog(); // Limpiar watchdog al detectar código válido
-            
-            console.log("🎯 Código detectado:", code);
-            
-            // Pausar la detección temporalmente (mantener cámara activa)
+            clearWatchdog();
+            console.log('Detected:', code);
             setIsPaused(true);
             setDetectedCode(code);
-            
-            // Procesar el código exitosamente
             onSuccess(code);
-            
-            // Reanudar la detección después de 2 segundos
-            restartTimer = setTimeout(() => {
-              setDetectedCode(null); // Limpiar el código detectado
-              setIsPaused(false); // Reanudar detección
-              startWatchdog(); // Reiniciar watchdog
-            }, 2000);
           } else {
-            // Reiniciar watchdog en cada detección válida
             startWatchdog();
           }
         });
 
-        Quagga.onProcessed((result: { codeResult?: { code: string }; line?: Array<{ x: number; y: number }> }) => {
-          if (result) {
-            const drawingCanvas = Quagga.canvas.dom.overlay;
-            const drawingCtx = drawingCanvas.getContext("2d");
-            if (result.codeResult && result.codeResult.code && result.line && drawingCtx) {
-              Quagga.ImageDebug.drawPath(result.line, { x: "x", y: "y" }, drawingCtx, {
-                color: "green",
-                lineWidth: 5,
-              });
-            }
-          }
-        });
-
-        // Manejar errores del live stream
-        Quagga.onProcessed((result: { codeResult?: { code: string } }) => {
-          if (result && result.codeResult && result.codeResult.code) {
-            // Si hay detección, el live stream funciona
-            setIsLiveStreamFailed(false);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        Quagga.onProcessed((result: any) => {
+          if (result && result.line) {
+            const canvas = Quagga.canvas.dom.overlay;
+            const ctx = canvas.getContext('2d');
+            Quagga.ImageDebug.drawPath(result.line, { x: 'x', y: 'y' }, ctx, { color: 'green', lineWidth: 3 });
           }
         });
 
       } catch (err) {
-        console.error("Error loading Quagga:", err);
-        setQuaggaAvailable(false);
-        const errorMessage = "Error al cargar el escáner de códigos de barras.";
-        setError(errorMessage);
-        onError(errorMessage);
+        console.error('Load error:', err);
+        setError('Error al cargar el escáner.');
+        onError('Error al cargar el escáner.');
         setIsInitializing(false);
       }
     };
 
-    // Pequeño delay para asegurar que el DOM esté listo
-    const timer = setTimeout(() => {
-      initializeScanner();
-    }, 100);
-
+    const timer = setTimeout(initializeScanner, 100);
     return () => {
       clearTimeout(timer);
-      clearWatchdog(); // Limpiar watchdog al desmontar
-      if (restartTimer) {
-        clearTimeout(restartTimer);
-      }
-      if (Quagga) {
-        try {
-          Quagga.stop();
-        } catch (err) {
-          console.error("Error stopping Quagga:", err);
-        }
+      clearWatchdog();
+      if (quaggaRef.current) {
+        Quagga.offDetected();
+        Quagga.offProcessed();
+        quaggaRef.current.stop();
       }
     };
-  }, [isClient, isMounted, onSuccess, onError, isPaused]);
+  }, [isClient, onSuccess, onError, isPaused]);
 
-  // No renderizar nada hasta que esté montado
-  if (!isMounted) {
-    return null;
-  }
+  // Handler para reintentar escaneo
+  const handleRestart = () => {
+    setDetectedCode(null);
+    setIsPaused(false);
+    quaggaRef.current?.start();
+    startWatchdogRef.current?.();
+  };
 
+  if (!isMounted) return null;
   if (!isClient) {
     return (
-      <Box sx={{ textAlign: "center" }}>
+      <Box textAlign="center">
         <CircularProgress size={40} />
-        <Typography variant="body2" sx={{ mt: 1 }}>
-          Cargando escáner...
-        </Typography>
-      </Box>
-    );
-  }
-
-  if (error && !quaggaAvailable) {
-    return (
-      <Box sx={{ textAlign: "center" }}>
-        <Alert severity="warning" sx={{ mb: 2 }}>
-          <Typography variant="body2">
-            El escáner de códigos de barras no está disponible en este navegador.
-          </Typography>
-        </Alert>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-          Por favor, ingresa el código de barras manualmente.
-        </Typography>
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert severity="error" sx={{ mb: 2 }}>
-        {error}
-      </Alert>
-    );
-  }
-
-  // Si se detectó un código, mostrar confirmación
-  if (detectedCode) {
-    return (
-      <Box sx={{ textAlign: "center" }}>
-        <Alert severity="success" sx={{ mb: 2 }}>
-          <Typography variant="h6" color="success.main">
-            ¡Código detectado!
-          </Typography>
-          <Typography variant="body1" sx={{ mt: 1, fontFamily: "monospace", fontSize: "1.2rem" }}>
-            {detectedCode}
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            El código ha sido agregado al formulario. Puedes cerrar esta ventana.
-          </Typography>
-        </Alert>
+        <Typography variant="body2" mt={1}>Cargando escáner...</Typography>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ textAlign: "center" }}>
-      {isInitializing && (
-        <Box sx={{ mb: 2 }}>
-          <CircularProgress size={40} />
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            Inicializando cámara...
-          </Typography>
-        </Box>
-      )}
-      
+    <Box sx={{ position: 'relative', width: '100%', height: 300 }}>
+      <Box ref={scannerRef} sx={{ width: '100%', height: '100%' }} />
+
+      {/* Guía visual */}
       <Box
         sx={{
-          width: "100%",
-          height: "300px",
-          border: "2px solid #ccc",
-          borderRadius: 1,
-          overflow: "hidden",
-          position: "relative",
+          position: 'absolute', top: '25%', left: '25%', width: '50%', height: '50%',
+          border: '2px dashed #0f0', pointerEvents: 'none', zIndex: 10
         }}
-      >
-        {/* Contenedor de la cámara */}
-        <Box
-          ref={scannerRef}
-          sx={{
-            width: "100%",
-            height: "100%",
-            position: "relative",
-          }}
-        />
-        
-        {/* Rectángulo de guía centrado */}
+      />
+
+      {/* Mensaje de detección */}
+      {detectedCode && (
         <Box
           sx={{
-            position: "absolute",
-            top: "25%",
-            left: "25%",
-            width: "50%",
-            height: "50%",
-            border: "3px solid #00ff00",
-            borderRadius: 1,
-            boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.3)",
-            pointerEvents: "none",
-            zIndex: 10,
+            position: 'absolute', inset: 0, bgcolor: 'rgba(0,0,0,0.6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20
           }}
         >
-          {/* Esquinas del rectángulo */}
-          <Box
-            sx={{
-              position: "absolute",
-              top: "-3px",
-              left: "-3px",
-              width: "20px",
-              height: "20px",
-              borderTop: "3px solid #00ff00",
-              borderLeft: "3px solid #00ff00",
-            }}
-          />
-          <Box
-            sx={{
-              position: "absolute",
-              top: "-3px",
-              right: "-3px",
-              width: "20px",
-              height: "20px",
-              borderTop: "3px solid #00ff00",
-              borderRight: "3px solid #00ff00",
-            }}
-          />
-          <Box
-            sx={{
-              position: "absolute",
-              bottom: "-3px",
-              left: "-3px",
-              width: "20px",
-              height: "20px",
-              borderBottom: "3px solid #00ff00",
-              borderLeft: "3px solid #00ff00",
-            }}
-          />
-          <Box
-            sx={{
-              position: "absolute",
-              bottom: "-3px",
-              right: "-3px",
-              width: "20px",
-              height: "20px",
-              borderBottom: "3px solid #00ff00",
-              borderRight: "3px solid #00ff00",
-            }}
-          />
+          <Stack spacing={2} alignItems="center">
+            <Alert severity="success">Código detectado: {detectedCode}</Alert>
+            <Button variant="contained" onClick={handleRestart}>Escanear de nuevo</Button>
+          </Stack>
         </Box>
-      </Box>
-      
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-        Coloca el código de barras dentro del rectángulo verde
-      </Typography>
-      
-      {isLiveStreamFailed && (
+      )}
+
+      {isInitializing && (
+        <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}>
+          <CircularProgress size={40} />
+        </Box>
+      )}
+
+      {error && (
+        <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>
+      )}
+
+      {isLiveStreamFailed && !error && (
         <Alert severity="info" sx={{ mt: 2 }}>
-          <Typography variant="body2">
-            Modo de compatibilidad activado. El escáner puede ser más lento.
-          </Typography>
+          Modo compatibilidad activado. Puede ser más lento.
         </Alert>
+      )}
+
+      {!detectedCode && !isInitializing && (
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+          Coloca el código dentro del recuadro verde
+        </Typography>
       )}
     </Box>
   );
-} 
+}
