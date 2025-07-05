@@ -35,35 +35,48 @@ export const useCarteleria = () => {
   // Función para procesar los datos y calcular discrepancias
   const processAuditData = (data: Carteleria[]): CarteleriaAuditResult[] => {
     return data.map((item) => {
-      // Casos especiales donde los precios se consideran iguales
-      const isPalletUnico = item.tipo_carteleria === "PALLET UNICO";
-      const isUnico = item.tipo_carteleria === "UNICO";
+      // Obtener precios de lista con manejo de null y convertir a números
+      const listaPrecioDetalle = Number(item.lista_precio_detalle ?? 0);
+      const listaPrecioMayorista = Number(item.lista_precio_mayorista ?? 0);
+      const carteleriaPrecioDetalle = Number(item.carteleria_precio_detalle ?? 0);
+      let carteleriaPrecioMayorista = Number(item.carteleria_precio_mayorista ?? 0);
       
-      // Si es PALLET UNICO o UNICO, los precios se consideran iguales
-      if (isPalletUnico || isUnico) {
-        return {
-          carteleria: item,
-          precioDetalleCoincide: true,
-          precioMayoristaCoincide: true,
-          diferenciaDetalle: 0,
-          diferenciaMayorista: 0,
-        };
+      // Para UNICO y PALLET UNICO, el mayorista debe ser igual al detalle
+      if (item.tipo_carteleria === "UNICO" || item.tipo_carteleria === "PALLET UNICO") {
+        carteleriaPrecioMayorista = carteleriaPrecioDetalle;
       }
       
-      // Obtener precios de lista con manejo de null
-      const listaPrecioDetalle = item.lista_precio_detalle ?? 0;
-      const listaPrecioMayorista = item.lista_precio_mayorista ?? 0;
+      // Debug: Log para ver qué está pasando
+      if (item.tipo_carteleria === "UNICO" || item.tipo_carteleria === "PALLET UNICO") {
+        console.log("Debug UNICO/PALLET:", {
+          tipo: item.tipo_carteleria,
+          carteleria_detalle: carteleriaPrecioDetalle,
+          lista_detalle: listaPrecioDetalle,
+          carteleria_mayorista_original: Number(item.carteleria_precio_mayorista ?? 0),
+          carteleria_mayorista_ajustado: carteleriaPrecioMayorista,
+          lista_mayorista: listaPrecioMayorista,
+          detalle_igual: carteleriaPrecioDetalle === listaPrecioDetalle,
+          mayorista_igual: carteleriaPrecioMayorista === listaPrecioMayorista
+        });
+      }
       
-      // Si no hay precio configurado en la lista (0), se considera correcto
-      const precioDetalleCoincide = listaPrecioDetalle === 0 || item.carteleria_precio_detalle === listaPrecioDetalle;
-      const precioMayoristaCoincide = listaPrecioMayorista === 0 || item.carteleria_precio_mayorista === listaPrecioMayorista;
+      // Calcular discrepancias - si no hay precio en lista (0), no es discrepancia
+      const precioDetalleCoincide = 
+        listaPrecioDetalle === 0 || // Si no hay precio en lista, no es discrepancia
+        (carteleriaPrecioDetalle === 0 && listaPrecioDetalle === 0) || // Ambos 0 = coincidencia
+        carteleriaPrecioDetalle === listaPrecioDetalle; // Mismo precio = coincidencia
+      
+      const precioMayoristaCoincide = 
+        listaPrecioMayorista === 0 || // Si no hay precio en lista, no es discrepancia
+        (carteleriaPrecioMayorista === 0 && listaPrecioMayorista === 0) || // Ambos 0 = coincidencia
+        carteleriaPrecioMayorista === listaPrecioMayorista; // Mismo precio = coincidencia
       
       return {
         carteleria: item,
         precioDetalleCoincide,
         precioMayoristaCoincide,
-        diferenciaDetalle: item.carteleria_precio_detalle - listaPrecioDetalle,
-        diferenciaMayorista: item.carteleria_precio_mayorista - listaPrecioMayorista,
+        diferenciaDetalle: carteleriaPrecioDetalle - listaPrecioDetalle,
+        diferenciaMayorista: carteleriaPrecioMayorista - listaPrecioMayorista,
       };
     });
   };
