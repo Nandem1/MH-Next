@@ -35,23 +35,40 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
         setIsInitializing(true);
         setError(null);
 
+        // Configuración de Quagga2
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const constraints: any = {
+          width: { min: 1920 },
+          height: { min: 1080 },
+          facingMode: "environment",
+          advanced: [
+            {
+              focusMode: "continuous",
+              exposureMode: "continuous",
+              whiteBalanceMode: "continuous",
+            }
+          ],
+        };
+
         await Quagga.init({
           inputStream: {
             name: "Live",
             type: "LiveStream",
             target: scannerRef.current!,
-            constraints: {
-              width: { min: 1280 },
-              height: { min: 720 },
-              facingMode: "environment", // Usar cámara trasera en móviles
+            constraints,
+            area: {
+              top: "25%", 
+              right: "25%", 
+              left: "25%", 
+              bottom: "25%"
             },
           },
           locator: {
             patchSize: "small",
-            halfSample: false, // Mantener resolución completa
+            halfSample: false,
           },
-          numOfWorkers: 4, // Mantener 4 workers para mejor rendimiento
-          frequency: 3, // Reducir a 6 para mejor precisión sin ser muy lento
+          numOfWorkers: 4,
+          frequency: 3,
           decoder: {
             readers: [
               "code_128_reader",
