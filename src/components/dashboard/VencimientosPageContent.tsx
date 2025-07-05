@@ -23,24 +23,35 @@ import AddIcon from "@mui/icons-material/Add";
 import { useVencimientosForm } from "@/hooks/useVencimientosForm";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { VencimientoFormData } from "@/types/vencimientos";
+import { useProducto } from "@/hooks/useProducto";
+import { ProductoInfo } from "./ProductoInfo";
 
 export function VencimientosPageContent() {
   const [openScanner, setOpenScanner] = useState(false);
   const {
     formData,
+    setFormData,
     handleInputChange,
     handleSubmit,
     isLoading,
     error,
     success,
     resetForm,
-    setFormData,
   } = useVencimientosForm();
+
+  const {
+    producto,
+    isLoading: isLoadingProducto,
+    error: errorProducto,
+    setCodigoBarras,
+    limpiarProducto,
+  } = useProducto();
 
   // Monitorear cambios en el código de barras
   useEffect(() => {
-    console.log("📝 formData.codigo_barras actualizado:", formData.codigo_barras);
-  }, [formData.codigo_barras]);
+    // Sincronizar con la búsqueda de productos
+    setCodigoBarras(formData.codigo_barras);
+  }, [formData.codigo_barras, setCodigoBarras]);
 
   const handleScanSuccess = (result: string) => {
     // Actualizar directamente el estado del formulario
@@ -57,6 +68,11 @@ export function VencimientosPageContent() {
     setOpenScanner(false);
   };
 
+  const handleLimpiar = () => {
+    resetForm();
+    limpiarProducto();
+  };
+
   return (
     <Box>
       {/* Título */}
@@ -67,6 +83,15 @@ export function VencimientosPageContent() {
         <Typography variant="body1" color="text.secondary" gutterBottom>
           Captura fechas de vencimiento para productos usando códigos de barras
         </Typography>
+      </Box>
+
+      {/* Información del Producto - Mobile: arriba */}
+      <Box sx={{ display: { xs: 'block', md: 'none' }, mb: 3 }}>
+        <ProductoInfo 
+          producto={producto}
+          isLoading={isLoadingProducto}
+          error={errorProducto}
+        />
       </Box>
 
       {/* Alertas */}
@@ -181,7 +206,7 @@ export function VencimientosPageContent() {
                 
                 <Button
                   variant="outlined"
-                  onClick={resetForm}
+                  onClick={handleLimpiar}
                   disabled={isLoading}
                 >
                   Limpiar
@@ -192,8 +217,17 @@ export function VencimientosPageContent() {
         </form>
       </Paper>
 
+      {/* Información del Producto - Desktop: después del formulario, Mobile: antes */}
+      <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+        <ProductoInfo 
+          producto={producto}
+          isLoading={isLoadingProducto}
+          error={errorProducto}
+        />
+      </Box>
+
       {/* Información */}
-      <Paper elevation={1} sx={{ p: 2 }}>
+      <Paper elevation={1} sx={{ p: 2, mt: 3 }}>
         <Typography variant="h6" gutterBottom>
           Información
         </Typography>
