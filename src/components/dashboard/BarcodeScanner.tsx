@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Box, Typography, Alert, CircularProgress, Button, Stack } from "@mui/material";
+import { Box, Typography, Alert, CircularProgress } from "@mui/material";
 import Quagga from "@ericblade/quagga2";
 
 interface BarcodeScannerProps {
@@ -15,8 +15,7 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
   const [error, setError] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [detectedCode, setDetectedCode] = useState<string | null>(null);
-  const [isPaused, setIsPaused] = useState(false);
+  const [quaggaAvailable, setQuaggaAvailable] = useState(true);
 
   useEffect(() => {
     setIsMounted(true);
@@ -24,32 +23,11 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
   }, []);
 
   useEffect(() => {
-    if (!isClient || !scannerRef.current) return;
-
-    let lastCode: string | null = null;
-    let stableCount = 0;
-    let watchdogTimer: NodeJS.Timeout | null = null;
-    const REQUIRED = 3;
-    const WATCHDOG_TIMEOUT = 10000; // 10s
-
-    const startWatchdog = () => {
-      if (watchdogTimer) clearTimeout(watchdogTimer);
-      watchdogTimer = setTimeout(() => {
-        console.log("Watchdog: reiniciando...");
-        Quagga.stop();
-        setTimeout(() => {
-          Quagga.start();
-          startWatchdog();
-        }, 500);
-      }, WATCHDOG_TIMEOUT);
-    };
-
-    const clearWatchdog = () => {
-      if (watchdogTimer) clearTimeout(watchdogTimer);
-    };
+    if (!isClient || !scannerRef.current || !isMounted) return;
 
     const initializeScanner = async () => {
       try {
+        // Verificar que estamos en el navegador
         if (typeof window === 'undefined') {
           throw new Error('Quagga solo funciona en el navegador');
         }
@@ -57,157 +35,149 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
         setIsInitializing(true);
         setError(null);
 
-        // Configuración de Quagga2
         await Quagga.init({
           inputStream: {
-            name: 'Live',
-            type: 'LiveStream',
+            name: "Live",
+            type: "LiveStream",
             target: scannerRef.current!,
             constraints: {
-              width: { min: 640 },
-              height: { min: 480 },
-              facingMode: 'environment',
-            },
-            area: {
-              top: '25%', 
-              right: '5%', 
-              left: '5%', 
-              bottom: '25%'
+              width: { min: 1280 },
+              height: { min: 720 },
+              facingMode: "environment", // Usar cámara trasera en móviles
             },
           },
-          locator: { 
-            patchSize: 'small', 
-            halfSample: true 
+          locator: {
+            patchSize: "small",
+            halfSample: false, // Mantener resolución completa
           },
-          numOfWorkers: 4,
-          frequency: 3,
-          decoder: { 
-            readers: ['ean_reader', 'code_128_reader'] 
+          numOfWorkers: 4, // Mantener 4 workers para mejor rendimiento
+          frequency: 3, // Reducir a 6 para mejor precisión sin ser muy lento
+          decoder: {
+            readers: [
+              "code_128_reader",
+              "ean_reader",
+            ],
           },
           locate: true,
         });
 
         setIsInitializing(false);
-        startWatchdog();
 
-        // Evento de detección
+        await Quagga.start();
+
         Quagga.onDetected((result) => {
-          if (isPaused) return;
+          const code = result.codeResult.code;
           
-          const { code } = result.codeResult;
-          if (!code || code.length < 8) return;
-
-          if (code === lastCode) {
-            stableCount++;
-          } else {
-            lastCode = code;
-            stableCount = 1;
-          }
-
-          if (stableCount >= REQUIRED) {
-            clearWatchdog();
-            console.log('Detected:', code);
-            setIsPaused(true);
-            setDetectedCode(code);
+          // Validación simple pero efectiva
+          if (code && code.length >= 8) {
+            Quagga.stop();
             onSuccess(code);
-          } else {
-            startWatchdog();
           }
         });
 
-        // Evento de procesamiento para dibujar líneas
         Quagga.onProcessed((result) => {
           if (result && result.line) {
-            const canvas = Quagga.canvas.dom.overlay;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              Quagga.ImageDebug.drawPath(result.line, { x: 'x', y: 'y' }, ctx, { 
-                color: 'green', 
-                lineWidth: 3 
+            const drawingCanvas = Quagga.canvas.dom.overlay;
+            const drawingCtx = drawingCanvas.getContext("2d");
+            if (drawingCtx) {
+              Quagga.ImageDebug.drawPath(result.line, { x: "x", y: "y" }, drawingCtx, {
+                color: "green",
+                lineWidth: 5,
               });
             }
           }
         });
 
-        // Iniciar el escáner
-        await Quagga.start();
-
       } catch (err) {
-        console.error('Load error:', err);
-        setError('Error al cargar el escáner.');
-        onError('Error al cargar el escáner.');
+        console.error("Error loading Quagga:", err);
+        setQuaggaAvailable(false);
+        const errorMessage = "Error al cargar el escáner de códigos de barras.";
+        setError(errorMessage);
+        onError(errorMessage);
         setIsInitializing(false);
       }
     };
 
-    const timer = setTimeout(initializeScanner, 100);
-    
+    // Pequeño delay para asegurar que el DOM esté listo
+    const timer = setTimeout(() => {
+      initializeScanner();
+    }, 100);
+
     return () => {
       clearTimeout(timer);
-      clearWatchdog();
-      Quagga.stop();
+      try {
+        Quagga.stop();
+      } catch (err) {
+        console.error("Error stopping Quagga:", err);
+      }
     };
-  }, [isClient, onSuccess, onError, isPaused]);
+  }, [isClient, isMounted, onSuccess, onError]);
 
-  // Handler para reintentar escaneo
-  const handleRestart = () => {
-    setDetectedCode(null);
-    setIsPaused(false);
-    Quagga.start();
-  };
+  // No renderizar nada hasta que esté montado
+  if (!isMounted) {
+    return null;
+  }
 
-  if (!isMounted) return null;
   if (!isClient) {
     return (
-      <Box textAlign="center">
+      <Box sx={{ textAlign: "center" }}>
         <CircularProgress size={40} />
-        <Typography variant="body2" mt={1}>Cargando escáner...</Typography>
+        <Typography variant="body2" sx={{ mt: 1 }}>
+          Cargando escáner...
+        </Typography>
       </Box>
     );
   }
 
-  return (
-    <Box sx={{ position: 'relative', width: '100%', height: 300 }}>
-      <Box ref={scannerRef} sx={{ width: '100%', height: '100%' }} />
+  if (error && !quaggaAvailable) {
+    return (
+      <Box sx={{ textAlign: "center" }}>
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          <Typography variant="body2">
+            El escáner de códigos de barras no está disponible en este navegador.
+          </Typography>
+        </Alert>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+          Por favor, ingresa el código de barras manualmente.
+        </Typography>
+      </Box>
+    );
+  }
 
-      {/* Guía visual */}
+  if (error) {
+    return (
+      <Alert severity="error" sx={{ mb: 2 }}>
+        {error}
+      </Alert>
+    );
+  }
+
+  return (
+    <Box sx={{ textAlign: "center" }}>
+      {isInitializing && (
+        <Box sx={{ mb: 2 }}>
+          <CircularProgress size={40} />
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            Inicializando cámara...
+          </Typography>
+        </Box>
+      )}
+      
       <Box
+        ref={scannerRef}
         sx={{
-          position: 'absolute', top: '25%', left: '25%', width: '50%', height: '50%',
-          border: '2px dashed #0f0', pointerEvents: 'none', zIndex: 10
+          width: "100%",
+          height: "300px",
+          border: "2px solid #ccc",
+          borderRadius: 1,
+          overflow: "hidden",
+          position: "relative",
         }}
       />
-
-      {/* Mensaje de detección */}
-      {detectedCode && (
-        <Box
-          sx={{
-            position: 'absolute', inset: 0, bgcolor: 'rgba(0,0,0,0.6)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20
-          }}
-        >
-          <Stack spacing={2} alignItems="center">
-            <Alert severity="success">Código detectado: {detectedCode}</Alert>
-            <Button variant="contained" onClick={handleRestart}>Escanear de nuevo</Button>
-          </Stack>
-        </Box>
-      )}
-
-      {isInitializing && (
-        <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}>
-          <CircularProgress size={40} />
-        </Box>
-      )}
-
-      {error && (
-        <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>
-      )}
-
-      {!detectedCode && !isInitializing && (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-          Coloca el código dentro del recuadro verde
-        </Typography>
-      )}
+      
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+        Apunta la cámara hacia el código de barras
+      </Typography>
     </Box>
   );
 }
