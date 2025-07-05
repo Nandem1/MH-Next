@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Box, Typography, Alert, CircularProgress } from "@mui/material";
-import Quagga from "quagga";
 
 interface BarcodeScannerProps {
   onSuccess: (result: string) => void;
@@ -13,83 +12,157 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
   const scannerRef = useRef<HTMLDivElement>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [quaggaAvailable, setQuaggaAvailable] = useState(true);
 
   useEffect(() => {
-    if (!scannerRef.current) return;
+    setIsMounted(true);
+    setIsClient(true);
+  }, []);
 
-    setIsInitializing(true);
-    setError(null);
+  useEffect(() => {
+    if (!isClient || !scannerRef.current || !isMounted) return;
 
-    Quagga.init(
-      {
-        inputStream: {
-          name: "Live",
-          type: "LiveStream",
-          target: scannerRef.current,
-          constraints: {
-            width: { min: 640 },
-            height: { min: 480 },
-            facingMode: "environment", // Usar cámara trasera en móviles
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let Quagga: any;
+
+    const initializeScanner = async () => {
+      try {
+        // Verificar que estamos en el navegador
+        if (typeof window === 'undefined') {
+          throw new Error('Quagga solo funciona en el navegador');
+        }
+
+        // Importar Quagga dinámicamente solo en el cliente
+        Quagga = (await import("quagga")).default;
+        
+        setIsInitializing(true);
+        setError(null);
+
+        Quagga.init(
+          {
+            inputStream: {
+              name: "Live",
+              type: "LiveStream",
+              target: scannerRef.current,
+              constraints: {
+                width: { min: 640 },
+                height: { min: 480 },
+                facingMode: "environment", // Usar cámara trasera en móviles
+              },
+            },
+            locator: {
+              patchSize: "medium",
+              halfSample: true,
+            },
+            numOfWorkers: 2,
+            frequency: 10,
+            decoder: {
+              readers: [
+                "code_128_reader",
+                "ean_reader",
+                "ean_8_reader",
+                "code_39_reader",
+                "code_39_vin_reader",
+                "codabar_reader",
+                "upc_reader",
+                "upc_e_reader",
+                "i2of5_reader",
+              ],
+            },
+            locate: true,
           },
-        },
-        locator: {
-          patchSize: "medium",
-          halfSample: true,
-        },
-        numOfWorkers: 2,
-        frequency: 10,
-        decoder: {
-          readers: [
-            "code_128_reader",
-            "ean_reader",
-            "ean_8_reader",
-            "code_39_reader",
-            "code_39_vin_reader",
-            "codabar_reader",
-            "upc_reader",
-            "upc_e_reader",
-            "i2of5_reader",
-          ],
-        },
-        locate: true,
-      },
-      (err) => {
+          (err: Error | null) => {
+            setIsInitializing(false);
+            if (err) {
+              console.error("Quagga init error:", err);
+              const errorMessage = "Error al inicializar la cámara. Asegúrate de dar permisos de cámara.";
+              setError(errorMessage);
+              onError(errorMessage);
+            }
+          }
+        );
+
+        Quagga.start();
+
+        Quagga.onDetected((result: { codeResult: { code: string } }) => {
+          const code = result.codeResult.code;
+          if (code) {
+            Quagga.stop();
+            onSuccess(code);
+          }
+        });
+
+        Quagga.onProcessed((result: { codeResult?: { code: string }; line?: Array<{ x: number; y: number }> }) => {
+          if (result) {
+            const drawingCanvas = Quagga.canvas.dom.overlay;
+            const drawingCtx = drawingCanvas.getContext("2d");
+            if (result.codeResult && result.codeResult.code && result.line && drawingCtx) {
+              Quagga.ImageDebug.drawPath(result.line, { x: "x", y: "y" }, drawingCtx, {
+                color: "green",
+                lineWidth: 5,
+              });
+            }
+          }
+        });
+      } catch (err) {
+        console.error("Error loading Quagga:", err);
+        setQuaggaAvailable(false);
+        const errorMessage = "Error al cargar el escáner de códigos de barras.";
+        setError(errorMessage);
+        onError(errorMessage);
         setIsInitializing(false);
-        if (err) {
-          const errorMessage = "Error al inicializar la cámara. Asegúrate de dar permisos de cámara.";
-          setError(errorMessage);
-          onError(errorMessage);
-        }
       }
-    );
+    };
 
-    Quagga.start();
-
-    Quagga.onDetected((result) => {
-      const code = result.codeResult.code;
-      if (code) {
-        Quagga.stop();
-        onSuccess(code);
-      }
-    });
-
-    Quagga.onProcessed((result) => {
-      if (result) {
-        const drawingCanvas = Quagga.canvas.dom.overlay;
-        const drawingCtx = drawingCanvas.getContext("2d");
-        if (result.codeResult && result.codeResult.code && result.line && drawingCtx) {
-          Quagga.ImageDebug.drawPath(result.line, { x: "x", y: "y" }, drawingCtx, {
-            color: "green",
-            lineWidth: 5,
-          });
-        }
-      }
-    });
+    // Pequeño delay para asegurar que el DOM esté listo
+    const timer = setTimeout(() => {
+      initializeScanner();
+    }, 100);
 
     return () => {
-      Quagga.stop();
+      clearTimeout(timer);
+      if (Quagga) {
+        try {
+          Quagga.stop();
+        } catch (err) {
+          console.error("Error stopping Quagga:", err);
+        }
+      }
     };
-  }, [onSuccess, onError]);
+  }, [isClient, isMounted, onSuccess, onError]);
+
+  // No renderizar nada hasta que esté montado
+  if (!isMounted) {
+    return null;
+  }
+
+  if (!isClient) {
+    return (
+      <Box sx={{ textAlign: "center" }}>
+        <CircularProgress size={40} />
+        <Typography variant="body2" sx={{ mt: 1 }}>
+          Cargando escáner...
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (error && !quaggaAvailable) {
+    return (
+      <Box sx={{ textAlign: "center" }}>
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          <Typography variant="body2">
+            El escáner de códigos de barras no está disponible en este navegador.
+          </Typography>
+        </Alert>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+          Por favor, ingresa el código de barras manualmente.
+        </Typography>
+      </Box>
+    );
+  }
 
   if (error) {
     return (
