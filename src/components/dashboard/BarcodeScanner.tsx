@@ -31,6 +31,7 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
     let lastCode: string | null = null;
     let stableCount = 0;
     let watchdogTimer: NodeJS.Timeout | null = null;
+    let restartTimer: NodeJS.Timeout | null = null;
     const THRESHOLD = 0.6;
     const REQUIRED = 3;
     const WATCHDOG_TIMEOUT = 10000; // 10 segundos
@@ -152,12 +153,21 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
             
             console.log("🎯 Código detectado:", code);
             
-            // Detener Quagga y mostrar el código detectado
+            // Detener Quagga temporalmente y mostrar el código detectado
             Quagga.stop();
             setDetectedCode(code);
             
             // Procesar el código exitosamente
             onSuccess(code);
+            
+            // Reiniciar el escáner después de 2 segundos para permitir más escaneos
+            restartTimer = setTimeout(() => {
+              setDetectedCode(null); // Limpiar el código detectado
+              if (scannerRef.current) {
+                Quagga.start();
+                startWatchdog(); // Reiniciar watchdog
+              }
+            }, 2000);
           } else {
             // Reiniciar watchdog en cada detección válida
             startWatchdog();
@@ -203,6 +213,9 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
     return () => {
       clearTimeout(timer);
       clearWatchdog(); // Limpiar watchdog al desmontar
+      if (restartTimer) {
+        clearTimeout(restartTimer);
+      }
       if (Quagga) {
         try {
           Quagga.stop();
