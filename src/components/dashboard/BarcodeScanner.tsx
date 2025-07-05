@@ -193,7 +193,22 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
           overflow: "hidden",
           position: "relative",
         }}
-      />
+      >
+        {/* Rectángulo de guía que coincide con el área de lectura de Quagga */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: "25%",
+            left: "25%",
+            width: "50%",
+            height: "50%",
+            border: "2px solid #00ff00",
+            borderRadius: 1,
+            pointerEvents: "none",
+            zIndex: 10,
+          }}
+        />
+      </Box>
       
       <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
         Apunta la cámara hacia el código de barras
