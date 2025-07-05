@@ -70,20 +70,11 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
           
           // Validación simple pero efectiva
           if (code && code.length >= 8) {
-            // Filtrar el "0" al inicio que es un problema común
-            let cleanCode = code;
+            // Si empieza con "0", quitarlo
+            const cleanCode = code.startsWith('0') ? code.substring(1) : code;
             
-            // Si empieza con "0" y tiene más de 8 dígitos, remover el primer "0"
-            if (code.startsWith('0') && code.length > 8) {
-              cleanCode = code.substring(1);
-              console.log('Código original:', code, 'Código limpio:', cleanCode);
-            }
-            
-            // Validación adicional: asegurar que el código limpio tenga al menos 8 caracteres
-            if (cleanCode.length >= 8) {
-              Quagga.stop();
-              onSuccess(cleanCode);
-            }
+            Quagga.stop();
+            onSuccess(cleanCode);
           }
         });
 
