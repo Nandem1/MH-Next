@@ -77,6 +77,7 @@ export const useVencimientosForm = () => {
 
   return {
     formData,
+    setFormData,
     handleInputChange,
     handleSubmit,
     isLoading,

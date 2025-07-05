@@ -22,6 +22,7 @@ import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
 import AddIcon from "@mui/icons-material/Add";
 import { useVencimientosForm } from "@/hooks/useVencimientosForm";
 import { BarcodeScanner } from "./BarcodeScanner";
+import { VencimientoFormData } from "@/types/vencimientos";
 
 export function VencimientosPageContent() {
   const [openScanner, setOpenScanner] = useState(false);
@@ -33,6 +34,7 @@ export function VencimientosPageContent() {
     error,
     success,
     resetForm,
+    setFormData,
   } = useVencimientosForm();
 
   // Monitorear cambios en el código de barras
@@ -41,17 +43,12 @@ export function VencimientosPageContent() {
   }, [formData.codigo_barras]);
 
   const handleScanSuccess = (result: string) => {
-    console.log("🔍 Código escaneado:", result);
+    // Actualizar directamente el estado del formulario
+    setFormData((prev: VencimientoFormData) => ({
+      ...prev,
+      codigo_barras: result
+    }));
     
-    // Create a proper event-like object for the form handler
-    const event = {
-      target: {
-        name: "codigo_barras",
-        value: result
-      }
-    } as React.ChangeEvent<HTMLInputElement>;
-    
-    handleInputChange(event);
     setOpenScanner(false);
   };
 
