@@ -17,6 +17,7 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
   const [quaggaAvailable, setQuaggaAvailable] = useState(true);
   const [isLiveStreamFailed, setIsLiveStreamFailed] = useState(false);
   const [detectedCode, setDetectedCode] = useState<string | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -136,6 +137,9 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
         Quagga.start();
 
         Quagga.onDetected((result: { codeResult: { code: string; confidence: number } }) => {
+          // Si está pausado, no procesar detecciones
+          if (isPaused) return;
+          
           const { code, confidence } = result.codeResult;
           
           // Solo procesar códigos con longitud mínima y confianza alta
@@ -153,20 +157,18 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
             
             console.log("🎯 Código detectado:", code);
             
-            // Detener Quagga temporalmente y mostrar el código detectado
-            Quagga.stop();
+            // Pausar la detección temporalmente (mantener cámara activa)
+            setIsPaused(true);
             setDetectedCode(code);
             
             // Procesar el código exitosamente
             onSuccess(code);
             
-            // Reiniciar el escáner después de 2 segundos para permitir más escaneos
+            // Reanudar la detección después de 2 segundos
             restartTimer = setTimeout(() => {
               setDetectedCode(null); // Limpiar el código detectado
-              if (scannerRef.current) {
-                Quagga.start();
-                startWatchdog(); // Reiniciar watchdog
-              }
+              setIsPaused(false); // Reanudar detección
+              startWatchdog(); // Reiniciar watchdog
             }, 2000);
           } else {
             // Reiniciar watchdog en cada detección válida
@@ -224,7 +226,7 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
         }
       }
     };
-  }, [isClient, isMounted, onSuccess, onError]);
+  }, [isClient, isMounted, onSuccess, onError, isPaused]);
 
   // No renderizar nada hasta que esté montado
   if (!isMounted) {
