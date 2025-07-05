@@ -17,7 +17,7 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
 import AddIcon from "@mui/icons-material/Add";
 import { useVencimientosForm } from "@/hooks/useVencimientosForm";
@@ -35,7 +35,14 @@ export function VencimientosPageContent() {
     resetForm,
   } = useVencimientosForm();
 
+  // Monitorear cambios en el código de barras
+  useEffect(() => {
+    console.log("📝 formData.codigo_barras actualizado:", formData.codigo_barras);
+  }, [formData.codigo_barras]);
+
   const handleScanSuccess = (result: string) => {
+    console.log("🔍 Código escaneado:", result);
+    
     // Create a proper event-like object for the form handler
     const event = {
       target: {

@@ -97,8 +97,8 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
               },
               area: {    // Región de interés - solo procesa el área central
                 top:    "25%",
-                right:  "25%",
-                left:   "25%",
+                right:  "5%",
+                left:   "5%",
                 bottom: "25%",
               },
             },
@@ -149,6 +149,8 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
 
           if (stableCount >= REQUIRED) {
             clearWatchdog(); // Limpiar watchdog al detectar código válido
+            
+            console.log("🎯 Código detectado:", code);
             
             // Detener Quagga y mostrar el código detectado
             Quagga.stop();
