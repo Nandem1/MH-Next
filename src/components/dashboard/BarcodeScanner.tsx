@@ -8,12 +8,6 @@ interface BarcodeScannerProps {
   onError: (error: string) => void;
 }
 
-interface ScanResult {
-  code: string;
-  confidence: number;
-  timestamp: number;
-}
-
 export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
   const scannerRef = useRef<HTMLDivElement>(null);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -21,9 +15,7 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
   const [isClient, setIsClient] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [quaggaAvailable, setQuaggaAvailable] = useState(true);
-  const [isScanning, setIsScanning] = useState(false);
-  const [scanResults, setScanResults] = useState<ScanResult[]>([]);
-  const [currentCode, setCurrentCode] = useState<string>("");
+  const [isLiveStreamFailed, setIsLiveStreamFailed] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -35,7 +27,42 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let Quagga: any;
-    let scanTimeout: NodeJS.Timeout;
+    let lastCode: string | null = null;
+    let stableCount = 0;
+    let watchdogTimer: NodeJS.Timeout | null = null;
+    const THRESHOLD = 0.6;
+    const REQUIRED = 3;
+    const WATCHDOG_TIMEOUT = 10000; // 10 segundos
+
+    const startWatchdog = () => {
+      // Limpiar watchdog anterior si existe
+      if (watchdogTimer) {
+        clearTimeout(watchdogTimer);
+      }
+      
+      // Iniciar nuevo watchdog
+      watchdogTimer = setTimeout(() => {
+        console.log("Watchdog: Reiniciando Quagga por timeout");
+        if (Quagga) {
+          try {
+            Quagga.stop();
+            setTimeout(() => {
+              Quagga.start();
+              startWatchdog(); // Reiniciar watchdog después del restart
+            }, 500); // Pequeño delay antes de reiniciar
+          } catch (err) {
+            console.error("Error restarting Quagga:", err);
+          }
+        }
+      }, WATCHDOG_TIMEOUT);
+    };
+
+    const clearWatchdog = () => {
+      if (watchdogTimer) {
+        clearTimeout(watchdogTimer);
+        watchdogTimer = null;
+      }
+    };
 
     const initializeScanner = async () => {
       try {
@@ -60,25 +87,31 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
                 width: { min: 640 },
                 height: { min: 480 },
                 facingMode: "environment", // Usar cámara trasera en móviles
+                // Asegurar autofocus activo
+                advanced: {
+                  focusMode: "continuous",
+                  exposureMode: "continuous",
+                  whiteBalanceMode: "continuous",
+                },
+              },
+              area: {    // Región de interés - solo procesa el área central
+                top:    "25%",
+                right:  "25%",
+                left:   "25%",
+                bottom: "25%",
               },
             },
             locator: {
-              patchSize: "medium",
-              halfSample: false,
+              patchSize: "small", // Buscar patrones finos
+              halfSample: true, // Acelerar preprocesado
             },
-            numOfWorkers: 4,
-            frequency: 8, // Reducir ligeramente de 10 a 8 para mejor precisión
+            numOfWorkers: 4, // Mantener 4 workers para mejor rendimiento
+            frequency: 3, // Solo 3 intentos por segundo - más tiempo para enfocar
             decoder: {
               readers: [
-                "code_128_reader",
-                "ean_reader",
-                "ean_8_reader",
-                "code_39_reader",
-                "code_39_vin_reader",
-                "codabar_reader",
-                "upc_reader",
-                "upc_e_reader",
-                "i2of5_reader",
+                "ean_reader",      // EAN-13 (13 dígitos) - formato más común
+                "code_128_reader", // Code 128 (alfanumérico) - formato versátil
+                // Eliminados readers innecesarios: codabar_reader, i2of5_reader, etc.
               ],
             },
             locate: true,
@@ -87,9 +120,13 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
             setIsInitializing(false);
             if (err) {
               console.error("Quagga init error:", err);
+              setIsLiveStreamFailed(true);
               const errorMessage = "Error al inicializar la cámara. Asegúrate de dar permisos de cámara.";
               setError(errorMessage);
               onError(errorMessage);
+            } else {
+              // Iniciar watchdog después de inicialización exitosa
+              startWatchdog();
             }
           }
         );
@@ -97,33 +134,25 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
         Quagga.start();
 
         Quagga.onDetected((result: { codeResult: { code: string; confidence: number } }) => {
-          const code = result.codeResult.code;
-          const confidence = result.codeResult.confidence;
+          const { code, confidence } = result.codeResult;
           
-          if (code && code.length >= 8 && confidence > 0.3) {
-            // Si es un nuevo código, iniciar proceso de escaneo múltiple
-            if (code !== currentCode) {
-              setCurrentCode(code);
-              setScanResults([]);
-              setIsScanning(true);
-              
-              // Limpiar timeout anterior si existe
-              if (scanTimeout) {
-                clearTimeout(scanTimeout);
-              }
-              
-              // Establecer timeout para procesar después de 2 segundos
-              scanTimeout = setTimeout(() => {
-                processScanResults();
-              }, 2000);
-            }
-            
-            // Agregar resultado al array
-            setScanResults(prev => [...prev, {
-              code,
-              confidence,
-              timestamp: Date.now()
-            }]);
+          // Solo procesar códigos con longitud mínima y confianza alta
+          if (!code || code.length < 8 || confidence < THRESHOLD) return;
+
+          if (code === lastCode) {
+            stableCount++;
+          } else {
+            lastCode = code;
+            stableCount = 1;
+          }
+
+          if (stableCount >= REQUIRED) {
+            clearWatchdog(); // Limpiar watchdog al detectar código válido
+            Quagga.stop();
+            onSuccess(code);
+          } else {
+            // Reiniciar watchdog en cada detección válida
+            startWatchdog();
           }
         });
 
@@ -140,52 +169,13 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
           }
         });
 
-        const processScanResults = () => {
-          if (scanResults.length === 0) {
-            setIsScanning(false);
-            setCurrentCode("");
-            return;
+        // Manejar errores del live stream
+        Quagga.onProcessed((result: { codeResult?: { code: string } }) => {
+          if (result && result.codeResult && result.codeResult.code) {
+            // Si hay detección, el live stream funciona
+            setIsLiveStreamFailed(false);
           }
-
-          // Agrupar resultados por código (por si hay variaciones menores)
-          const codeGroups = new Map<string, ScanResult[]>();
-          
-          scanResults.forEach(result => {
-            const normalizedCode = result.code.trim();
-            if (!codeGroups.has(normalizedCode)) {
-              codeGroups.set(normalizedCode, []);
-            }
-            codeGroups.get(normalizedCode)!.push(result);
-          });
-
-          // Encontrar el grupo con más lecturas y mayor confianza promedio
-          let bestCode = "";
-          let bestConfidence = 0;
-          let bestCount = 0;
-
-          codeGroups.forEach((results, code) => {
-            const avgConfidence = results.reduce((sum, r) => sum + r.confidence, 0) / results.length;
-            const count = results.length;
-
-            // Priorizar códigos con más lecturas y mayor confianza
-            if (count > bestCount || (count === bestCount && avgConfidence > bestConfidence)) {
-              bestCode = code;
-              bestConfidence = avgConfidence;
-              bestCount = count;
-            }
-          });
-
-          // Solo procesar si tenemos al menos 2 lecturas del mismo código
-          if (bestCount >= 2) {
-            Quagga.stop();
-            onSuccess(bestCode);
-          } else {
-            // Si no hay suficientes lecturas, continuar escaneando
-            setIsScanning(false);
-            setCurrentCode("");
-            setScanResults([]);
-          }
-        };
+        });
 
       } catch (err) {
         console.error("Error loading Quagga:", err);
@@ -204,9 +194,7 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
 
     return () => {
       clearTimeout(timer);
-      if (scanTimeout) {
-        clearTimeout(scanTimeout);
-      }
+      clearWatchdog(); // Limpiar watchdog al desmontar
       if (Quagga) {
         try {
           Quagga.stop();
@@ -215,7 +203,7 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
         }
       }
     };
-  }, [isClient, isMounted, onSuccess, onError, currentCode, scanResults]);
+  }, [isClient, isMounted, onSuccess, onError]);
 
   // No renderizar nada hasta que esté montado
   if (!isMounted) {
@@ -268,7 +256,6 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
       )}
       
       <Box
-        ref={scannerRef}
         sx={{
           width: "100%",
           height: "300px",
@@ -277,21 +264,90 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
           overflow: "hidden",
           position: "relative",
         }}
-      />
+      >
+        {/* Contenedor de la cámara */}
+        <Box
+          ref={scannerRef}
+          sx={{
+            width: "100%",
+            height: "100%",
+            position: "relative",
+          }}
+        />
+        
+        {/* Rectángulo de guía centrado */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: "25%",
+            left: "25%",
+            width: "50%",
+            height: "50%",
+            border: "3px solid #00ff00",
+            borderRadius: 1,
+            boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.3)",
+            pointerEvents: "none",
+            zIndex: 10,
+          }}
+        >
+          {/* Esquinas del rectángulo */}
+          <Box
+            sx={{
+              position: "absolute",
+              top: "-3px",
+              left: "-3px",
+              width: "20px",
+              height: "20px",
+              borderTop: "3px solid #00ff00",
+              borderLeft: "3px solid #00ff00",
+            }}
+          />
+          <Box
+            sx={{
+              position: "absolute",
+              top: "-3px",
+              right: "-3px",
+              width: "20px",
+              height: "20px",
+              borderTop: "3px solid #00ff00",
+              borderRight: "3px solid #00ff00",
+            }}
+          />
+          <Box
+            sx={{
+              position: "absolute",
+              bottom: "-3px",
+              left: "-3px",
+              width: "20px",
+              height: "20px",
+              borderBottom: "3px solid #00ff00",
+              borderLeft: "3px solid #00ff00",
+            }}
+          />
+          <Box
+            sx={{
+              position: "absolute",
+              bottom: "-3px",
+              right: "-3px",
+              width: "20px",
+              height: "20px",
+              borderBottom: "3px solid #00ff00",
+              borderRight: "3px solid #00ff00",
+            }}
+          />
+        </Box>
+      </Box>
       
       <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-        Apunta la cámara hacia el código de barras
+        Coloca el código de barras dentro del rectángulo verde
       </Typography>
       
-      {isScanning && currentCode && (
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="body2" color="primary">
-            Código detectado: {currentCode}
+      {isLiveStreamFailed && (
+        <Alert severity="info" sx={{ mt: 2 }}>
+          <Typography variant="body2">
+            Modo de compatibilidad activado. El escáner puede ser más lento.
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Lecturas: {scanResults.length} - Procesando...
-          </Typography>
-        </Box>
+        </Alert>
       )}
     </Box>
   );
