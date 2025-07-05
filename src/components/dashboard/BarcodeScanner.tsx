@@ -2,48 +2,21 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Box, Typography, Alert, CircularProgress, Button, Stack } from "@mui/material";
+import Quagga from "@ericblade/quagga2";
 
 interface BarcodeScannerProps {
   onSuccess: (result: string) => void;
   onError: (error: string) => void;
 }
 
-// Tipo para Quagga
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface QuaggaType {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  init: (config: any, callback: (err: Error | null) => void) => void;
-  start: () => void;
-  stop: () => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onDetected: (callback: (result: any) => void) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onProcessed: (callback: (result: any) => void) => void;
-  offDetected: () => void;
-  offProcessed: () => void;
-  canvas: {
-    dom: {
-      overlay: HTMLCanvasElement;
-    };
-  };
-  ImageDebug: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    drawPath: (line: any, coords: any, ctx: CanvasRenderingContext2D, options: any) => void;
-  };
-}
-
 export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
   const scannerRef = useRef<HTMLDivElement>(null);
-  const quaggaRef = useRef<QuaggaType | null>(null);
-  const startWatchdogRef = useRef<(() => void) | undefined>(undefined);
-
   const [isInitializing, setIsInitializing] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [detectedCode, setDetectedCode] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
-  const [isLiveStreamFailed, setIsLiveStreamFailed] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -53,12 +26,9 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
   useEffect(() => {
     if (!isClient || !scannerRef.current) return;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let Quagga: any;
     let lastCode: string | null = null;
     let stableCount = 0;
     let watchdogTimer: NodeJS.Timeout | null = null;
-    const THRESHOLD = 0.6;
     const REQUIRED = 3;
     const WATCHDOG_TIMEOUT = 10000; // 10s
 
@@ -66,17 +36,13 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
       if (watchdogTimer) clearTimeout(watchdogTimer);
       watchdogTimer = setTimeout(() => {
         console.log("Watchdog: reiniciando...");
-        if (quaggaRef.current) {
-          quaggaRef.current.stop();
-          setTimeout(() => {
-            quaggaRef.current?.start();
-            startWatchdog();
-          }, 500);
-        }
+        Quagga.stop();
+        setTimeout(() => {
+          Quagga.start();
+          startWatchdog();
+        }, 500);
       }, WATCHDOG_TIMEOUT);
     };
-
-    startWatchdogRef.current = startWatchdog;
 
     const clearWatchdog = () => {
       if (watchdogTimer) clearTimeout(watchdogTimer);
@@ -87,18 +53,12 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
         if (typeof window === 'undefined') {
           throw new Error('Quagga solo funciona en el navegador');
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Quagga = (await import('quagga')).default;
-        quaggaRef.current = Quagga;
-
-        // detach previous handlers
-        Quagga.offDetected();
-        Quagga.offProcessed();
 
         setIsInitializing(true);
         setError(null);
 
-        Quagga.init({
+        // Configuración de Quagga2
+        await Quagga.init({
           inputStream: {
             name: 'Live',
             type: 'LiveStream',
@@ -107,40 +67,35 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
               width: { min: 640 },
               height: { min: 480 },
               facingMode: 'environment',
-              advanced: [
-                { focusMode: 'continuous' },
-                { exposureMode: 'continuous' },
-                { whiteBalanceMode: 'continuous' },
-              ],
             },
             area: {
-              top: '25%', right: '5%', left: '5%', bottom: '25%'
+              top: '25%', 
+              right: '5%', 
+              left: '5%', 
+              bottom: '25%'
             },
           },
-          locator: { patchSize: 'small', halfSample: true },
+          locator: { 
+            patchSize: 'small', 
+            halfSample: true 
+          },
           numOfWorkers: 4,
           frequency: 3,
-          decoder: { readers: ['ean_reader', 'code_128_reader'] },
+          decoder: { 
+            readers: ['ean_reader', 'code_128_reader'] 
+          },
           locate: true,
-        }, (err: Error | null) => {
-          setIsInitializing(false);
-          if (err) {
-            console.error('Init error:', err);
-            setError('Error al inicializar la cámara.');
-            onError('Error al inicializar la cámara.');
-            setIsLiveStreamFailed(true);
-          } else {
-            startWatchdog();
-          }
         });
 
-        Quagga.start();
+        setIsInitializing(false);
+        startWatchdog();
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Quagga.onDetected((result: any) => {
+        // Evento de detección
+        Quagga.onDetected((result) => {
           if (isPaused) return;
-          const { code, confidence } = result.codeResult;
-          if (!code || code.length < 8 || confidence < THRESHOLD) return;
+          
+          const { code } = result.codeResult;
+          if (!code || code.length < 8) return;
 
           if (code === lastCode) {
             stableCount++;
@@ -160,14 +115,22 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
           }
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Quagga.onProcessed((result: any) => {
+        // Evento de procesamiento para dibujar líneas
+        Quagga.onProcessed((result) => {
           if (result && result.line) {
             const canvas = Quagga.canvas.dom.overlay;
             const ctx = canvas.getContext('2d');
-            Quagga.ImageDebug.drawPath(result.line, { x: 'x', y: 'y' }, ctx, { color: 'green', lineWidth: 3 });
+            if (ctx) {
+              Quagga.ImageDebug.drawPath(result.line, { x: 'x', y: 'y' }, ctx, { 
+                color: 'green', 
+                lineWidth: 3 
+              });
+            }
           }
         });
+
+        // Iniciar el escáner
+        await Quagga.start();
 
       } catch (err) {
         console.error('Load error:', err);
@@ -178,14 +141,11 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
     };
 
     const timer = setTimeout(initializeScanner, 100);
+    
     return () => {
       clearTimeout(timer);
       clearWatchdog();
-      if (quaggaRef.current) {
-        Quagga.offDetected();
-        Quagga.offProcessed();
-        quaggaRef.current.stop();
-      }
+      Quagga.stop();
     };
   }, [isClient, onSuccess, onError, isPaused]);
 
@@ -193,8 +153,7 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
   const handleRestart = () => {
     setDetectedCode(null);
     setIsPaused(false);
-    quaggaRef.current?.start();
-    startWatchdogRef.current?.();
+    Quagga.start();
   };
 
   if (!isMounted) return null;
@@ -244,12 +203,6 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
         <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>
       )}
 
-      {isLiveStreamFailed && !error && (
-        <Alert severity="info" sx={{ mt: 2 }}>
-          Modo compatibilidad activado. Puede ser más lento.
-        </Alert>
-      )}
-
       {!detectedCode && !isInitializing && (
         <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
           Coloca el código dentro del recuadro verde
@@ -258,3 +211,4 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
     </Box>
   );
 }
+
