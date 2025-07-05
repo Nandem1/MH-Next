@@ -22,6 +22,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useState, useRef } from "react";
 import html2canvas from "html2canvas";
 import { CarteleriaPreview } from "./CarteleriaPreview";
+import { VencimientosSection } from "./VencimientosSection";
 
 interface CarteleriaCardProps {
   item: CarteleriaAuditResult;
@@ -294,6 +295,11 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
               </Box>
             </Box>
           </Box>
+
+          <Divider />
+
+          {/* Sección de Vencimientos */}
+          <VencimientosSection fechas_vencimiento={carteleria.fechas_vencimiento} />
 
           <Divider />
 

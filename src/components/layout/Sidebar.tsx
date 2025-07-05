@@ -25,6 +25,7 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import RotateLeftIcon from "@mui/icons-material/RotateLeft";
 import ChecklistIcon from "@mui/icons-material/Checklist";
 import AssessmentIcon from "@mui/icons-material/Assessment";
+import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
 
 import { useRouter, usePathname } from "next/navigation";
 import { useMediaQuery } from "@mui/material";
@@ -177,6 +178,20 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
                 <AssessmentIcon />
               </ListItemIcon>
               <ListItemText primary="Auditoría de Cartelería" />
+            </ListItemButton>
+          </ListItem>
+
+          {/* Vencimientos */}
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={pathname === "/dashboard/vencimientos"}
+              onClick={() => goTo("/dashboard/vencimientos")}
+              sx={navButtonStyle()}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <QrCodeScannerIcon />
+              </ListItemIcon>
+              <ListItemText primary="Vencimientos" />
             </ListItemButton>
           </ListItem>
 

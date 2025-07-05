@@ -30,6 +30,21 @@ export interface Carteleria {
 
   // Origen indicador
   origen?: "producto" | "pack" | "sin_origen" | null | undefined;
+
+  // Vencimientos (array de fechas de vencimiento)
+  fechas_vencimiento?: Array<{
+    fecha_vencimiento: string;
+    cantidad: number;
+    lote?: string | null;
+  }>;
+}
+
+export interface Vencimiento {
+  id: number;
+  codigo_barras: string;
+  fecha_vencimiento: string;
+  cantidad: number;
+  lote?: string | null;
 }
 
 export interface CarteleriaAuditResult {

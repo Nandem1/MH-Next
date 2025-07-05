@@ -32,8 +32,6 @@ export const useCarteleria = () => {
     });
   })() : undefined;
 
-
-
   // Función para procesar los datos y calcular discrepancias
   const processAuditData = (data: Carteleria[]): CarteleriaAuditResult[] => {
     return data.map((item) => {
@@ -73,8 +71,6 @@ export const useCarteleria = () => {
   // Filtrar datos procesados
   const processedData = carteleriaData ? processAuditData(carteleriaData) : [];
   
-
-  
   const filteredData = processedData.filter((item) => {
     
     const searchTermLower = searchTerm.toLowerCase();
@@ -113,9 +109,8 @@ export const useCarteleria = () => {
 
   // Estadísticas
   const estadisticas = carteleriaData ? (() => {
-    const procesados = processAuditData(carteleriaData);
-    const total = procesados.length;
-    const conDiscrepancia = procesados.filter(item => 
+    const total = processedData.length;
+    const conDiscrepancia = processedData.filter(item => 
       !item.precioDetalleCoincide || !item.precioMayoristaCoincide
     ).length;
     const coinciden = total - conDiscrepancia;
