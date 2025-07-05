@@ -57,10 +57,10 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
             target: scannerRef.current!,
             constraints,
             area: {
-              top: "25%", 
-              right: "25%", 
-              left: "25%", 
-              bottom: "25%"
+              top: "10%", 
+              right: "10%", 
+              left: "10%", 
+              bottom: "10%"
             },
           },
           locator: {
@@ -198,10 +198,10 @@ export function BarcodeScanner({ onSuccess, onError }: BarcodeScannerProps) {
         <Box
           sx={{
             position: "absolute",
-            top: "25%",
-            left: "25%",
-            width: "50%",
-            height: "50%",
+            top: "10%",
+            left: "10%",
+            width: "80%",
+            height: "80%",
             border: "2px solid #00ff00",
             borderRadius: 1,
             pointerEvents: "none",
