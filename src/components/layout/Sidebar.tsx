@@ -195,6 +195,20 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
             </ListItemButton>
           </ListItem>
 
+          {/* Control de Vencimientos */}
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={pathname === "/dashboard/control-vencimientos"}
+              onClick={() => goTo("/dashboard/control-vencimientos")}
+              sx={navButtonStyle()}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <AssessmentIcon />
+              </ListItemIcon>
+              <ListItemText primary="Control de Vencimientos" />
+            </ListItemButton>
+          </ListItem>
+
           {/* ZebrAI */}
           <ListItem disablePadding>
             <ListItemButton

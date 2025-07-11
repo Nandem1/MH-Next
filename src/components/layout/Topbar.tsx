@@ -23,7 +23,6 @@ interface TopbarProps {
 export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
   const { toggleTheme, mode } = useThemeContext();
   const { logout, usuario, loadUsuario } = useAuth();
-  console.log("👤 Usuario:", usuario);
 
   const handleLogout = useCallback(() => {
     logout();

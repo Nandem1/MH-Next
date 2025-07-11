@@ -55,7 +55,7 @@ export function FacturaTable({
   };
 
   const handleConfirmChangeEstado = () => {
-    console.log(`Cambiar estado de factura ID: ${selectedFacturaId}`);
+
     handleCloseConfirmModal();
   };
 

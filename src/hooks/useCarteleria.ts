@@ -46,19 +46,7 @@ export const useCarteleria = () => {
         carteleriaPrecioMayorista = carteleriaPrecioDetalle;
       }
       
-      // Debug: Log para ver qué está pasando
-      if (item.tipo_carteleria === "UNICO" || item.tipo_carteleria === "PALLET UNICO") {
-        console.log("Debug UNICO/PALLET:", {
-          tipo: item.tipo_carteleria,
-          carteleria_detalle: carteleriaPrecioDetalle,
-          lista_detalle: listaPrecioDetalle,
-          carteleria_mayorista_original: Number(item.carteleria_precio_mayorista ?? 0),
-          carteleria_mayorista_ajustado: carteleriaPrecioMayorista,
-          lista_mayorista: listaPrecioMayorista,
-          detalle_igual: carteleriaPrecioDetalle === listaPrecioDetalle,
-          mayorista_igual: carteleriaPrecioMayorista === listaPrecioMayorista
-        });
-      }
+
       
       // Calcular discrepancias - si no hay precio en lista (0), no es discrepancia
       const precioDetalleCoincide = 

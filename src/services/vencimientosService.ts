@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { Vencimiento, VencimientoResponse } from '../types/vencimientos';
+import { Vencimiento, VencimientoResponse, ControlVencimientosResponse } from '../types/vencimientos';
 
-// Configuración base de axios
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api-beta';
+// Usar la variable de entorno como los otros servicios
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Helper para manejar errores de axios
 const handleAxiosError = (error: unknown): VencimientoResponse => {
@@ -26,12 +26,24 @@ export const crearControlVencimiento = async (vencimiento: Omit<Vencimiento, 'id
 };
 
 // Obtener todos los controles de vencimiento
-export const obtenerControlVencimientos = async (): Promise<VencimientoResponse> => {
+export const obtenerControlVencimientos = async (): Promise<ControlVencimientosResponse> => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/api-beta/control-vencimientos`);
+    const url = `${API_BASE_URL}/api-beta/control-vencimientos`;
+    
+    const response = await axios.get(url);
     return response.data;
   } catch (error: unknown) {
-    return handleAxiosError(error);
+    console.error("Error en vencimientosService:", error);
+    if (axios.isAxiosError(error)) {
+      console.error("Response status:", error.response?.status);
+      console.error("Response data:", error.response?.data);
+      console.error("Request URL:", error.config?.url);
+    }
+    return {
+      success: false,
+      data: [],
+      total: 0
+    };
   }
 };
 

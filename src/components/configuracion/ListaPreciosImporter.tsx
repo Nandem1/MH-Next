@@ -17,8 +17,6 @@ import {
 } from "@mui/material";
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import CancelIcon from '@mui/icons-material/Cancel';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ErrorIcon from '@mui/icons-material/Error';
 import axios, { AxiosError } from "axios";
 import { useSnackbar } from "@/hooks/useSnackbar";
 
@@ -283,7 +281,7 @@ export function ListaPreciosImporter() {
       {/* Snackbar */}
       <Snackbar
         open={open}
-        autoHideDuration={4000}
+        autoHideDuration={3000}
         onClose={handleClose}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
@@ -291,15 +289,7 @@ export function ListaPreciosImporter() {
           onClose={handleClose}
           severity={severity}
           variant="filled"
-          icon={severity === "success" ? <CheckCircleIcon /> : <ErrorIcon />}
-          sx={{ 
-            width: "100%",
-            maxWidth: 400,
-            "& .MuiAlert-message": {
-              color: "white",
-              fontWeight: 500,
-            }
-          }}
+          sx={{ width: "100%" }}
         >
           {message}
         </Alert>

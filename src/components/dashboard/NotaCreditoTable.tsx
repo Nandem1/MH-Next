@@ -68,7 +68,7 @@ export function NotaCreditoTable({
   };
 
   const handleConfirmChangeEstado = () => {
-    console.log(`Cambiar estado de nota de crédito ID: ${selectedNotaCreditoId}`);
+
     handleCloseConfirmModal();
   };
 
