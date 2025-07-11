@@ -30,9 +30,6 @@ export function FacturaTable({
   const [openViewModal, setOpenViewModal] = useState(false);
   const [selectedFactura, setSelectedFactura] = useState<Factura | null>(null);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
-  const [selectedFacturaId, setSelectedFacturaId] = useState<string | null>(
-    null
-  );
 
   const handleOpenViewModal = (factura: Factura) => {
     setSelectedFactura(factura);
@@ -44,13 +41,11 @@ export function FacturaTable({
     setOpenViewModal(false);
   };
 
-  const handleOpenConfirmModal = (id: string) => {
-    setSelectedFacturaId(id);
+  const handleOpenConfirmModal = () => {
     setOpenConfirmModal(true);
   };
 
   const handleCloseConfirmModal = () => {
-    setSelectedFacturaId(null);
     setOpenConfirmModal(false);
   };
 

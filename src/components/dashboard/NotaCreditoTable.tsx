@@ -33,9 +33,6 @@ export function NotaCreditoTable({
   const [openFacturaAsociadaModal, setOpenFacturaAsociadaModal] = useState(false);
   const [selectedFacturaAsociada, setSelectedFacturaAsociada] = useState<NotaCredito['facturaAsociada']>(undefined);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
-  const [selectedNotaCreditoId, setSelectedNotaCreditoId] = useState<string | null>(
-    null
-  );
 
   const handleOpenViewModal = (notaCredito: NotaCredito) => {
     setSelectedNotaCredito(notaCredito);
@@ -57,13 +54,11 @@ export function NotaCreditoTable({
     setOpenFacturaAsociadaModal(false);
   };
 
-  const handleOpenConfirmModal = (id: string) => {
-    setSelectedNotaCreditoId(id);
+  const handleOpenConfirmModal = () => {
     setOpenConfirmModal(true);
   };
 
   const handleCloseConfirmModal = () => {
-    setSelectedNotaCreditoId(null);
     setOpenConfirmModal(false);
   };
 

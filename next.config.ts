@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,      // (opcional) buena práctica en prod
-  swcMinify: true,            // (opcional) build más rápido
 
   // Configuración para manejar módulos del lado del cliente
   webpack: (config, { isServer }) => {
