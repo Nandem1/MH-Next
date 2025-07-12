@@ -18,11 +18,12 @@ export interface Cheque {
 
 export interface TrackingEnvio {
   id: string;
-  estado: "EN_ORIGEN" | "EN_TRANSITO" | "RECIBIDA";
+  estado: "EN_ORIGEN" | "EN_TRANSITO" | "RECIBIDA" | "ENTREGADA";
   localOrigen: string;
   localDestino: string; // Siempre será "BALMACEDA 599"
   fechaEnvio?: string;
   fechaRecepcion?: string;
+  fechaEntrega?: string;
   observaciones?: string;
   enviadoPor?: string;
   recibidoPor?: string;
