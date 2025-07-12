@@ -33,18 +33,16 @@ import { NominaCheque, Cheque, TrackingEnvio, AsignarChequeRequest, MarcarPagado
 export default function NominasPage() {
   const theme = useTheme();
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading, rol_id, usuario } = useAuthStatus();
+  const { isAuthenticated, isLoading: authLoading, rol_id } = useAuthStatus();
   const {
     nominas,
     filtro,
     loading,
-    error,
     crearNomina,
     crearCheque,
     asignarCheque,
     marcarChequePagado,
     actualizarTracking,
-    clearError,
     setFiltro,
   } = useNominasCheque();
 
@@ -182,9 +180,7 @@ export default function NominasPage() {
     setSnackbarOpen(false);
   };
 
-  const getLocalNombre = (localId: string) => {
-    return locales.find(l => l.id.toString() === localId)?.nombre || localId;
-  };
+
 
   return (
     <Box sx={{ 
@@ -361,7 +357,7 @@ export default function NominasPage() {
         <FiltroNominas 
           filtro={filtro} 
           onFiltroChange={setFiltro} 
-          locales={locales}
+          locales={locales.map(l => ({ id: l.id.toString(), nombre: l.nombre }))}
         />
 
         {/* Content */}
@@ -427,11 +423,12 @@ export default function NominasPage() {
             {selectedNomina && (
               <Box>
                 {/* Tracking Component */}
-                <TrackingEnvioComponent
-                  tracking={selectedNomina.trackingEnvio}
-                  onUpdateTracking={handleUpdateTracking}
-                  loading={loading}
-                />
+                {selectedNomina.trackingEnvio && (
+                  <TrackingEnvioComponent
+                    tracking={selectedNomina.trackingEnvio}
+                    onUpdateTracking={handleUpdateTracking}
+                  />
+                )}
               </Box>
             )}
           </DialogContent>
