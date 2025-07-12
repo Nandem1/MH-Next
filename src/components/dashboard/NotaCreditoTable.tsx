@@ -298,7 +298,7 @@ export function NotaCreditoTable({
               onView={() => handleOpenViewModal(notaCredito)}
               onPrint={() => handlePrint(notaCredito)}
               onPrintFacturaAsociada={() => handlePrintFacturaAsociada(notaCredito.facturaAsociada)}
-              onViewFacturaAsociada={handleOpenFacturaAsociadaModal}
+              onViewFacturaAsociada={() => handleOpenFacturaAsociadaModal(notaCredito.facturaAsociada)}
               onEditarMonto={() => handleOpenEditarMontoModal(notaCredito)}
             />
           ))}
