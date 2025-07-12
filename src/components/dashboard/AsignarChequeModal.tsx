@@ -10,25 +10,16 @@ import {
   Typography,
   Alert,
   CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Radio,
-  RadioGroup,
-  FormControl,
-  FormLabel,
+  TextField,
   Stack,
-  Chip,
+  Paper,
   useTheme,
 } from "@mui/material";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { nominaChequeService } from "@/services/nominaChequeService";
+import { AsignarChequeRequest } from "@/types/nominaCheque";
 
-interface FacturaDisponible {
+interface FacturaEncontrada {
   id: string;
   folio: string;
   proveedor: string;
@@ -38,7 +29,7 @@ interface FacturaDisponible {
 interface AsignarChequeModalProps {
   open: boolean;
   onClose: () => void;
-  onAsignar: (facturaId: string) => Promise<void>;
+  onAsignar: (request: AsignarChequeRequest) => Promise<void>;
   numeroCheque: string;
   loading?: boolean;
 }
@@ -50,46 +41,90 @@ export function AsignarChequeModal({
   numeroCheque,
   loading = false,
 }: AsignarChequeModalProps) {
-  const [facturas, setFacturas] = useState<FacturaDisponible[]>([]);
-  const [selectedFacturaId, setSelectedFacturaId] = useState<string>("");
-  const [loadingFacturas, setLoadingFacturas] = useState(false);
+  const [folioBusqueda, setFolioBusqueda] = useState("");
+  const [facturaEncontrada, setFacturaEncontrada] = useState<FacturaEncontrada | null>(null);
+  const [montoPagado, setMontoPagado] = useState("");
+  const [loadingBusqueda, setLoadingBusqueda] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
   const theme = useTheme();
 
-  // Cargar facturas disponibles
-  useEffect(() => {
-    if (open) {
-      loadFacturasDisponibles();
+  // Función de búsqueda con debounce
+  const buscarFactura = useCallback(async (folio: string) => {
+    if (!folio.trim()) {
+      setFacturaEncontrada(null);
+      return;
     }
-  }, [open]);
 
-  const loadFacturasDisponibles = async () => {
     try {
-      setLoadingFacturas(true);
+      setLoadingBusqueda(true);
       setError(null);
-      const facturasData = await nominaChequeService.getFacturasDisponibles();
-      setFacturas(facturasData);
+      const factura = await nominaChequeService.buscarFacturaPorFolio(folio.trim());
+      setFacturaEncontrada(factura);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar facturas");
+      setError(err instanceof Error ? err.message : "Error al buscar factura");
+      setFacturaEncontrada(null);
     } finally {
-      setLoadingFacturas(false);
+      setLoadingBusqueda(false);
     }
+  }, []);
+
+  // Manejar cambio en el folio con debounce
+  const handleFolioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFolioBusqueda(value);
+    setError(null);
+
+    // Limpiar timeout anterior
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout);
+    }
+
+    // Establecer nuevo timeout para búsqueda
+    const timeout = setTimeout(() => {
+      buscarFactura(value);
+    }, 1000); // 1 segundo de debounce
+
+    setDebounceTimeout(timeout);
   };
+
+  // Limpiar al cerrar modal
+  useEffect(() => {
+    if (!open) {
+      setFolioBusqueda("");
+      setFacturaEncontrada(null);
+      setMontoPagado("");
+      setError(null);
+      if (debounceTimeout) {
+        clearTimeout(debounceTimeout);
+      }
+    }
+  }, [open, debounceTimeout]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedFacturaId) {
-      setError("Debes seleccionar una factura");
+    if (!folioBusqueda.trim()) {
+      setError("Debes ingresar un folio de factura");
+      return;
+    }
+
+    if (!facturaEncontrada) {
+      setError("Debes buscar y encontrar una factura válida");
       return;
     }
 
     try {
       setError(null);
-      await onAsignar(selectedFacturaId);
+      await onAsignar({
+        facturaFolio: folioBusqueda.trim(),
+        montoPagado: montoPagado ? parseFloat(montoPagado) : undefined,
+      });
       
       // Limpiar formulario
-      setSelectedFacturaId("");
+      setFolioBusqueda("");
+      setFacturaEncontrada(null);
+      setMontoPagado("");
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al asignar cheque");
@@ -98,19 +133,19 @@ export function AsignarChequeModal({
 
   const handleClose = () => {
     if (!loading) {
-      setSelectedFacturaId("");
+      setFolioBusqueda("");
+      setFacturaEncontrada(null);
+      setMontoPagado("");
       setError(null);
       onClose();
     }
   };
 
-  const selectedFactura = facturas.find(f => f.id === selectedFacturaId);
-
   return (
     <Dialog 
       open={open} 
       onClose={handleClose} 
-      maxWidth="md" 
+      maxWidth="sm" 
       fullWidth
       PaperProps={{
         sx: {
@@ -123,12 +158,15 @@ export function AsignarChequeModal({
       <form onSubmit={handleSubmit}>
         <DialogTitle sx={{ pb: 2 }}>
           <Typography variant="h5" fontWeight={700} sx={{ color: "text.primary" }}>
-            💳 Asignar Cheque #{numeroCheque}
+            Asignar Cheque a Factura
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
+            Cheque: {numeroCheque}
           </Typography>
         </DialogTitle>
         
         <DialogContent sx={{ pt: 0 }}>
-          <Box sx={{ mt: 1 }}>
+          <Box>
             {error && (
               <Alert 
                 severity="error" 
@@ -144,174 +182,131 @@ export function AsignarChequeModal({
               </Alert>
             )}
             
-            <Paper 
-              elevation={0}
-              sx={{ 
-                mb: 3, 
-                p: 3, 
-                bgcolor: theme.palette.mode === 'light' ? theme.palette.info.light : theme.palette.background.default,
-                border: `1px solid ${theme.palette.info.main}`,
-                borderRadius: "8px",
+            <TextField
+              fullWidth
+              label="Folio de Factura"
+              value={folioBusqueda}
+              onChange={handleFolioChange}
+              placeholder="Ingresa el folio de la factura..."
+              margin="normal"
+              required
+              disabled={loading}
+              InputProps={{
+                endAdornment: loadingBusqueda && (
+                  <CircularProgress size={20} sx={{ color: "text.secondary" }} />
+                ),
               }}
-            >
-              <Typography variant="body2" sx={{ color: theme.palette.info.main, fontWeight: 600, mb: 2 }}>
-                📋 Información del Cheque
-              </Typography>
-              <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 1 }}>
-                Número: <strong style={{ color: theme.palette.text.primary }}>#{numeroCheque}</strong>
-              </Typography>
-              <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-                Estado: <Chip 
-                  label="Disponible" 
-                  size="small" 
-                  sx={{ 
-                    bgcolor: theme.palette.mode === 'light' ? theme.palette.grey[200] : theme.palette.grey[800],
-                    color: theme.palette.text.secondary,
-                    fontWeight: 500,
-                    border: `1px solid ${theme.palette.divider}`,
-                  }} 
-                />
-              </Typography>
-            </Paper>
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
+                  color: theme.palette.text.primary,
+                  "& fieldset": {
+                    borderColor: theme.palette.divider,
+                  },
+                  "&:hover fieldset": {
+                    borderColor: theme.palette.text.primary,
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: theme.palette.primary.main,
+                  },
+                },
+                "& .MuiInputLabel-root": {
+                  color: theme.palette.text.secondary,
+                  "&.Mui-focused": {
+                    color: theme.palette.primary.main,
+                  },
+                },
+                input: {
+                  color: theme.palette.text.primary,
+                },
+              }}
+              InputLabelProps={{ style: { color: theme.palette.text.secondary } }}
+              helperText={<span style={{ color: theme.palette.text.secondary }}>La búsqueda se realizará automáticamente 1 segundo después de dejar de escribir</span>}
+            />
 
-            <FormControl component="fieldset" fullWidth>
-              <FormLabel component="legend">
-                <Typography variant="subtitle1" fontWeight={600} sx={{ color: "text.primary" }}>
-                  📄 Seleccionar Factura para Asignar
-                </Typography>
-              </FormLabel>
-              
-              {loadingFacturas ? (
-                <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-                  <CircularProgress />
-                </Box>
-              ) : facturas.length === 0 ? (
-                <Alert 
-                  severity="info" 
-                  sx={{ 
-                    mt: 2,
-                    borderRadius: "8px",
-                    border: `1px solid ${theme.palette.info.light}`,
-                    bgcolor: theme.palette.mode === 'light' ? "#eff6ff" : theme.palette.background.default,
-                    color: theme.palette.info.main,
-                  }}
-                >
-                  No hay facturas disponibles para asignar
-                </Alert>
-              ) : (
-                <RadioGroup
-                  value={selectedFacturaId}
-                  onChange={(e) => setSelectedFacturaId(e.target.value)}
-                  sx={{ mt: 2 }}
-                >
-                  <TableContainer component={Paper} variant="outlined" sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: "8px" }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow sx={{ bgcolor: "background.default" }}>
-                          <TableCell align="center" sx={{ width: 50, borderBottom: `1px solid ${theme.palette.divider}` }}></TableCell>
-                          <TableCell align="center" sx={{ borderBottom: `1px solid ${theme.palette.divider}`, py: 1.5 }}>
-                            <Typography variant="caption" sx={{ color: theme.palette.text.secondary, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
-                              Folio
-                            </Typography>
-                          </TableCell>
-                          <TableCell align="center" sx={{ borderBottom: `1px solid ${theme.palette.divider}`, py: 1.5 }}>
-                            <Typography variant="caption" sx={{ color: theme.palette.text.secondary, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
-                              Proveedor
-                            </Typography>
-                          </TableCell>
-                          <TableCell align="center" sx={{ borderBottom: `1px solid ${theme.palette.divider}`, py: 1.5 }}>
-                            <Typography variant="caption" sx={{ color: theme.palette.text.secondary, textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
-                              Monto
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {facturas.map((factura) => (
-                          <TableRow
-                            key={factura.id}
-                            hover
-                            sx={{
-                              cursor: "pointer",
-                              "&:hover": {
-                                backgroundColor: "action.hover",
-                              },
-                              "&:not(:last-child)": {
-                                borderBottom: `1px solid ${theme.palette.divider}`,
-                              },
-                            }}
-                            onClick={() => setSelectedFacturaId(factura.id)}
-                          >
-                            <TableCell align="center">
-                              <Radio
-                                value={factura.id}
-                                checked={selectedFacturaId === factura.id}
-                                onChange={(e) => setSelectedFacturaId(e.target.value)}
-                                sx={{
-                                  color: theme.palette.primary.main,
-                                  "&.Mui-checked": {
-                                    color: theme.palette.primary.main,
-                                  },
-                                }}
-                              />
-                            </TableCell>
-                            <TableCell align="center" sx={{ py: 1.5 }}>
-                              <Typography variant="body2" fontWeight={500} sx={{ color: theme.palette.text.primary }}>
-                                {factura.folio}
-                              </Typography>
-                            </TableCell>
-                            <TableCell align="center" sx={{ py: 1.5 }}>
-                              <Typography variant="body2" sx={{ color: theme.palette.text.primary }}>
-                                {factura.proveedor}
-                              </Typography>
-                            </TableCell>
-                            <TableCell align="center" sx={{ py: 1.5 }}>
-                              <Typography variant="body2" fontWeight={500} sx={{ color: theme.palette.primary.main }}>
-                                ${factura.monto?.toLocaleString()}
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </RadioGroup>
-              )}
-            </FormControl>
-
-            {selectedFactura && (
+            {facturaEncontrada && (
               <Paper 
-                elevation={0}
+                elevation={0} 
                 sx={{ 
-                  mt: 3, 
-                  p: 3, 
-                  bgcolor: theme.palette.mode === 'light' ? theme.palette.success.light : theme.palette.background.default,
-                  border: `1px solid ${theme.palette.success.main}`,
+                  mt: 2, 
+                  p: 2, 
+                  bgcolor: theme.palette.mode === 'light' ? "#f0f8ff" : "#1a2332",
+                  border: `1px solid ${theme.palette.mode === 'light' ? "#b3d9ff" : "#2d3748"}`,
                   borderRadius: "8px",
                 }}
               >
-                <Typography variant="subtitle2" fontWeight={600} sx={{ color: theme.palette.success.main, mb: 2 }}>
-                  ✅ Factura Seleccionada
+                <Typography variant="h6" sx={{ color: "text.primary", mb: 1 }}>
+                  Factura Encontrada
                 </Typography>
                 <Stack spacing={1}>
-                  <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-                    <strong style={{ color: theme.palette.text.primary }}>Folio:</strong> {selectedFactura.folio}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-                    <strong style={{ color: theme.palette.text.primary }}>Proveedor:</strong> {selectedFactura.proveedor}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-                    <strong style={{ color: theme.palette.text.primary }}>Monto:</strong> ${selectedFactura.monto?.toLocaleString()}
-                  </Typography>
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>Folio:</Typography>
+                    <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
+                      {facturaEncontrada.folio}
+                    </Typography>
+                  </Box>
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>Proveedor:</Typography>
+                    <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
+                      {facturaEncontrada.proveedor}
+                    </Typography>
+                  </Box>
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>Monto Factura:</Typography>
+                    <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
+                      ${facturaEncontrada.monto.toLocaleString()}
+                    </Typography>
+                  </Box>
                 </Stack>
               </Paper>
             )}
+
+            <TextField
+              fullWidth
+              label="Monto a Pagar (Opcional)"
+              value={montoPagado}
+              onChange={(e) => setMontoPagado(e.target.value)}
+              placeholder="Dejar vacío para usar monto de factura"
+              margin="normal"
+              disabled={loading || !facturaEncontrada}
+              type="number"
+              inputProps={{
+                min: 0,
+                step: 1,
+              }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
+                  color: theme.palette.text.primary,
+                  "& fieldset": {
+                    borderColor: theme.palette.divider,
+                  },
+                  "&:hover fieldset": {
+                    borderColor: theme.palette.text.primary,
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: theme.palette.primary.main,
+                  },
+                },
+                "& .MuiInputLabel-root": {
+                  color: theme.palette.text.secondary,
+                  "&.Mui-focused": {
+                    color: theme.palette.primary.main,
+                  },
+                },
+                input: {
+                  color: theme.palette.text.primary,
+                },
+              }}
+              InputLabelProps={{ style: { color: theme.palette.text.secondary } }}
+              helperText={<span style={{ color: theme.palette.text.secondary }}>Si se deja vacío, se usará el monto de la factura</span>}
+            />
           </Box>
         </DialogContent>
         
         <DialogActions sx={{ p: 3, pt: 0 }}>
-          <Button 
-            onClick={handleClose} 
+          <Button
+            onClick={handleClose}
             disabled={loading}
             sx={{
               color: theme.palette.text.secondary,
@@ -327,10 +322,9 @@ export function AsignarChequeModal({
           <Button
             type="submit"
             variant="contained"
-            disabled={loading || !selectedFacturaId || facturas.length === 0}
-            startIcon={loading ? <CircularProgress size={16} /> : null}
+            disabled={loading || !facturaEncontrada}
             sx={{
-              bgcolor: theme.palette.warning.main,
+              bgcolor: theme.palette.primary.main,
               color: theme.palette.mode === 'light' ? "#000" : "#000",
               px: 4,
               py: 1.5,
@@ -340,7 +334,7 @@ export function AsignarChequeModal({
               fontWeight: 600,
               boxShadow: "none",
               "&:hover": {
-                bgcolor: theme.palette.warning.dark,
+                bgcolor: theme.palette.primary.dark,
                 boxShadow: "none",
               },
               "&:disabled": {
@@ -349,7 +343,11 @@ export function AsignarChequeModal({
               },
             }}
           >
-            {loading ? "Asignando..." : "Asignar Cheque"}
+            {loading ? (
+              <CircularProgress size={20} sx={{ color: "inherit" }} />
+            ) : (
+              "Asignar Cheque"
+            )}
           </Button>
         </DialogActions>
       </form>

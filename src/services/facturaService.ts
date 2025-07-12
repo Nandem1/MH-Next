@@ -47,3 +47,15 @@ export const getFacturas = async (
     throw new Error("No se pudieron cargar las facturas");
   }
 };
+
+// Nueva función para actualizar el monto de una factura
+export const actualizarMontoFactura = async (id: string, monto: number): Promise<void> => {
+  try {
+    await axios.put(`${API_URL}/api-beta/facturas/${id}/monto`, {
+      monto: monto,
+    });
+  } catch (error) {
+    console.error("Error actualizando monto de factura:", error);
+    throw new Error("No se pudo actualizar el monto de la factura");
+  }
+};

@@ -11,17 +11,25 @@ import {
   Button,
   Typography,
   Stack,
+  IconButton,
+  Tooltip,
+  useTheme,
+  Box,
+  CircularProgress,
 } from "@mui/material";
 import DoneIcon from "@mui/icons-material/Done";
 import PrintIcon from "@mui/icons-material/Print";
+import EditIcon from "@mui/icons-material/Edit";
 import { Factura } from "@/types/factura";
 import { formatearRut } from "@/utils/formatearRut";
+import { formatearMonto } from "@/utils/formatearMonto";
 
 interface FacturaTableDesktopProps {
   facturas: Factura[];
   onView: (factura: Factura) => void;
   onChangeEstado: (id: string) => void;
   onPrint: (factura: Factura) => void;
+  onEditarMonto: (factura: Factura) => void;
 }
 
 export function FacturaTableDesktop({
@@ -29,7 +37,10 @@ export function FacturaTableDesktop({
   onView,
   onChangeEstado,
   onPrint,
+  onEditarMonto,
 }: FacturaTableDesktopProps) {
+  const theme = useTheme();
+
   return (
     <TableContainer
       component={Paper}
@@ -50,6 +61,7 @@ export function FacturaTableDesktop({
             <TableCell align="center">Proveedor</TableCell>
             <TableCell align="center">Local</TableCell>
             <TableCell align="center">Estado</TableCell>
+            <TableCell align="center">Monto</TableCell>
             <TableCell align="center">Fecha Ingreso</TableCell>
             <TableCell align="center">Acciones</TableCell>
           </TableRow>
@@ -87,6 +99,45 @@ export function FacturaTableDesktop({
                 <Typography variant="body2" noWrap>
                   {factura.estado}
                 </Typography>
+              </TableCell>
+
+              {/* Monto con ícono de editar */}
+              <TableCell align="center">
+                <Box sx={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {factura.isUpdating ? (
+                    <CircularProgress size={16} />
+                  ) : (
+                    <Typography variant="body2" fontWeight={500} noWrap>
+                      {formatearMonto(factura.monto)}
+                    </Typography>
+                  )}
+                  <Tooltip title="Editar monto">
+                    <IconButton
+                      size="small"
+                      onClick={() => onEditarMonto(factura)}
+                      disabled={factura.isUpdating}
+                      sx={{
+                        position: "absolute",
+                        right: -12,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        ml: 3,
+                        width: 24,
+                        height: 24,
+                        color: theme.palette.primary.main,
+                        "&:hover": {
+                          bgcolor: theme.palette.primary.light,
+                          color: theme.palette.primary.contrastText,
+                        },
+                        "& .MuiSvgIcon-root": {
+                          fontSize: "0.875rem",
+                        },
+                      }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               </TableCell>
 
               <TableCell align="center">

@@ -5,9 +5,11 @@ import { FacturaCard } from "./FacturaCard";
 import { FacturaTableDesktop } from "./FacturaTableDesktop";
 import { ViewFacturaModal } from "./ViewFacturaModal";
 import { ConfirmChangeEstadoModal } from "./ConfirmChangeEstadoModal";
-import { Box, Skeleton, Typography, Container } from "@mui/material";
+import { EditarMontoModal } from "./EditarMontoModal";
+import { Box, Skeleton, Typography, Container, Snackbar, Alert } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
+import { useActualizarMontoFactura } from "@/hooks/useFacturas";
 
 interface FacturaTableProps {
   facturas: Factura[];
@@ -21,6 +23,7 @@ export function FacturaTable({
   error,
 }: FacturaTableProps) {
   const isMobile = useResponsive("(max-width:600px)");
+  const actualizarMontoMutation = useActualizarMontoFactura();
 
   // Forzar recálculo de layout al montar
   useEffect(() => {
@@ -30,6 +33,13 @@ export function FacturaTable({
   const [openViewModal, setOpenViewModal] = useState(false);
   const [selectedFactura, setSelectedFactura] = useState<Factura | null>(null);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
+  const [openEditarMontoModal, setOpenEditarMontoModal] = useState(false);
+  const [facturaParaEditar, setFacturaParaEditar] = useState<Factura | null>(null);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
   const handleOpenViewModal = (factura: Factura) => {
     setSelectedFactura(factura);
@@ -50,9 +60,59 @@ export function FacturaTable({
   };
 
   const handleConfirmChangeEstado = () => {
-
+    // TODO: Implementar cambio de estado
     handleCloseConfirmModal();
   };
+
+  const handleOpenEditarMontoModal = (factura: Factura) => {
+    setFacturaParaEditar(factura);
+    setOpenEditarMontoModal(true);
+  };
+
+  const handleCloseEditarMontoModal = () => {
+    setFacturaParaEditar(null);
+    setOpenEditarMontoModal(false);
+  };
+
+  const handleEditarMonto = async (monto: number) => {
+    if (!facturaParaEditar) return;
+    
+    try {
+      // Cerrar el modal inmediatamente (optimistic update ya actualizó la UI)
+      handleCloseEditarMontoModal();
+      
+      // Ejecutar la mutación en background (sin await)
+      actualizarMontoMutation.mutate({ 
+        id: facturaParaEditar.id, 
+        monto 
+      });
+    } catch (error) {
+      console.error("Error al actualizar monto:", error);
+      // El modal manejará el error automáticamente
+      throw error;
+    }
+  };
+
+  // Verificar si se está actualizando alguna factura
+  const isUpdating = actualizarMontoMutation.isPending;
+
+  // Manejar estados de la mutación
+  useEffect(() => {
+    if (actualizarMontoMutation.isSuccess) {
+      setSnackbar({
+        open: true,
+        message: 'Monto actualizado correctamente',
+        severity: 'success'
+      });
+    }
+    if (actualizarMontoMutation.isError) {
+      setSnackbar({
+        open: true,
+        message: 'Error al actualizar monto',
+        severity: 'error'
+      });
+    }
+  }, [actualizarMontoMutation.isSuccess, actualizarMontoMutation.isError]);
 
   const handlePrint = (factura: Factura) => {
     if (!factura) return;
@@ -159,6 +219,7 @@ export function FacturaTable({
               factura={factura}
               onView={() => handleOpenViewModal(factura)}
               onPrint={() => handlePrint(factura)}
+              onEditarMonto={() => handleOpenEditarMontoModal(factura)}
             />
           ))}
         </Box>
@@ -168,6 +229,7 @@ export function FacturaTable({
           onView={handleOpenViewModal}
           onChangeEstado={handleOpenConfirmModal}
           onPrint={handlePrint}
+          onEditarMonto={handleOpenEditarMontoModal}
         />
       )}
 
@@ -182,6 +244,26 @@ export function FacturaTable({
         onClose={handleCloseConfirmModal}
         onConfirm={handleConfirmChangeEstado}
       />
+
+      <EditarMontoModal
+        open={openEditarMontoModal}
+        onClose={handleCloseEditarMontoModal}
+        onSubmit={handleEditarMonto}
+        montoActual={facturaParaEditar?.monto}
+        titulo={`Factura ${facturaParaEditar?.folio} - ${facturaParaEditar?.proveedor}`}
+        loading={isUpdating}
+      />
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+      >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

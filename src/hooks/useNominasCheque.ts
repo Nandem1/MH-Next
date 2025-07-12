@@ -1,5 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import { NominaCheque, CrearNominaChequeRequest, FiltroNominas, TrackingEnvio } from "@/types/nominaCheque";
+import { 
+  NominaCheque, 
+  CrearNominaChequeRequest, 
+  CrearChequeRequest,
+  AsignarChequeRequest,
+  MarcarPagadoRequest,
+  FiltroNominas, 
+  TrackingEnvio 
+} from "@/types/nominaCheque";
 import { nominaChequeService } from "@/services/nominaChequeService";
 import { mockNominasCheque, mockFacturasDisponibles } from "@/data/nominasChequeMock";
 import { useAuthStatus } from "@/hooks/useAuthStatus";
@@ -128,6 +136,7 @@ export const useNominasCheque = () => {
             id: `track-${mockNominasCheque.length + 1}`,
             estado: "EN_ORIGEN",
             localOrigen: request.local,
+            localDestino: "BALMACEDA 599",
           },
           cheques: Array.from({ length: 10 }, (_, i) => ({
             id: `${mockNominasCheque.length + 1}-${i + 1}`,
@@ -180,14 +189,15 @@ export const useNominasCheque = () => {
             recibidoPor: trackingData.estado === "RECIBIDA" ? usuario?.nombre : nomina.trackingEnvio.recibidoPor,
           };
         } else {
-          nomina.trackingEnvio = {
-            id: `track-${nominaId}`,
-            estado: trackingData.estado || "EN_ORIGEN",
-            localOrigen: nomina.local,
-            ...trackingData,
-            enviadoPor: trackingData.estado === "EN_TRANSITO" ? usuario?.nombre : undefined,
-            recibidoPor: trackingData.estado === "RECIBIDA" ? usuario?.nombre : undefined,
-          };
+                  nomina.trackingEnvio = {
+          id: `track-${nominaId}`,
+          estado: trackingData.estado || "EN_ORIGEN",
+          localOrigen: nomina.local,
+          localDestino: "BALMACEDA 599",
+          ...trackingData,
+          enviadoPor: trackingData.estado === "EN_TRANSITO" ? usuario?.nombre : undefined,
+          recibidoPor: trackingData.estado === "RECIBIDA" ? usuario?.nombre : undefined,
+        };
         }
         
         // Actualizar estado local
@@ -212,8 +222,56 @@ export const useNominasCheque = () => {
     }
   }, [selectedNomina?.id, loadNomina, loadNominas, usuario?.nombre]);
 
-  // Asignar cheque a factura
-  const asignarCheque = useCallback(async (nominaId: string, chequeId: string, facturaId: string) => {
+  // Crear cheque manualmente
+  const crearCheque = useCallback(async (request: CrearChequeRequest) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      if (USE_MOCK_DATA) {
+        // Simular delay de red
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Crear nuevo cheque mock
+        const nuevoCheque = {
+          id: `cheque-${Date.now()}`,
+          numeroCorrelativo: request.numeroCorrelativo,
+          estado: "DISPONIBLE" as const,
+        };
+        
+        // Si se especifica una nómina, agregarlo a esa nómina
+        if (request.nominaId) {
+          const nominaIndex = mockNominasCheque.findIndex(n => n.id === request.nominaId);
+          if (nominaIndex !== -1) {
+            mockNominasCheque[nominaIndex].cheques.push(nuevoCheque);
+            mockNominasCheque[nominaIndex].totalCheques += 1;
+            mockNominasCheque[nominaIndex].chequesDisponibles += 1;
+          }
+        }
+        
+        // Actualizar estado local
+        setNominas(prev => [...prev]);
+        return nuevoCheque;
+      } else {
+        const nuevoCheque = await nominaChequeService.crearCheque(request);
+        
+        // Si se asignó a una nómina, actualizar la lista
+        if (request.nominaId) {
+          await loadNominas();
+        }
+        
+        return nuevoCheque;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al crear cheque");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [loadNominas]);
+
+  // Asignar cheque a factura por folio
+  const asignarCheque = useCallback(async (nominaId: string, chequeId: string, request: AsignarChequeRequest) => {
     try {
       setError(null);
       
@@ -233,8 +291,8 @@ export const useNominasCheque = () => {
           throw new Error("Cheque no encontrado");
         }
         
-        // Encontrar la factura
-        const factura = mockFacturasDisponibles.find(f => f.id === facturaId);
+        // Simular búsqueda de factura por folio
+        const factura = mockFacturasDisponibles.find(f => f.folio === request.facturaFolio);
         if (!factura) {
           throw new Error("Factura no encontrada");
         }
@@ -243,6 +301,8 @@ export const useNominasCheque = () => {
         nomina.cheques[chequeIndex] = {
           ...nomina.cheques[chequeIndex],
           estado: "ASIGNADO",
+          proveedor: factura.proveedor,
+          montoPagado: request.montoPagado || factura.monto,
           facturaAsociada: {
             id: factura.id,
             folio: factura.folio,
@@ -255,8 +315,8 @@ export const useNominasCheque = () => {
         };
         
         // Actualizar contadores
-        nomina.chequesDisponibles--;
-        nomina.chequesAsignados++;
+        nomina.chequesDisponibles -= 1;
+        nomina.chequesAsignados += 1;
         
         // Actualizar estado local
         setNominas(prev => [...prev]);
@@ -264,7 +324,7 @@ export const useNominasCheque = () => {
           setSelectedNomina({ ...nomina });
         }
       } else {
-        await nominaChequeService.asignarCheque(nominaId, chequeId, facturaId);
+        await nominaChequeService.asignarCheque(nominaId, chequeId, request);
         
         // Actualizar la nómina seleccionada si es la misma
         if (selectedNomina?.id === nominaId) {
@@ -280,8 +340,8 @@ export const useNominasCheque = () => {
     }
   }, [selectedNomina?.id, loadNomina, loadNominas]);
 
-  // Marcar cheque como pagado
-  const marcarChequePagado = useCallback(async (nominaId: string, chequeId: string) => {
+  // Marcar cheque como pagado con monto y fecha
+  const marcarChequePagado = useCallback(async (nominaId: string, chequeId: string, request: MarcarPagadoRequest) => {
     try {
       setError(null);
       
@@ -301,21 +361,22 @@ export const useNominasCheque = () => {
           throw new Error("Cheque no encontrado");
         }
         
+        const cheque = nomina.cheques[chequeIndex];
+        if (cheque.estado !== "ASIGNADO") {
+          throw new Error("Solo se pueden marcar como pagados cheques asignados");
+        }
+        
         // Actualizar el cheque
         nomina.cheques[chequeIndex] = {
-          ...nomina.cheques[chequeIndex],
+          ...cheque,
           estado: "PAGADO",
-          fechaPago: new Date().toISOString(),
+          montoPagado: request.montoPagado,
+          fechaPago: request.fechaPago,
         };
         
         // Actualizar contadores
-        nomina.chequesAsignados--;
-        nomina.chequesPagados++;
-        
-        // Verificar si la nómina está completa
-        if (nomina.chequesPagados === nomina.totalCheques) {
-          nomina.estado = "COMPLETADA";
-        }
+        nomina.chequesAsignados -= 1;
+        nomina.chequesPagados += 1;
         
         // Actualizar estado local
         setNominas(prev => [...prev]);
@@ -323,7 +384,7 @@ export const useNominasCheque = () => {
           setSelectedNomina({ ...nomina });
         }
       } else {
-        await nominaChequeService.marcarChequePagado(nominaId, chequeId);
+        await nominaChequeService.marcarChequePagado(nominaId, chequeId, request);
         
         // Actualizar la nómina seleccionada si es la misma
         if (selectedNomina?.id === nominaId) {
@@ -375,6 +436,7 @@ export const useNominasCheque = () => {
     loadNominas,
     loadNomina,
     crearNomina,
+    crearCheque,
     asignarCheque,
     marcarChequePagado,
     actualizarTracking,
