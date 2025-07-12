@@ -1,6 +1,7 @@
 // src/types/factura.d.ts
 
 export interface FacturaResponse {
+  id: number; // ID real de la base de datos (ahora siempre incluido)
   folio: string;
   proveedor: string;
   image_url: string;
@@ -9,8 +10,8 @@ export interface FacturaResponse {
   nombre_local: string;
   nombre_usuario: string;
   rut_proveedor?: string;
+  monto?: number; // Campo real del monto desde el backend
 }
-
 
 export interface Factura {
   id: string;
@@ -23,4 +24,7 @@ export interface Factura {
   image_url_cloudinary: string;
   nombre_usuario: string;
   rut_proveedor?: string;
+  monto?: number; // Nuevo campo para el monto
+  isUpdating?: boolean; // Estado de actualización
+  pendingMonto?: number; // Monto pendiente de confirmación
 }

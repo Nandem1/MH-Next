@@ -1,4 +1,5 @@
 export interface NotaCreditoResponse {
+  id: number; // ID real de la base de datos (ahora siempre incluido)
   folio_nc: string;
   folio_factura_referenciada: string;
   factura_image_url: string;
@@ -16,6 +17,8 @@ export interface NotaCreditoResponse {
   proveedor: string;
   rut_proveedor: string;
   nombre_usuario: string;
+  monto?: number; // Campo real del monto de la NC desde el backend
+  factura_monto?: number; // Campo real del monto de la factura referenciada
 }
 
 export interface NotaCredito {
@@ -29,11 +32,15 @@ export interface NotaCredito {
   image_url_cloudinary: string;
   nombre_usuario: string;
   rut_proveedor?: string;
+  monto?: number; // Nuevo campo para el monto
+  isUpdating?: boolean; // Estado de actualización
+  pendingMonto?: number; // Monto pendiente de confirmación
   facturaAsociada?: {
     folio: string;
     proveedor: string;
     estado: string;
     fechaIngreso: string;
     image_url_cloudinary: string;
+    monto?: number; // Nuevo campo para el monto de la factura asociada
   };
 } 

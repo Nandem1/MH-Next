@@ -14,13 +14,18 @@ import {
   IconButton,
   Collapse,
   Box,
+  Tooltip,
+  useTheme,
+  CircularProgress,
 } from "@mui/material";
 import DoneIcon from "@mui/icons-material/Done";
 import PrintIcon from "@mui/icons-material/Print";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import EditIcon from "@mui/icons-material/Edit";
 import { NotaCredito } from "@/types/notaCredito";
 import { formatearRut } from "@/utils/formatearRut";
+import { formatearMonto } from "@/utils/formatearMonto";
 import { useState } from "react";
 
 interface NotaCreditoTableDesktopProps {
@@ -34,6 +39,7 @@ interface NotaCreditoTableDesktopProps {
   onPrintFacturaAsociada: (
     facturaAsociada: NotaCredito["facturaAsociada"]
   ) => void;
+  onEditarMonto: (notaCredito: NotaCredito) => void;
 }
 
 export function NotaCreditoTableDesktop({
@@ -43,8 +49,10 @@ export function NotaCreditoTableDesktop({
   onViewFacturaAsociada,
   onPrint,
   onPrintFacturaAsociada,
+  onEditarMonto,
 }: NotaCreditoTableDesktopProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const theme = useTheme();
 
   const handleRowClick = (id: string) => {
     const newExpandedRows = new Set(expandedRows);
@@ -79,6 +87,7 @@ export function NotaCreditoTableDesktop({
             <TableCell align="center">Proveedor</TableCell>
             <TableCell align="center">Local</TableCell>
             <TableCell align="center">Estado</TableCell>
+            <TableCell align="center">Monto</TableCell>
             <TableCell align="center">Fecha Ingreso</TableCell>
             <TableCell align="center">Acciones</TableCell>
           </TableRow>
@@ -120,7 +129,11 @@ export function NotaCreditoTableDesktop({
                   )}
                 </TableCell>
 
-                <TableCell align="center">{notaCredito.folio}</TableCell>
+                <TableCell align="center">
+                  <Typography variant="body2" fontWeight={500} noWrap>
+                    {notaCredito.folio}
+                  </Typography>
+                </TableCell>
 
                 {/* Proveedor + Rut */}
                 <TableCell align="center">
@@ -150,6 +163,48 @@ export function NotaCreditoTableDesktop({
                   <Typography variant="body2" noWrap>
                     {notaCredito.estado}
                   </Typography>
+                </TableCell>
+
+                {/* Monto con ícono de editar */}
+                <TableCell align="center">
+                                                  <Box sx={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {notaCredito.isUpdating ? (
+                    <CircularProgress size={16} />
+                  ) : (
+                    <Typography variant="body2" fontWeight={500} noWrap>
+                      {formatearMonto(notaCredito.monto)}
+                    </Typography>
+                  )}
+                  <Tooltip title="Editar monto">
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditarMonto(notaCredito);
+                      }}
+                      disabled={notaCredito.isUpdating}
+                      sx={{
+                        position: "absolute",
+                        right: -12,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        ml: 3,
+                        width: 24,
+                        height: 24,
+                        color: theme.palette.primary.main,
+                        "&:hover": {
+                          bgcolor: theme.palette.primary.light,
+                          color: theme.palette.primary.contrastText,
+                        },
+                        "& .MuiSvgIcon-root": {
+                          fontSize: "0.875rem",
+                        },
+                      }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
                 </TableCell>
 
                 <TableCell align="center">
@@ -201,12 +256,12 @@ export function NotaCreditoTableDesktop({
                 </TableCell>
               </TableRow>
 
-              {/* Row expandible con factura asociada */}
+              {/* Fila expandible con factura asociada */}
               {notaCredito.facturaAsociada && (
                 <TableRow>
                   <TableCell
                     style={{ paddingBottom: 0, paddingTop: 0 }}
-                    colSpan={7}
+                    colSpan={8}
                   >
                     <Collapse
                       in={isExpanded(notaCredito.id)}
@@ -228,6 +283,7 @@ export function NotaCreditoTableDesktop({
                               <TableCell align="center">Folio</TableCell>
                               <TableCell align="center">Proveedor</TableCell>
                               <TableCell align="center">Estado</TableCell>
+                              <TableCell align="center">Monto</TableCell>
                               <TableCell align="center">Fecha</TableCell>
                               <TableCell align="center">Acciones</TableCell>
                             </TableRow>
@@ -247,6 +303,11 @@ export function NotaCreditoTableDesktop({
                               <TableCell align="center">
                                 <Typography variant="body2">
                                   {notaCredito.facturaAsociada.estado}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="center">
+                                <Typography variant="body2" fontWeight={500}>
+                                  {formatearMonto(notaCredito.facturaAsociada.monto)}
                                 </Typography>
                               </TableCell>
                               <TableCell align="center">

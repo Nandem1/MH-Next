@@ -9,73 +9,62 @@ import {
   Box,
   Stack,
   Divider,
-  Collapse,
   IconButton,
+  Tooltip,
+  useTheme,
+  CircularProgress,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PrintIcon from "@mui/icons-material/Print";
+import EditIcon from "@mui/icons-material/Edit";
 import { NotaCredito } from "@/types/notaCredito";
 import { formatearRut } from "@/utils/formatearRut";
-import { useState } from "react";
+import { formatearMonto } from "@/utils/formatearMonto";
 
 interface NotaCreditoCardProps {
   notaCredito: NotaCredito;
   onView: () => void;
   onPrint: () => void;
-  onPrintFacturaAsociada?: () => void;
-  onViewFacturaAsociada?: (facturaAsociada: NotaCredito['facturaAsociada']) => void;
+  onPrintFacturaAsociada: () => void;
+  onViewFacturaAsociada: () => void;
+  onEditarMonto: () => void;
 }
 
-export function NotaCreditoCard({ notaCredito, onView, onPrint, onPrintFacturaAsociada, onViewFacturaAsociada }: NotaCreditoCardProps) {
-  const [expanded, setExpanded] = useState(false);
-
-  const handleExpandClick = () => {
-    setExpanded(!expanded);
-  };
+export function NotaCreditoCard({
+  notaCredito,
+  onView,
+  onPrint,
+  onPrintFacturaAsociada,
+  onViewFacturaAsociada,
+  onEditarMonto,
+}: NotaCreditoCardProps) {
+  const theme = useTheme();
 
   return (
     <Card
       sx={{
+        width: "100%",
         backgroundColor: "background.paper",
-        borderRadius: 2,
         border: "1px solid",
         borderColor: "divider",
-        display: "flex",
-        flexDirection: "column",
-        width: "100%",
-        maxWidth: 600,
-        mx: "auto",
+        borderRadius: 2,
+        overflow: "hidden",
       }}
     >
       <CardMedia
         component="img"
+        height="200"
         image={notaCredito.image_url_cloudinary}
-        alt={`Imagen nota de crédito folio ${notaCredito.folio} - ${notaCredito.proveedor}`}
-        onLoad={() => window.dispatchEvent(new Event("resize"))}
-        sx={{
-          height: { xs: 180, sm: 200, md: 220 },
-          objectFit: "cover",
-          objectPosition: "top",
-          backgroundColor: "#1e1e1e",
-          borderTopLeftRadius: 8,
-          borderTopRightRadius: 8,
-        }}
+        alt={`Nota de crédito ${notaCredito.folio}`}
+        sx={{ objectFit: "cover" }}
       />
-
-      <CardContent sx={{ flexGrow: 1, px: { xs: 2, sm: 3 }, pb: 2 }}>
-        <Stack spacing={1} height="100%">
+      <CardContent sx={{ p: 2 }}>
+        <Stack spacing={2}>
+          {/* Header */}
           <Box>
-            <Typography
-              variant="subtitle1"
-              fontWeight="bold"
-              sx={{
-                wordBreak: "break-word",
-                hyphens: "auto",
-                lineHeight: 1.25,
-                maxHeight: { xs: 48, sm: 56 },
-                overflow: "hidden",
-              }}
-            >
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              Folio: {notaCredito.folio}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
               {notaCredito.proveedor}
             </Typography>
             <Typography variant="caption" color="text.secondary">
@@ -85,124 +74,172 @@ export function NotaCreditoCard({ notaCredito, onView, onPrint, onPrintFacturaAs
 
           <Divider />
 
-          <Box>
-            <Typography variant="body2">
-              <strong>Folio:</strong> {notaCredito.folio}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Local:</strong> {notaCredito.local}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Subido por: {notaCredito.nombre_usuario}
-            </Typography>
-          </Box>
-
-          <Divider />
-
-          <Box>
-            <Typography variant="body2">
-              <strong>Estado:</strong> {notaCredito.estado}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Fecha:</strong>{" "}
-              {new Date(notaCredito.fechaIngreso).toLocaleDateString()}
-            </Typography>
-          </Box>
-
-          {/* Botón de expandir si hay factura asociada */}
-          {notaCredito.facturaAsociada && (
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <Typography variant="body2" color="primary" fontWeight={500}>
-                📄 Tiene factura asociada
+          {/* Información */}
+          <Stack spacing={1}>
+            <Box display="flex" alignItems="center">
+              <Typography variant="body2" color="text.secondary">
+                Local:
               </Typography>
-              <IconButton
-                onClick={handleExpandClick}
-                sx={{
-                  transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.3s',
-                }}
-              >
-                <ExpandMoreIcon />
-              </IconButton>
+              <Typography variant="body2" fontWeight={500} sx={{ ml: 1 }}>
+                {notaCredito.local}
+              </Typography>
             </Box>
-          )}
 
-          {/* Contenido expandible con factura asociada */}
+            <Box display="flex" alignItems="center">
+              <Typography variant="body2" color="text.secondary">
+                Estado:
+              </Typography>
+              <Typography variant="body2" fontWeight={500} sx={{ ml: 1 }}>
+                {notaCredito.estado}
+              </Typography>
+            </Box>
+
+            {/* Monto con ícono de editar */}
+            <Box display="flex" alignItems="center">
+              <Typography variant="body2" color="text.secondary">
+                Monto:
+              </Typography>
+              {notaCredito.isUpdating ? (
+                <CircularProgress size={16} sx={{ ml: 1 }} />
+              ) : (
+                <Typography variant="body2" fontWeight={500} sx={{ ml: 1 }}>
+                  {formatearMonto(notaCredito.monto)}
+                </Typography>
+              )}
+              <Tooltip title="Editar monto">
+                <IconButton
+                  size="small"
+                  onClick={onEditarMonto}
+                  disabled={notaCredito.isUpdating}
+                  sx={{
+                    ml: 1,
+                    width: 24,
+                    height: 24,
+                    color: theme.palette.primary.main,
+                    "&:hover": {
+                      bgcolor: theme.palette.primary.light,
+                      color: theme.palette.primary.contrastText,
+                    },
+                    "& .MuiSvgIcon-root": {
+                      fontSize: "0.875rem",
+                    },
+                  }}
+                >
+                  <EditIcon />
+                </IconButton>
+              </Tooltip>
+            </Box>
+
+            <Box display="flex" alignItems="center">
+              <Typography variant="body2" color="text.secondary">
+                Fecha:
+              </Typography>
+              <Typography variant="body2" fontWeight={500} sx={{ ml: 1 }}>
+                {new Date(notaCredito.fechaIngreso).toLocaleDateString()}
+              </Typography>
+            </Box>
+
+            <Box display="flex" alignItems="center">
+              <Typography variant="body2" color="text.secondary">
+                Subido por:
+              </Typography>
+              <Typography variant="body2" fontWeight={500} sx={{ ml: 1 }}>
+                {notaCredito.nombre_usuario}
+              </Typography>
+            </Box>
+          </Stack>
+
+          {/* Factura Asociada */}
           {notaCredito.facturaAsociada && (
-            <Collapse in={expanded} timeout="auto" unmountOnExit>
-              <Box sx={{ mt: 2, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
-                <Typography variant="h6" gutterBottom color="primary">
+            <>
+              <Divider />
+              <Box>
+                <Typography variant="subtitle2" fontWeight={600} gutterBottom>
                   📄 Factura Asociada
                 </Typography>
                 <Stack spacing={1}>
-                  <Typography variant="body2">
-                    <strong>Folio:</strong> {notaCredito.facturaAsociada.folio}
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Proveedor:</strong> {notaCredito.facturaAsociada.proveedor}
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Estado:</strong> {notaCredito.facturaAsociada.estado}
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Fecha:</strong>{" "}
-                    {new Date(notaCredito.facturaAsociada.fechaIngreso).toLocaleDateString()}
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    size="small"
-                    onClick={() => {
-                      if (onViewFacturaAsociada) {
-                        onViewFacturaAsociada(notaCredito.facturaAsociada);
-                      }
-                    }}
-                    sx={{ mt: 1 }}
-                  >
-                    Ver Factura
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    size="small"
-                    startIcon={<PrintIcon />}
-                    onClick={() => {
-                      if (onPrintFacturaAsociada) {
-                        onPrintFacturaAsociada();
-                      }
-                    }}
-                    sx={{ mt: 1 }}
-                  >
-                    Imprimir Factura
-                  </Button>
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="body2" color="text.secondary">
+                      Folio:
+                    </Typography>
+                    <Typography variant="body2" fontWeight={500}>
+                      {notaCredito.facturaAsociada.folio}
+                    </Typography>
+                  </Box>
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="body2" color="text.secondary">
+                      Proveedor:
+                    </Typography>
+                    <Typography variant="body2" fontWeight={500}>
+                      {notaCredito.facturaAsociada.proveedor}
+                    </Typography>
+                  </Box>
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="body2" color="text.secondary">
+                      Estado:
+                    </Typography>
+                    <Typography variant="body2" fontWeight={500}>
+                      {notaCredito.facturaAsociada.estado}
+                    </Typography>
+                  </Box>
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="body2" color="text.secondary">
+                      Monto:
+                    </Typography>
+                    <Typography variant="body2" fontWeight={500}>
+                      {formatearMonto(notaCredito.facturaAsociada.monto)}
+                    </Typography>
+                  </Box>
                 </Stack>
               </Box>
-            </Collapse>
+            </>
           )}
 
-          <Box sx={{ mt: "auto" }}>
+          <Divider />
+
+          {/* Acciones */}
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              onClick={onView}
+              sx={{ textTransform: "none" }}
+            >
+              Ver Nota de Crédito
+            </Button>
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={onPrint}
+              sx={{ textTransform: "none" }}
+            >
+              <PrintIcon fontSize="small" />
+            </Button>
+          </Stack>
+
+          {/* Acciones de factura asociada */}
+          {notaCredito.facturaAsociada && (
             <Stack direction="row" spacing={1}>
               <Button
-                onClick={onView}
-                size="small"
-                variant="contained"
+                variant="outlined"
                 color="primary"
-                sx={{ flex: 1, borderRadius: 2 }}
+                fullWidth
+                onClick={onViewFacturaAsociada}
+                sx={{ textTransform: "none" }}
               >
-                Ver Nota de Crédito
+                Ver Factura Asociada
               </Button>
               <Button
-                onClick={onPrint}
-                size="small"
-                variant="contained"
-                color="primary"
-                startIcon={<PrintIcon />}
-                sx={{ borderRadius: 2 }}
+                variant="outlined"
+                color="secondary"
+                onClick={onPrintFacturaAsociada}
+                sx={{ textTransform: "none" }}
               >
-                Imprimir
+                <PrintIcon fontSize="small" />
               </Button>
             </Stack>
-          </Box>
+          )}
         </Stack>
       </CardContent>
     </Card>

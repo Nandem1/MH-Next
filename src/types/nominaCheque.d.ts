@@ -2,6 +2,9 @@ export interface Cheque {
   id: string;
   numeroCorrelativo: string;
   estado: "DISPONIBLE" | "ASIGNADO" | "PAGADO";
+  proveedor?: string; // Se obtiene de la factura asociada
+  montoPagado?: number; // Monto real pagado (puede ser diferente al de la factura)
+  fechaPago?: string; // Fecha manual del pago
   facturaAsociada?: {
     id: string;
     folio: string;
@@ -11,17 +14,15 @@ export interface Cheque {
     fechaIngreso: string;
   };
   fechaAsignacion?: string;
-  fechaPago?: string;
 }
 
 export interface TrackingEnvio {
   id: string;
-  estado: "EN_ORIGEN" | "EN_TRANSITO" | "RECIBIDA" | "ENTREGADA";
+  estado: "EN_ORIGEN" | "EN_TRANSITO" | "RECIBIDA";
   localOrigen: string;
-  localDestino?: string;
+  localDestino: string; // Siempre será "BALMACEDA 599"
   fechaEnvio?: string;
   fechaRecepcion?: string;
-  fechaEntrega?: string;
   observaciones?: string;
   enviadoPor?: string;
   recibidoPor?: string;
@@ -75,6 +76,9 @@ export interface ChequeResponse {
   id: string;
   numero_correlativo: string;
   estado: string;
+  proveedor?: string;
+  monto_pagado?: number;
+  fecha_pago?: string;
   factura_asociada?: {
     id: string;
     folio: string;
@@ -84,13 +88,27 @@ export interface ChequeResponse {
     fecha_ingreso: string;
   };
   fecha_asignacion?: string;
-  fecha_pago?: string;
 }
 
 export interface CrearNominaChequeRequest {
   nombre: string;
   correlativoInicial: string;
   local: string;
+}
+
+export interface CrearChequeRequest {
+  numeroCorrelativo: string;
+  nominaId?: string; // Opcional, se puede asignar después
+}
+
+export interface AsignarChequeRequest {
+  facturaFolio: string; // Buscar por folio en lugar de ID
+  montoPagado?: number;
+}
+
+export interface MarcarPagadoRequest {
+  montoPagado: number;
+  fechaPago: string;
 }
 
 export interface UsuarioAuth {

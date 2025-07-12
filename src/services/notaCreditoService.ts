@@ -45,4 +45,16 @@ export const getNotasCredito = async (
     console.error("Error obteniendo notas de crédito:", error);
     throw new Error("No se pudieron cargar las notas de crédito");
   }
+};
+
+// Nueva función para actualizar el monto de una nota de crédito
+export const actualizarMontoNotaCredito = async (id: string, monto: number): Promise<void> => {
+  try {
+    await axios.put(`${API_URL}/api-beta/notas-credito/${id}/monto`, {
+      monto: monto,
+    });
+  } catch (error) {
+    console.error("Error actualizando monto de nota de crédito:", error);
+    throw new Error("No se pudo actualizar el monto de la nota de crédito");
+  }
 }; 

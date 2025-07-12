@@ -1,4 +1,13 @@
-import { NominaCheque, NominaChequeResponse, ChequeResponse, CrearNominaChequeRequest, TrackingEnvio } from "@/types/nominaCheque";
+import { 
+  NominaCheque, 
+  NominaChequeResponse, 
+  ChequeResponse, 
+  CrearNominaChequeRequest, 
+  CrearChequeRequest,
+  AsignarChequeRequest,
+  MarcarPagadoRequest,
+  TrackingEnvio 
+} from "@/types/nominaCheque";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
@@ -18,18 +27,17 @@ const transformNominaResponse = (response: NominaChequeResponse): NominaCheque =
     chequesDisponibles: response.cheques_disponibles,
     chequesAsignados: response.cheques_asignados,
     chequesPagados: response.cheques_pagados,
-    trackingEnvio: response.tracking_envio ? {
-      id: response.tracking_envio.id,
-      estado: response.tracking_envio.estado as "EN_ORIGEN" | "EN_TRANSITO" | "RECIBIDA" | "ENTREGADA",
-      localOrigen: response.tracking_envio.local_origen,
-      localDestino: response.tracking_envio.local_destino,
-      fechaEnvio: response.tracking_envio.fecha_envio,
-      fechaRecepcion: response.tracking_envio.fecha_recepcion,
-      fechaEntrega: response.tracking_envio.fecha_entrega,
-      observaciones: response.tracking_envio.observaciones,
-      enviadoPor: response.tracking_envio.enviado_por,
-      recibidoPor: response.tracking_envio.recibido_por,
-    } : undefined,
+          trackingEnvio: response.tracking_envio ? {
+        id: response.tracking_envio.id,
+        estado: response.tracking_envio.estado as "EN_ORIGEN" | "EN_TRANSITO" | "RECIBIDA",
+        localOrigen: response.tracking_envio.local_origen,
+        localDestino: response.tracking_envio.local_destino || "BALMACEDA 599",
+        fechaEnvio: response.tracking_envio.fecha_envio,
+        fechaRecepcion: response.tracking_envio.fecha_recepcion,
+        observaciones: response.tracking_envio.observaciones,
+        enviadoPor: response.tracking_envio.enviado_por,
+        recibidoPor: response.tracking_envio.recibido_por,
+      } : undefined,
   };
 };
 
@@ -142,8 +150,34 @@ export const nominaChequeService = {
     }
   },
 
-  // Asignar cheque a factura
-  async asignarCheque(nominaId: string, chequeId: string, facturaId: string): Promise<void> {
+  // Crear cheque manualmente
+  async crearCheque(request: CrearChequeRequest): Promise<ChequeResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/cheques`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          numero_correlativo: request.numeroCorrelativo,
+          nomina_id: request.nominaId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al crear cheque");
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error creating cheque:", error);
+      throw error;
+    }
+  },
+
+  // Asignar cheque a factura por folio
+  async asignarCheque(nominaId: string, chequeId: string, request: AsignarChequeRequest): Promise<void> {
     try {
       const response = await fetch(`${API_BASE_URL}/nominas-cheque/${nominaId}/cheques/${chequeId}/asignar`, {
         method: "PUT",
@@ -151,7 +185,10 @@ export const nominaChequeService = {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ factura_id: facturaId }),
+        body: JSON.stringify({
+          factura_folio: request.facturaFolio,
+          monto_pagado: request.montoPagado,
+        }),
       });
 
       if (!response.ok) {
@@ -163,8 +200,8 @@ export const nominaChequeService = {
     }
   },
 
-  // Marcar cheque como pagado
-  async marcarChequePagado(nominaId: string, chequeId: string): Promise<void> {
+  // Marcar cheque como pagado con monto y fecha
+  async marcarChequePagado(nominaId: string, chequeId: string, request: MarcarPagadoRequest): Promise<void> {
     try {
       const response = await fetch(`${API_BASE_URL}/nominas-cheque/${nominaId}/cheques/${chequeId}/pagar`, {
         method: "PUT",
@@ -172,6 +209,10 @@ export const nominaChequeService = {
           "Content-Type": "application/json",
         },
         credentials: "include",
+        body: JSON.stringify({
+          monto_pagado: request.montoPagado,
+          fecha_pago: request.fechaPago,
+        }),
       });
 
       if (!response.ok) {
@@ -183,7 +224,45 @@ export const nominaChequeService = {
     }
   },
 
-  // Obtener facturas disponibles para asignar
+  // Buscar factura por folio (con debounce)
+  async buscarFacturaPorFolio(folio: string): Promise<{ id: string; folio: string; proveedor: string; monto: number } | null> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api-beta/facturas/${folio}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null; // Factura no encontrada
+        }
+        throw new Error("Error al buscar factura");
+      }
+
+      const data = await response.json();
+      
+      // La respuesta es un array, tomamos el primer elemento
+      if (Array.isArray(data) && data.length > 0) {
+        const factura = data[0];
+        return {
+          id: factura.id.toString(),
+          folio: factura.folio,
+          proveedor: factura.proveedor,
+          monto: 0, // El API no devuelve monto, se puede agregar después
+        };
+      }
+      
+      return null; // No se encontró la factura
+    } catch (error) {
+      console.error("Error fetching factura by folio:", error);
+      throw error;
+    }
+  },
+
+  // Obtener facturas disponibles para asignar (mantener para compatibilidad)
   async getFacturasDisponibles(): Promise<{ id: string; folio: string; proveedor: string; monto: number }[]> {
     try {
       const response = await fetch(`${API_BASE_URL}/facturas/disponibles`, {

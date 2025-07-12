@@ -12,7 +12,6 @@ import {
   DialogContent,
   DialogActions,
   Stack,
-  Chip,
   Container,
   Paper,
   useTheme,
@@ -23,11 +22,13 @@ import { useAuthStatus, locales } from "@/hooks/useAuthStatus";
 import { useNominasCheque } from "@/hooks/useNominasCheque";
 import { NominaChequeTable } from "@/components/dashboard/NominaChequeTable";
 import { NuevaNominaChequeModal } from "@/components/dashboard/NuevaNominaChequeModal";
+import { NuevoChequeModal } from "@/components/dashboard/NuevoChequeModal";
 import { AsignarChequeModal } from "@/components/dashboard/AsignarChequeModal";
+import { MarcarPagadoModal } from "@/components/dashboard/MarcarPagadoModal";
 import { FiltroNominas } from "@/components/dashboard/FiltroNominas";
 import { TrackingEnvioComponent } from "@/components/dashboard/TrackingEnvio";
 import Footer from "@/components/shared/Footer";
-import { NominaCheque, Cheque, TrackingEnvio } from "@/types/nominaCheque";
+import { NominaCheque, Cheque, TrackingEnvio, AsignarChequeRequest, MarcarPagadoRequest } from "@/types/nominaCheque";
 
 export default function NominasPage() {
   const theme = useTheme();
@@ -39,6 +40,7 @@ export default function NominasPage() {
     loading,
     error,
     crearNomina,
+    crearCheque,
     asignarCheque,
     marcarChequePagado,
     actualizarTracking,
@@ -47,7 +49,9 @@ export default function NominasPage() {
   } = useNominasCheque();
 
   const [modalNuevaNominaOpen, setModalNuevaNominaOpen] = useState(false);
+  const [modalNuevoChequeOpen, setModalNuevoChequeOpen] = useState(false);
   const [modalAsignarOpen, setModalAsignarOpen] = useState(false);
+  const [modalMarcarPagadoOpen, setModalMarcarPagadoOpen] = useState(false);
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
   const [selectedNomina, setSelectedNomina] = useState<NominaCheque | null>(null);
   const [selectedCheque, setSelectedCheque] = useState<{ nominaId: string; cheque: Cheque } | null>(null);
@@ -91,6 +95,19 @@ export default function NominasPage() {
     }
   };
 
+  const handleCrearCheque = async (request: { numeroCorrelativo: string; nominaId?: string }) => {
+    try {
+      await crearCheque(request);
+      setSnackbarMessage("Cheque creado exitosamente");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+    } catch (err) {
+      setSnackbarMessage(err instanceof Error ? err.message : "Error al crear cheque");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
+  };
+
   const handleViewNomina = (nomina: NominaCheque) => {
     setSelectedNomina(nomina);
     setModalDetalleOpen(true);
@@ -106,11 +123,11 @@ export default function NominasPage() {
     }
   };
 
-  const handleConfirmarAsignacion = async (facturaId: string) => {
+  const handleConfirmarAsignacion = async (request: AsignarChequeRequest) => {
     if (!selectedCheque) return;
     
     try {
-      await asignarCheque(selectedCheque.nominaId, selectedCheque.cheque.id, facturaId);
+      await asignarCheque(selectedCheque.nominaId, selectedCheque.cheque.id, request);
       setSnackbarMessage("Cheque asignado exitosamente");
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
@@ -121,9 +138,21 @@ export default function NominasPage() {
     }
   };
 
-  const handleMarcarPagado = async (nominaId: string, chequeId: string) => {
+  const handleMarcarPagado = (nominaId: string, chequeId: string) => {
+    const nomina = nominas.find(n => n.id === nominaId);
+    const cheque = nomina?.cheques.find(c => c.id === chequeId);
+    
+    if (nomina && cheque) {
+      setSelectedCheque({ nominaId, cheque });
+      setModalMarcarPagadoOpen(true);
+    }
+  };
+
+  const handleConfirmarMarcarPagado = async (request: MarcarPagadoRequest) => {
+    if (!selectedCheque) return;
+    
     try {
-      await marcarChequePagado(nominaId, chequeId);
+      await marcarChequePagado(selectedCheque.nominaId, selectedCheque.cheque.id, request);
       setSnackbarMessage("Cheque marcado como pagado");
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
@@ -241,99 +270,48 @@ export default function NominasPage() {
                 >
                   Este módulo está actualmente en desarrollo. La interfaz visual está casi completa, 
                   pero el backend aún no ha sido implementado. Las funcionalidades de crear nóminas, 
-                  asignar cheques y actualizar estados no funcionarán hasta que se complete el desarrollo del backend.
+                  crear cheques manualmente, asignar cheques y actualizar estados no funcionarán hasta que se complete el desarrollo del backend.
                 </Typography>
               </Box>
             </Stack>
           </Paper>
 
           <Typography 
-            variant="h3" 
-            fontWeight={700}
+            variant="h4" 
+            fontWeight={700} 
             sx={{ 
-              fontSize: { xs: "2rem", md: "2.5rem" },
-              color: "text.primary",
-              mb: 1,
-              letterSpacing: "-0.02em",
+              color: "text.primary", 
+              mb: 2,
+              textAlign: { xs: "center", md: "left" },
             }}
           >
-            Nóminas de Cheques
+            Gestión de Nóminas de Cheques
           </Typography>
+          
           <Typography 
             variant="body1" 
             sx={{ 
-              color: "text.secondary",
-              fontSize: "1.1rem",
-              lineHeight: 1.6,
-              maxWidth: "600px",
+              color: "text.secondary", 
+              mb: 4,
+              textAlign: { xs: "center", md: "left" },
             }}
           >
-            Gestiona el proceso digital de cheques físicos. Crea nóminas de 10 cheques correlativos 
-            y asígnalos a facturas para el control de pagos.
+            Administra las nóminas de cheques, crea cheques manualmente, asigna facturas y controla el estado de pagos
           </Typography>
-        </Box>
 
-        {/* Información del usuario */}
-        {usuario && (
-          <Paper 
-            elevation={0}
-            sx={{ 
-              mb: 4, 
-              p: 3, 
-              bgcolor: "background.paper",
-              border: `1px solid ${theme.palette.divider}`,
-              borderRadius: "12px",
-            }}
+          {/* Action Buttons */}
+          <Stack 
+            direction={{ xs: "column", sm: "row" }} 
+            spacing={2} 
+            sx={{ mb: 4 }}
+            justifyContent={{ xs: "center", md: "flex-start" }}
           >
-            <Stack direction="row" spacing={3} alignItems="center" flexWrap="wrap">
-              <Box>
-                <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
-                  Usuario
-                </Typography>
-                <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 500 }}>
-                  {usuario.nombre}
-                </Typography>
-              </Box>
-              <Box sx={{ width: "1px", height: "24px", bgcolor: "divider" }} />
-              <Box>
-                <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
-                  Local
-                </Typography>
-                <Chip
-                  label={usuario.local_nombre}
-                  size="small"
-                  sx={{
-                    bgcolor: theme.palette.mode === 'light' ? "#f0f0f0" : "#333",
-                    marginLeft: "8px",
-                    color: "text.primary",
-                    fontWeight: 500,
-                    border: `1px solid ${theme.palette.divider}`,
-                    "&:hover": {
-                      bgcolor: theme.palette.mode === 'light' ? "#e8e8e8" : "#444",
-                    },
-                  }}
-                />
-              </Box>
-            </Stack>
-          </Paper>
-        )}
-
-        {/* Filtros */}
-        <FiltroNominas
-          filtro={filtro}
-          onFiltroChange={setFiltro}
-          locales={locales.map(l => ({ id: l.id.toString(), nombre: l.nombre }))}
-        />
-
-        {/* Botón crear nómina */}
-        {esAdmin && (
-          <Box sx={{ mb: 4 }}>
             <Button
               variant="contained"
               onClick={() => setModalNuevaNominaOpen(true)}
-              disabled={loading}
+              disabled={!esAdmin}
               sx={{
-                bgcolor: "primary.main",
+                bgcolor: theme.palette.primary.main,
                 color: theme.palette.mode === 'light' ? "#000" : "#000",
                 px: 4,
                 py: 1.5,
@@ -343,87 +321,58 @@ export default function NominasPage() {
                 fontWeight: 600,
                 boxShadow: "none",
                 "&:hover": {
-                  bgcolor: "primary.dark",
+                  bgcolor: theme.palette.primary.dark,
                   boxShadow: "none",
                 },
                 "&:disabled": {
-                  bgcolor: "action.disabledBackground",
-                  color: "action.disabled",
+                  bgcolor: theme.palette.action.disabledBackground,
+                  color: theme.palette.action.disabled,
                 },
               }}
             >
-              Crear Nueva Nómina
+              Nueva Nómina
             </Button>
-          </Box>
-        )}
-
-        {/* Error */}
-        {error && (
-          <Alert 
-            severity="error" 
-            sx={{ 
-              mb: 4, 
-              borderRadius: "8px",
-              border: `1px solid ${theme.palette.error.light}`,
-              bgcolor: theme.palette.mode === 'light' ? "#fef2f2" : "#2d1b1b",
-              color: "error.main",
-            }} 
-            onClose={clearError}
-          >
-            {error}
-          </Alert>
-        )}
-
-        {/* Contenido principal */}
-        {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-            <CircularProgress size={32} />
-          </Box>
-        ) : nominas.length === 0 ? (
-          <Paper 
-            elevation={0}
-            sx={{ 
-              textAlign: "center", 
-              py: 8, 
-              bgcolor: "background.paper",
-              border: `1px solid ${theme.palette.divider}`,
-              borderRadius: "12px",
-            }}
-          >
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                color: "text.secondary", 
-                mb: 2,
-                fontWeight: 500,
+            
+            <Button
+              variant="outlined"
+              onClick={() => setModalNuevoChequeOpen(true)}
+              sx={{
+                borderColor: theme.palette.primary.main,
+                color: theme.palette.primary.main,
+                px: 4,
+                py: 1.5,
+                borderRadius: "8px",
+                textTransform: "none",
+                fontSize: "0.95rem",
+                fontWeight: 600,
+                "&:hover": {
+                  borderColor: theme.palette.primary.dark,
+                  bgcolor: theme.palette.primary.main,
+                  color: theme.palette.mode === 'light' ? "#000" : "#000",
+                },
               }}
             >
-              No hay nóminas que coincidan con los filtros
-            </Typography>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                color: "text.secondary",
-                maxWidth: "400px",
-                mx: "auto",
-              }}
-            >
-              {esAdmin 
-                ? "Crea tu primera nómina de cheques usando el botón de arriba"
-                : "Contacta a un administrador para crear nóminas de cheques"
-              }
-            </Typography>
-          </Paper>
-        ) : (
-          <NominaChequeTable
-            nominas={nominas}
-            onViewNomina={handleViewNomina}
-            onAsignarCheque={handleAsignarCheque}
-            onMarcarPagado={handleMarcarPagado}
-          />
-        )}
+              Nuevo Cheque
+            </Button>
+          </Stack>
+        </Box>
 
-        {/* Modales */}
+        {/* Filters */}
+        <FiltroNominas 
+          filtro={filtro} 
+          onFiltroChange={setFiltro} 
+          locales={locales}
+        />
+
+        {/* Content */}
+        <NominaChequeTable
+          nominas={nominas}
+          onViewNomina={handleViewNomina}
+          onAsignarCheque={handleAsignarCheque}
+          onMarcarPagado={handleMarcarPagado}
+        />
+
+        {/* Modals */}
         <NuevaNominaChequeModal
           open={modalNuevaNominaOpen}
           onClose={() => setModalNuevaNominaOpen(false)}
@@ -431,166 +380,85 @@ export default function NominasPage() {
           loading={loading}
         />
 
-        {selectedCheque && (
-          <AsignarChequeModal
-            open={modalAsignarOpen}
-            onClose={() => {
-              setModalAsignarOpen(false);
-              setSelectedCheque(null);
-            }}
-            onAsignar={handleConfirmarAsignacion}
-            numeroCheque={selectedCheque.cheque.numeroCorrelativo}
-            loading={loading}
-          />
-        )}
+        <NuevoChequeModal
+          open={modalNuevoChequeOpen}
+          onClose={() => setModalNuevoChequeOpen(false)}
+          onSubmit={handleCrearCheque}
+          loading={loading}
+          nominasDisponibles={nominas.map(n => ({ id: n.id.toString(), nombre: n.nombre }))}
+        />
 
-        {/* Modal Detalle de Nómina */}
+        <AsignarChequeModal
+          open={modalAsignarOpen}
+          onClose={() => setModalAsignarOpen(false)}
+          onAsignar={handleConfirmarAsignacion}
+          numeroCheque={selectedCheque?.cheque.numeroCorrelativo || ""}
+          loading={loading}
+        />
+
+        <MarcarPagadoModal
+          open={modalMarcarPagadoOpen}
+          onClose={() => setModalMarcarPagadoOpen(false)}
+          onSubmit={handleConfirmarMarcarPagado}
+          numeroCheque={selectedCheque?.cheque.numeroCorrelativo || ""}
+          montoFactura={selectedCheque?.cheque.facturaAsociada?.monto}
+          loading={loading}
+        />
+
+        {/* Detail Modal */}
         <Dialog
           open={modalDetalleOpen}
-          onClose={() => {
-            setModalDetalleOpen(false);
-            setSelectedNomina(null);
-          }}
+          onClose={() => setModalDetalleOpen(false)}
           maxWidth="lg"
           fullWidth
           PaperProps={{
             sx: {
               borderRadius: "12px",
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              bgcolor: "background.paper",
             }
           }}
         >
-          <DialogTitle sx={{ pb: 2 }}>
+          <DialogTitle>
             <Typography variant="h5" fontWeight={700} sx={{ color: "text.primary" }}>
-              Detalles de Nómina
-            </Typography>
-            <Typography variant="body1" sx={{ color: "text.secondary", mt: 1 }}>
-              {selectedNomina?.nombre}
+              Detalle de Nómina: {selectedNomina?.nombre}
             </Typography>
           </DialogTitle>
-          <DialogContent sx={{ pt: 0 }}>
+          <DialogContent>
             {selectedNomina && (
               <Box>
-                <Stack direction="row" spacing={4} sx={{ mb: 4, flexWrap: "wrap" }}>
-                  <Box>
-                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
-                      Local
-                    </Typography>
-                    <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 500 }}>
-                      {getLocalNombre(selectedNomina.local)}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
-                      Correlativos
-                    </Typography>
-                    <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 500 }}>
-                      {selectedNomina.correlativoInicial} - {selectedNomina.correlativoFinal}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
-                      Estado
-                    </Typography>
-                    <Chip
-                      label={selectedNomina.estado}
-                      size="small"
-                      sx={{
-                        bgcolor: selectedNomina.estado === "ACTIVA" ? "success.light" : 
-                                selectedNomina.estado === "COMPLETADA" ? "primary.light" : "error.light",
-                        color: selectedNomina.estado === "ACTIVA" ? "success.dark" : 
-                               selectedNomina.estado === "COMPLETADA" ? "primary.dark" : "error.dark",
-                        fontWeight: 600,
-                        border: "1px solid",
-                        borderColor: selectedNomina.estado === "ACTIVA" ? "success.main" : 
-                                   selectedNomina.estado === "COMPLETADA" ? "primary.main" : "error.main",
-                      }}
-                    />
-                  </Box>
-                </Stack>
-                
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
-                    Creado por
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 500 }}>
-                    {selectedNomina.creadoPor}
-                  </Typography>
-                </Box>
-                
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 600 }}>
-                    Fecha de creación
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 500 }}>
-                    {new Date(selectedNomina.fechaCreacion).toLocaleDateString()}
-                  </Typography>
-                </Box>
-                
-                {/* Tracking de envío */}
-                {selectedNomina.trackingEnvio && (
-                  <Box sx={{ mb: 4 }}>
-                    <TrackingEnvioComponent
-                      tracking={selectedNomina.trackingEnvio}
-                      onUpdateTracking={handleUpdateTracking}
-                      readonly={false}
-                    />
-                  </Box>
-                )}
-                
-                <Box>
-                  <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600, mb: 2 }}>
-                    Cheques de la Nómina
-                  </Typography>
-                  <NominaChequeTable
-                    nominas={[selectedNomina]}
-                    onViewNomina={() => {}}
-                    onAsignarCheque={handleAsignarCheque}
-                    onMarcarPagado={handleMarcarPagado}
-                  />
-                </Box>
+                {/* Tracking Component */}
+                <TrackingEnvioComponent
+                  tracking={selectedNomina.trackingEnvio}
+                  onUpdateTracking={handleUpdateTracking}
+                  loading={loading}
+                />
               </Box>
             )}
           </DialogContent>
-          <DialogActions sx={{ p: 3, pt: 0 }}>
-            <Button 
-              onClick={() => {
-                setModalDetalleOpen(false);
-                setSelectedNomina(null);
-              }}
-              sx={{
-                color: "text.secondary",
-                textTransform: "none",
-                fontWeight: 500,
-                "&:hover": {
-                  bgcolor: "action.hover",
-                },
-              }}
-            >
+          <DialogActions>
+            <Button onClick={() => setModalDetalleOpen(false)}>
               Cerrar
             </Button>
           </DialogActions>
         </Dialog>
 
+        {/* Snackbar */}
         <Snackbar
           open={snackbarOpen}
-          autoHideDuration={4000}
+          autoHideDuration={6000}
           onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         >
           <Alert 
-            severity={snackbarSeverity} 
-            sx={{ 
-              width: "100%",
-              borderRadius: "8px",
-              fontWeight: 500,
-            }}
+            onClose={handleCloseSnackbar} 
+            severity={snackbarSeverity}
+            sx={{ width: "100%" }}
           >
             {snackbarMessage}
           </Alert>
         </Snackbar>
       </Container>
-
+      
       <Footer />
     </Box>
   );
