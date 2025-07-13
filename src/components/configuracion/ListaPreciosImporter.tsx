@@ -22,19 +22,19 @@ const locales: Local[] = [
     id: 1,
     nombre: "LA CANTERA 3055",
     activo: true,
-    endpoint: "/api-beta/lista-precios-cantera"
+    endpoint: "lista-precios-cantera"
   },
   {
     id: 2,
     nombre: "LIBERTADOR 1476",
     activo: false,
-    endpoint: "/api-beta/lista-precios-local2"
+    endpoint: "lista-precios-local2"
   },
   {
     id: 3,
     nombre: "BALMACEDA 599",
     activo: false,
-    endpoint: "/api-beta/lista-precios-local3"
+    endpoint: "lista-precios-local3"
   }
 ];
 
@@ -92,7 +92,7 @@ export function ListaPreciosImporter() {
       formData.append("file", file);
 
       const response = await axios.post(
-        local.endpoint,
+        `${process.env.NEXT_PUBLIC_API_URL}/api-beta/${local.endpoint}`,
         formData,
         {
           headers: {
