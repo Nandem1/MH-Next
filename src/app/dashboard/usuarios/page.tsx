@@ -1,22 +1,12 @@
-// /app/dashboard/usuarios/page.tsx
 "use client";
+
+import { Box, Button, CircularProgress, Typography, Paper, Snackbar, Alert, Table, TableHead, TableRow, TableCell, TableBody } from "@mui/material";
+// /app/dashboard/usuarios/page.tsx
+
 
 import { useUsuariosFull } from "@/hooks/useUsuariosFull";
 import { useAuthStatus } from "@/hooks/useAuthStatus";
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Typography,
-  Paper,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  Snackbar,
-  Alert,
-} from "@mui/material";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import NuevoUsuarioModal from "@/components/usuarios/NuevoUsuarioModal";

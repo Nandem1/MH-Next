@@ -5,8 +5,19 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "build:prod": "copy next.config.production.ts next.config.ts && next build",
     "start": "next start",
-    "lint": "next lint"
+    "start:prod": "NODE_ENV=production next start",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
+    "analyze": "node scripts/analyze.js",
+    "analyze:server": "node scripts/analyze.js",
+    "analyze:browser": "node scripts/analyze.js",
+    "optimize": "node scripts/optimize-imports.js",
+    "fix": "node scripts/fix-imports.js",
+    "clean": "node scripts/clean-duplicates.js",
+    "fix-client": "node scripts/fix-use-client.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -32,9 +43,11 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@next/bundle-analyzer": "^15.3.5",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^7.0.3",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
     "typescript": "^5.8.3"

@@ -1,30 +1,34 @@
 "use client";
 
-import {
-  Box,
-  Typography,
-  Paper,
-  TextField,
-  Button,
-  Grid,
-  Alert,
-  AlertTitle,
-  CircularProgress,
-  Divider,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Paper from "@mui/material/Paper";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import Grid from "@mui/material/Grid";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
 import { useState, useEffect } from "react";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
 import AddIcon from "@mui/icons-material/Add";
 import { useVencimientosForm } from "@/hooks/useVencimientosForm";
-import { BarcodeScanner } from "./BarcodeScanner";
 import { VencimientoFormData } from "@/types/vencimientos";
 import { useProducto } from "@/hooks/useProducto";
 import { ProductoInfo } from "./ProductoInfo";
+import dynamic from "next/dynamic";
+
+// Lazy load the heavy BarcodeScanner component
+const BarcodeScanner = dynamic(() => import("./BarcodeScanner").then(mod => ({ default: mod.BarcodeScanner })), {
+  loading: () => <LoadingSpinner message="Cargando escáner..." />,
+  ssr: false
+});
 
 export function VencimientosPageContent() {
   const [openScanner, setOpenScanner] = useState(false);
@@ -198,7 +202,7 @@ export function VencimientosPageContent() {
                   sx={{ minWidth: 150 }}
                 >
                   {isLoading ? (
-                    <CircularProgress size={20} color="inherit" />
+                    <LoadingSpinner size={20} message="" />
                   ) : (
                     "Registrar Vencimiento"
                   )}

@@ -1,26 +1,14 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  Chip,
-  Divider,
-  Alert,
-  AlertTitle,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogActions,
-  IconButton,
-} from "@mui/material";
+import { Typography, Box, Chip, Divider, Alert, AlertTitle, Button, Dialog, DialogContent, DialogActions, IconButton, Card, CardContent } from "@mui/material";
+
+
+
 import { CarteleriaAuditResult } from "@/types/carteleria";
 import WarningIcon from "@mui/icons-material/Warning";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { useState, useRef } from "react";
-import html2canvas from "html2canvas";
 import { CarteleriaPreview } from "./CarteleriaPreview";
 import { VencimientosSection } from "./VencimientosSection";
 
@@ -53,6 +41,8 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
   const handleDownloadPNG = async () => {
     if (previewRef.current) {
       try {
+        // Lazy load html2canvas only when needed
+        const html2canvas = (await import("html2canvas")).default;
         const canvas = await html2canvas(previewRef.current, {
           background: "white",
         });

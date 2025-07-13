@@ -1,16 +1,14 @@
 "use client";
 
-import {
-  Box,
-  Typography,
-  Paper,
-  CircularProgress,
-  Alert,
-  AlertTitle,
-  Chip,
-  Grid,
-  Button,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Paper from "@mui/material/Paper";
+import CircularProgress from "@mui/material/CircularProgress";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
+import Chip from "@mui/material/Chip";
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
 import { useCarteleria } from "@/hooks/useCarteleria";
 import { CarteleriaSearchBar } from "./CarteleriaSearchBar";
 import { CarteleriaCard } from "./CarteleriaCard";

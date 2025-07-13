@@ -17,10 +17,8 @@ export const useNotasCredito = (
   return useQuery({
     queryKey: ["notasCredito", page, limit, local ?? "", usuario ?? "", proveedor ?? ""],
     queryFn: () => getNotasCredito(page, limit, local, usuario, proveedor),
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    retry: 1,
-    staleTime: 1000 * 60 * 5,
+    // Usar configuración global del QueryClient
+    // staleTime, retry, refetchOnWindowFocus, etc. se manejan globalmente
   });
 };
 

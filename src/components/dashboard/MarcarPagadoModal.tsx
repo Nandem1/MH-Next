@@ -1,21 +1,19 @@
 "use client";
 
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Box,
-  Typography,
-  Alert,
-  CircularProgress,
-  Paper,
-  useTheme,
-} from "@mui/material";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Alert from "@mui/material/Alert";
+import CircularProgress from "@mui/material/CircularProgress";
+import Paper from "@mui/material/Paper";
 import { useState, useEffect } from "react";
 import { MarcarPagadoRequest } from "@/types/nominaCheque";
+import { useTheme } from "@mui/material";
 
 interface MarcarPagadoModalProps {
   open: boolean;
@@ -112,7 +110,6 @@ export function MarcarPagadoModal({
             Cheque: {numeroCheque}
           </Typography>
         </DialogTitle>
-        
         <DialogContent sx={{ pt: 0 }}>
           <Box>
             {error && (
@@ -129,7 +126,6 @@ export function MarcarPagadoModal({
                 {error}
               </Alert>
             )}
-
             {montoFactura && (
               <Paper 
                 elevation={0} 
@@ -137,7 +133,7 @@ export function MarcarPagadoModal({
                   mb: 3, 
                   p: 2, 
                   bgcolor: theme.palette.mode === 'light' ? "#fff3cd" : "#2d2b1b",
-                  border: `1px solid ${theme.palette.mode === 'light' ? "#ffeaa7" : "#4a4a2b"}`,
+                  border: `1px solid ${theme.palette.mode === 'light' ? '#ffeaa7' : '#4a4a2b'}`,
                   borderRadius: "8px",
                 }}
               >
@@ -149,7 +145,6 @@ export function MarcarPagadoModal({
                 </Typography>
               </Paper>
             )}
-            
             <TextField
               fullWidth
               label="Monto Pagado"
@@ -192,7 +187,6 @@ export function MarcarPagadoModal({
               InputLabelProps={{ style: { color: theme.palette.text.secondary } }}
               helperText={<span style={{ color: theme.palette.text.secondary }}>Monto real pagado por el cheque</span>}
             />
-            
             <TextField
               fullWidth
               label="Fecha de Pago"
@@ -235,7 +229,6 @@ export function MarcarPagadoModal({
             />
           </Box>
         </DialogContent>
-        
         <DialogActions sx={{ p: 3, pt: 0 }}>
           <Button
             onClick={handleClose}
@@ -285,4 +278,4 @@ export function MarcarPagadoModal({
       </form>
     </Dialog>
   );
-} 
+}

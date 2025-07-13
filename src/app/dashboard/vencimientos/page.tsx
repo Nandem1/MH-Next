@@ -1,5 +1,5 @@
 import { VencimientosPageContent } from "@/components/dashboard/VencimientosPageContent";
-import { Box } from "@mui/material";
+import Box from "@mui/material/Box";
 
 export default function VencimientosPage() {
   return (

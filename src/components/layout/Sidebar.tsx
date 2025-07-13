@@ -1,20 +1,9 @@
 "use client";
 
-import {
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Collapse,
-  Toolbar,
-  Divider,
-  Box,
-  Typography,
-  Button,
-  Link as MuiLink,
-} from "@mui/material";
+import { Divider, Box, Typography, Button, useMediaQuery, Toolbar, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Collapse, Drawer } from "@mui/material";
+
+
+
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -28,7 +17,7 @@ import AssessmentIcon from "@mui/icons-material/Assessment";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
 
 import { useRouter, usePathname } from "next/navigation";
-import { useMediaQuery } from "@mui/material";
+
 import { drawerWidth } from "@/constants/layout";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
@@ -282,15 +271,22 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
         }}
       >
         Desarrollado por{" "}
-        <MuiLink
+        <Typography
+          component="a"
           href="https://github.com/Nandem1"
           target="_blank"
           rel="noopener noreferrer"
-          underline="hover"
-          sx={{ color: "primary.main", fontWeight: 500 }}
+          sx={{ 
+            color: "primary.main", 
+            fontWeight: 500,
+            textDecoration: "none",
+            "&:hover": {
+              textDecoration: "underline"
+            }
+          }}
         >
           Nandev
-        </MuiLink>
+        </Typography>
       </Box>
     </Box>
   );

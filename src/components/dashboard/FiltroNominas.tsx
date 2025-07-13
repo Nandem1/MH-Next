@@ -1,19 +1,9 @@
 "use client";
 
-import {
-  Box,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Button,
-  Stack,
-  Typography,
-  Paper,
-  Chip,
-  useTheme,
-} from "@mui/material";
+import { Box, TextField, Button, Typography, Paper, Chip, Stack, FormControl, InputLabel, Select, MenuItem, useTheme } from "@mui/material";
+
+
+
 import type { FiltroNominas } from "@/types/nominaCheque";
 import { useState } from "react";
 

@@ -1,5 +1,7 @@
-// src/hooks/useAuth.ts
 "use client";
+
+// src/hooks/useAuth.ts
+
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";

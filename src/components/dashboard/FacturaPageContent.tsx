@@ -6,7 +6,10 @@ import { Factura } from "@/types/factura";
 import { FacturaSearchBar } from "./FacturaSearchBar";
 import { FacturaTable } from "./FacturaTable";
 import { useFacturas } from "@/hooks/useFacturas";
-import { CircularProgress, Box, Typography, Pagination } from "@mui/material";
+import CircularProgress from "@mui/material/CircularProgress";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Pagination from "@mui/material/Pagination";
 import { adaptFactura } from "@/utils/adaptFactura";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;

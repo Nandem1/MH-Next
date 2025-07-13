@@ -1,16 +1,10 @@
 "use client";
 
+import { Box, Paper, Typography, Alert, CircularProgress, Grid, Card, CardContent } from "@mui/material";
+
+
 import { useState } from "react";
-import {
-  Box,
-  Paper,
-  Typography,
-  Card,
-  CardContent,
-  Alert,
-  CircularProgress,
-  Grid,
-} from "@mui/material";
+
 import {
   Inventory as InventoryIcon,
   LocalOffer as LocalOfferIcon,

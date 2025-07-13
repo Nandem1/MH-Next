@@ -1,23 +1,10 @@
 "use client";
 
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box, Typography, Alert, CircularProgress, Chip, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+
+
 import { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Box,
-  Typography,
-  Alert,
-  CircularProgress,
-  Chip,
-} from "@mui/material";
+
 import { VencimientoEstado, ActualizarEstadoVencimientoRequest } from "@/types/vencimientos";
 import { useVencimientosEstados, useStockDisponible } from "@/hooks/useVencimientosEstados";
 import { formatCurrency } from "@/utils/formatearRut";

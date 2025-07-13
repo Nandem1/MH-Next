@@ -6,7 +6,10 @@ import { NotaCredito } from "@/types/notaCredito";
 import { NotaCreditoSearchBar } from "./NotaCreditoSearchBar";
 import { NotaCreditoTable } from "./NotaCreditoTable";
 import { useNotasCredito } from "@/hooks/useNotasCredito";
-import { CircularProgress, Box, Typography, Pagination } from "@mui/material";
+import CircularProgress from "@mui/material/CircularProgress";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Pagination from "@mui/material/Pagination";
 import { adaptNotaCredito } from "@/utils/adaptNotaCredito";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;

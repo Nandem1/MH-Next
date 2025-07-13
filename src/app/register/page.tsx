@@ -1,18 +1,11 @@
 "use client";
 
+import { TextField, Button, Typography, Box, Snackbar, Alert, CircularProgress, Paper, Link } from "@mui/material";
+
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  TextField,
-  Button,
-  Typography,
-  Box,
-  Snackbar,
-  Alert,
-  CircularProgress,
-  Link,
-  Paper,
-} from "@mui/material";
+
 import axios, { AxiosError } from "axios";
 
 export default function RegisterPage() {

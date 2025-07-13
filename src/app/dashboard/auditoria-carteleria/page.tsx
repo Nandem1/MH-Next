@@ -1,5 +1,21 @@
-import { CarteleriaPageContent } from "@/components/dashboard/CarteleriaPageContent";
-import { Box } from "@mui/material";
+"use client";
+
+import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
+import dynamic from "next/dynamic";
+
+// Lazy load del componente pesado
+const CarteleriaPageContent = dynamic(
+  () => import("@/components/dashboard/CarteleriaPageContent").then(mod => ({ default: mod.CarteleriaPageContent })),
+  {
+    loading: () => (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" }}>
+        <CircularProgress />
+      </Box>
+    ),
+    ssr: false, // Deshabilitar SSR para este componente pesado
+  }
+);
 
 export default function AuditoriaCarteleriaPage() {
   return (

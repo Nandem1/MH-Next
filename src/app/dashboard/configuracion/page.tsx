@@ -1,15 +1,10 @@
-// /app/dashboard/configuracion/page.tsx
 "use client";
 
-import {
-  Box,
-  Typography,
-  Divider,
-  Button,
-  CircularProgress,
-  Tabs,
-  Tab,
-} from "@mui/material";
+import { Box, Typography, Divider, Button, CircularProgress, Tabs, Tab } from "@mui/material";
+// /app/dashboard/configuracion/page.tsx
+
+
+
 import { useAuthStatus } from "@/hooks/useAuthStatus";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

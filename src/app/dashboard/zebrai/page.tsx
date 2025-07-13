@@ -1,6 +1,6 @@
 "use client";
 
-import { Box } from "@mui/material";
+import Box from "@mui/material/Box";
 import Footer from "@/components/shared/Footer";
 import { ZebrAIGenerator } from "@/components/zebra/ZebrAIGenerator";
 

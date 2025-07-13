@@ -1,9 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { NotaCreditoPageContent } from "@/components/dashboard/NotaCreditoPageContent";
-import { Typography, Box } from "@mui/material";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
+import dynamic from "next/dynamic";
 import Footer from "@/components/shared/Footer";
+
+// Lazy load del componente pesado
+const NotaCreditoPageContent = dynamic(
+  () => import("@/components/dashboard/NotaCreditoPageContent").then(mod => ({ default: mod.NotaCreditoPageContent })),
+  {
+    loading: () => (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" }}>
+        <CircularProgress />
+      </Box>
+    ),
+    ssr: false, // Deshabilitar SSR para este componente pesado
+  }
+);
 
 export default function NotasCreditoPage() {
   const [mounted, setMounted] = useState(false);

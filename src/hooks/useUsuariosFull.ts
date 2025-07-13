@@ -1,5 +1,7 @@
-// /hooks/useUsuariosFull.ts
 "use client";
+
+// /hooks/useUsuariosFull.ts
+
 
 import { useQuery } from "@tanstack/react-query";
 import { getUsuariosFull, UsuarioFull } from "@/services/usuarioService";

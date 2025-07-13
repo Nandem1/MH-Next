@@ -1,7 +1,9 @@
-// src/components/shared/Footer.tsx
 "use client";
 
-import { Box } from "@mui/material";
+// src/components/shared/Footer.tsx
+
+
+import Box from "@mui/material/Box";
 
 export default function Footer() {
   return (

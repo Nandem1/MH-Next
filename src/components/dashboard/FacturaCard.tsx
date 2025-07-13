@@ -1,21 +1,12 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardMedia,
-  Typography,
-  Button,
-  Box,
-  Stack,
-  Divider,
-  IconButton,
-  Tooltip,
-  useTheme,
-  CircularProgress,
-} from "@mui/material";
+import { Typography, Button, Box, Divider, IconButton, CircularProgress, Card, CardContent, Stack, Tooltip, useTheme } from "@mui/material";
+
+
+
 import PrintIcon from "@mui/icons-material/Print";
 import EditIcon from "@mui/icons-material/Edit";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { Factura } from "@/types/factura";
 import { formatearRut } from "@/utils/formatearRut";
 import { formatearMonto } from "@/utils/formatearMonto";
@@ -46,13 +37,14 @@ export function FacturaCard({
         overflow: "hidden",
       }}
     >
-      <CardMedia
-        component="img"
-        height="200"
-        image={factura.image_url_cloudinary}
-        alt={`Factura ${factura.folio}`}
-        sx={{ objectFit: "cover" }}
-      />
+      <Box sx={{ position: "relative", height: 200, overflow: "hidden" }}>
+        <OptimizedImage
+          src={factura.image_url_cloudinary}
+          alt={`Factura ${factura.folio}`}
+          fill
+          variant="card"
+        />
+      </Box>
       <CardContent sx={{ p: 2 }}>
         <Stack spacing={2}>
           {/* Header */}

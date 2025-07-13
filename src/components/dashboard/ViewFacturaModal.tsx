@@ -1,18 +1,16 @@
 "use client";
 
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
 import PrintIcon from "@mui/icons-material/Print";
 import Image from "next/image";
 import { Factura } from "@/types/factura";
 import { formatearRut } from "@/utils/formatearRut";
+import { useTheme } from "@mui/material";
 
 interface ViewFacturaModalProps {
   open: boolean;
@@ -131,7 +129,9 @@ export function ViewFacturaModal({
               objectFit: "contain",
               backgroundColor: "#111",
             }}
-            unoptimized
+            sizes="(max-width: 600px) 100vw, (max-width: 1200px) 80vw, 800px"
+            priority={true}
+            quality={85}
           />
         )}
       </DialogContent>

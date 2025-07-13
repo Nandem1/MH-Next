@@ -3,14 +3,66 @@
 import { NotaCredito } from "@/types/notaCredito";
 import { NotaCreditoCard } from "./NotaCreditoCard";
 import { NotaCreditoTableDesktop } from "./NotaCreditoTableDesktop";
-import { ViewNotaCreditoModal } from "./ViewNotaCreditoModal";
-import { ViewFacturaAsociadaModal } from "./ViewFacturaAsociadaModal";
-import { ConfirmChangeEstadoModal } from "./ConfirmChangeEstadoModal";
-import { EditarMontoModal } from "./EditarMontoModal";
-import { Box, Skeleton, Typography, Container, Snackbar, Alert } from "@mui/material";
+import Box from "@mui/material/Box";
+import Skeleton from "@mui/material/Skeleton";
+import Typography from "@mui/material/Typography";
+import Container from "@mui/material/Container";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import CircularProgress from "@mui/material/CircularProgress";
 import { useState, useEffect } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
 import { useActualizarMontoNotaCredito } from "@/hooks/useNotasCredito";
+import dynamic from "next/dynamic";
+
+// Lazy load de modales pesados
+const ViewNotaCreditoModal = dynamic(
+  () => import("./ViewNotaCreditoModal").then(mod => ({ default: mod.ViewNotaCreditoModal })),
+  {
+    loading: () => (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px" }}>
+        <CircularProgress />
+      </Box>
+    ),
+    ssr: false,
+  }
+);
+
+const ViewFacturaAsociadaModal = dynamic(
+  () => import("./ViewFacturaAsociadaModal").then(mod => ({ default: mod.ViewFacturaAsociadaModal })),
+  {
+    loading: () => (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px" }}>
+        <CircularProgress />
+      </Box>
+    ),
+    ssr: false,
+  }
+);
+
+const ConfirmChangeEstadoModal = dynamic(
+  () => import("./ConfirmChangeEstadoModal").then(mod => ({ default: mod.ConfirmChangeEstadoModal })),
+  {
+    loading: () => (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px" }}>
+        <CircularProgress />
+      </Box>
+    ),
+    ssr: false,
+  }
+);
+
+const EditarMontoModal = dynamic(
+  () => import("./EditarMontoModal").then(mod => ({ default: mod.EditarMontoModal })),
+  {
+    loading: () => (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px" }}>
+        <CircularProgress />
+      </Box>
+    ),
+    ssr: false,
+  }
+);
 
 interface NotaCreditoTableProps {
   notasCredito: NotaCredito[];

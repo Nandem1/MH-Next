@@ -1,21 +1,9 @@
 "use client";
 
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Box,
-  Typography,
-  Alert,
-  CircularProgress,
-  Chip,
-  Stack,
-  Paper,
-  useTheme,
-} from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box, Typography, Alert, CircularProgress, Chip, Paper, Stack, useTheme } from "@mui/material";
+
+
+
 import { useState } from "react";
 import { CrearNominaChequeRequest } from "@/types/nominaCheque";
 import { useAuthStatus } from "@/hooks/useAuthStatus";

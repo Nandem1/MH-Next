@@ -1,10 +1,30 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  reactStrictMode: true,      // (opcional) buena práctica en prod
+  // Configuración optimizada para producción
+  reactStrictMode: true,
+  swcMinify: true, // Usar SWC para minificación (más rápido que Terser)
+  
+  // Configuración de compresión
+  compress: true,
+  
+  // Configuración de imágenes optimizadas
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        port: '',
+        pathname: '/dibcf0lnb/image/upload/**',
+      },
+    ],
+    // Optimizaciones adicionales para producción
+    formats: ['image/webp', 'image/avif'],
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 días
+  },
 
   // Configuración para manejar módulos del lado del cliente
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -13,18 +33,70 @@ const nextConfig: NextConfig = {
         tls: false,
       };
     }
+    
+    // Optimizaciones adicionales para producción
+    if (!dev) {
+      // Optimizar chunks
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
+          mui: {
+            test: /[\\/]node_modules[\\/]@mui[\\/]/,
+            name: 'mui',
+            chunks: 'all',
+            priority: 10,
+          },
+        },
+      };
+    }
+    
     return config;
   },
 
-  async rewrites() {
+  // Headers de seguridad para producción
+  async headers() {
     return [
       {
-        source: "/api-beta/:path*",                 // todo lo que empiece con /api-beta
-        destination:
-          "https://mh-backend-production.up.railway.app/api-beta/:path*", // tu backend
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+        ],
       },
     ];
   },
+
+  // Rewrites para API
+  async rewrites() {
+    return [
+      {
+        source: "/api-beta/:path*",
+        destination: "https://mh-backend-production.up.railway.app/api-beta/:path*",
+      },
+    ];
+  },
+
+  // Configuración de output
+  output: 'standalone', // Para Docker deployments
 };
 
-export default nextConfig;
+export default nextConfig; 

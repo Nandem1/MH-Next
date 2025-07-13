@@ -1,16 +1,10 @@
 "use client";
 
+import { Box, Button, Typography, TextField, Grid, Card, CardContent, CardMedia } from "@mui/material";
+
+
 import { useState } from "react";
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CardMedia,
-  Typography,
-  TextField,
-  Grid,
-} from "@mui/material";
+
 
 export function ZebrAIGenerator() {
   const [barcode, setBarcode] = useState("");
