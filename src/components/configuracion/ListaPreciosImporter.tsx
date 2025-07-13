@@ -92,7 +92,7 @@ export function ListaPreciosImporter() {
       formData.append("file", file);
 
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}${local.endpoint}`,
+        local.endpoint,
         formData,
         {
           headers: {
