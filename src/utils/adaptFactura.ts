@@ -1,5 +1,6 @@
 // src/utils/adaptFactura.ts
 import { Factura, FacturaResponse } from "@/types/factura";
+import { montoAEntero } from "@/utils/formatearMonto";
 
 const transformDriveUrl = (url: string) => {
   const regex = /\/file\/d\/(.*?)\/view/;
@@ -37,6 +38,11 @@ export function adaptFactura(factura: FacturaResponse): Factura {
     image_url_cloudinary: factura.image_url_cloudinary,
     nombre_usuario: factura.nombre_usuario,
     rut_proveedor: factura.rut_proveedor || "undefined",
-    monto: factura.monto || 0, // Usar monto real del API, 0 si no existe
+    monto: montoAEntero(typeof factura.monto === 'string' ? parseFloat(factura.monto) : factura.monto || 0), // Convertir string a entero
+    // Nuevas propiedades de método de pago con valores del backend o por defecto
+    metodo_pago: factura.metodo_pago || "POR_PAGAR",
+    monto_pagado: factura.monto_pagado ? montoAEntero(typeof factura.monto_pagado === 'string' ? parseFloat(factura.monto_pagado) : factura.monto_pagado) : undefined,
+    cheque_correlativo: factura.cheque_correlativo,
+    id_proveedor: factura.id_proveedor, // ID del proveedor para endpoints
   };
 }

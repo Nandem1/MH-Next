@@ -1,6 +1,6 @@
 // src/services/facturaService.ts
 import axios from "axios";
-import { Factura, FacturaResponse } from "@/types/factura";
+import { Factura, FacturaResponse, ActualizarMetodoPagoRequest } from "@/types/factura";
 import { adaptFactura } from "@/utils/adaptFactura";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -57,5 +57,19 @@ export const actualizarMontoFactura = async (id: string, monto: number): Promise
   } catch (error) {
     console.error("Error actualizando monto de factura:", error);
     throw new Error("No se pudo actualizar el monto de la factura");
+  }
+};
+
+// Nueva función para actualizar el método de pago de una factura
+export const actualizarMetodoPagoFactura = async (data: ActualizarMetodoPagoRequest): Promise<void> => {
+  try {
+    await axios.put(`${API_URL}/api-beta/facturas/${data.id}/metodo-pago`, {
+      metodo_pago: data.metodo_pago,
+      monto_pagado: data.monto_pagado,
+      cheque: data.cheque,
+    });
+  } catch (error) {
+    console.error("Error actualizando método de pago de factura:", error);
+    throw new Error("No se pudo actualizar el método de pago de la factura");
   }
 };

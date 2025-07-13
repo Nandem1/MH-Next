@@ -12,7 +12,7 @@ import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useState, useEffect } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
-import { useActualizarMontoFactura } from "@/hooks/useFacturas";
+import { useActualizarMontoFactura, useActualizarMetodoPagoFactura } from "@/hooks/useFacturas";
 import dynamic from "next/dynamic";
 
 // Lazy load de modales pesados
@@ -52,6 +52,18 @@ const EditarMontoModal = dynamic(
   }
 );
 
+const EditarMetodoPagoModal = dynamic(
+  () => import("./EditarMetodoPagoModal").then(mod => ({ default: mod.EditarMetodoPagoModal })),
+  {
+    loading: () => (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px" }}>
+        <CircularProgress />
+      </Box>
+    ),
+    ssr: false,
+  }
+);
+
 interface FacturaTableProps {
   facturas: Factura[];
   isLoading: boolean;
@@ -65,6 +77,7 @@ export function FacturaTable({
 }: FacturaTableProps) {
   const isMobile = useResponsive("(max-width:600px)");
   const actualizarMontoMutation = useActualizarMontoFactura();
+  const actualizarMetodoPagoMutation = useActualizarMetodoPagoFactura();
 
   // Forzar recálculo de layout al montar
   useEffect(() => {
@@ -75,6 +88,7 @@ export function FacturaTable({
   const [selectedFactura, setSelectedFactura] = useState<Factura | null>(null);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [openEditarMontoModal, setOpenEditarMontoModal] = useState(false);
+  const [openEditarMetodoPagoModal, setOpenEditarMetodoPagoModal] = useState(false);
   const [facturaParaEditar, setFacturaParaEditar] = useState<Factura | null>(null);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
@@ -134,6 +148,32 @@ export function FacturaTable({
     }
   };
 
+  const handleOpenEditarMetodoPagoModal = (factura: Factura) => {
+    setFacturaParaEditar(factura);
+    setOpenEditarMetodoPagoModal(true);
+  };
+
+  const handleCloseEditarMetodoPagoModal = () => {
+    setFacturaParaEditar(null);
+    setOpenEditarMetodoPagoModal(false);
+  };
+
+  const handleEditarMetodoPago = async (data: import("@/types/factura").ActualizarMetodoPagoRequest) => {
+    if (!facturaParaEditar) return;
+    
+    try {
+      // Cerrar el modal inmediatamente (optimistic update ya actualizó la UI)
+      handleCloseEditarMetodoPagoModal();
+      
+      // Ejecutar la mutación en background (sin await)
+      actualizarMetodoPagoMutation.mutate(data);
+    } catch (error) {
+      console.error("Error al actualizar método de pago:", error);
+      // El modal manejará el error automáticamente
+      throw error;
+    }
+  };
+
   // Verificar si se está actualizando alguna factura
   const isUpdating = actualizarMontoMutation.isPending;
 
@@ -154,6 +194,24 @@ export function FacturaTable({
       });
     }
   }, [actualizarMontoMutation.isSuccess, actualizarMontoMutation.isError]);
+
+  // Manejar estados de la mutación de método de pago
+  useEffect(() => {
+    if (actualizarMetodoPagoMutation.isSuccess) {
+      setSnackbar({
+        open: true,
+        message: 'Método de pago actualizado correctamente',
+        severity: 'success'
+      });
+    }
+    if (actualizarMetodoPagoMutation.isError) {
+      setSnackbar({
+        open: true,
+        message: 'Error al actualizar método de pago',
+        severity: 'error'
+      });
+    }
+  }, [actualizarMetodoPagoMutation.isSuccess, actualizarMetodoPagoMutation.isError]);
 
   const handlePrint = (factura: Factura) => {
     if (!factura) return;
@@ -261,6 +319,7 @@ export function FacturaTable({
               onView={() => handleOpenViewModal(factura)}
               onPrint={() => handlePrint(factura)}
               onEditarMonto={() => handleOpenEditarMontoModal(factura)}
+              onEditarPago={() => handleOpenEditarMetodoPagoModal(factura)}
             />
           ))}
         </Box>
@@ -271,6 +330,7 @@ export function FacturaTable({
           onChangeEstado={handleOpenConfirmModal}
           onPrint={handlePrint}
           onEditarMonto={handleOpenEditarMontoModal}
+          onEditarPago={handleOpenEditarMetodoPagoModal}
         />
       )}
 
@@ -293,6 +353,14 @@ export function FacturaTable({
         montoActual={facturaParaEditar?.monto}
         titulo={`Factura ${facturaParaEditar?.folio} - ${facturaParaEditar?.proveedor}`}
         loading={isUpdating}
+      />
+
+      <EditarMetodoPagoModal
+        open={openEditarMetodoPagoModal}
+        onClose={handleCloseEditarMetodoPagoModal}
+        onSubmit={handleEditarMetodoPago}
+        factura={facturaParaEditar}
+        loading={actualizarMetodoPagoMutation.isPending}
       />
 
       <Snackbar

@@ -1,12 +1,12 @@
 "use client";
 
-import { Paper, Button, Typography, IconButton, Box, CircularProgress, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Stack, Tooltip } from "@mui/material";
+import { Paper, Button, Typography, IconButton, Box, CircularProgress, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Stack, Tooltip, Chip } from "@mui/material";
 import { useTheme } from "@mui/material";
-
 
 import DoneIcon from "@mui/icons-material/Done";
 import PrintIcon from "@mui/icons-material/Print";
 import EditIcon from "@mui/icons-material/Edit";
+import PaymentIcon from "@mui/icons-material/Payment";
 import { Factura } from "@/types/factura";
 import { formatearRut } from "@/utils/formatearRut";
 import { formatearMonto } from "@/utils/formatearMonto";
@@ -17,6 +17,7 @@ interface FacturaTableDesktopProps {
   onChangeEstado: (id: string) => void;
   onPrint: (factura: Factura) => void;
   onEditarMonto: (factura: Factura) => void;
+  onEditarPago: (factura: Factura) => void;
 }
 
 export function FacturaTableDesktop({
@@ -25,8 +26,36 @@ export function FacturaTableDesktop({
   onChangeEstado,
   onPrint,
   onEditarMonto,
+  onEditarPago,
 }: FacturaTableDesktopProps) {
   const theme = useTheme();
+
+  const getPagoColor = (metodoPago: string) => {
+    switch (metodoPago) {
+      case "POR_PAGAR":
+        return "warning";
+      case "CHEQUE":
+        return "info";
+      case "TRANSFERENCIA":
+        return "success";
+      case "EFECTIVO":
+        return "primary";
+      default:
+        return "default";
+    }
+  };
+
+  const getPagoText = (factura: Factura) => {
+    if (!factura.metodo_pago || factura.metodo_pago === "POR_PAGAR") {
+      return "POR PAGAR";
+    }
+    
+    if (factura.metodo_pago === "CHEQUE" && factura.cheque_correlativo) {
+      return `CHEQUE #${factura.cheque_correlativo}`;
+    }
+    
+    return factura.metodo_pago;
+  };
 
   return (
     <TableContainer
@@ -47,7 +76,7 @@ export function FacturaTableDesktop({
             <TableCell align="center">Folio</TableCell>
             <TableCell align="center">Proveedor</TableCell>
             <TableCell align="center">Local</TableCell>
-            <TableCell align="center">Estado</TableCell>
+            <TableCell align="center">Pagado con</TableCell>
             <TableCell align="center">Monto</TableCell>
             <TableCell align="center">Fecha Ingreso</TableCell>
             <TableCell align="center">Acciones</TableCell>
@@ -82,10 +111,45 @@ export function FacturaTableDesktop({
                 </Stack>
               </TableCell>
 
+              {/* PAGADO CON con ícono de editar */}
               <TableCell align="center">
-                <Typography variant="body2" noWrap>
-                  {factura.estado}
-                </Typography>
+                <Box sx={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {factura.isUpdating ? (
+                    <CircularProgress size={16} />
+                  ) : (
+                    <Chip
+                      label={getPagoText(factura)}
+                      color={getPagoColor(factura.metodo_pago || "POR_PAGAR")}
+                      size="small"
+                    />
+                  )}
+                  <Tooltip title="Editar método de pago">
+                    <IconButton
+                      size="small"
+                      onClick={() => onEditarPago(factura)}
+                      disabled={factura.isUpdating}
+                      sx={{
+                        position: "absolute",
+                        right: -12,
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        ml: 1,
+                        width: 24,
+                        height: 24,
+                        color: theme.palette.primary.main,
+                        "&:hover": {
+                          bgcolor: theme.palette.primary.light,
+                          color: theme.palette.primary.contrastText,
+                        },
+                        "& .MuiSvgIcon-root": {
+                          fontSize: "0.875rem",
+                        },
+                      }}
+                    >
+                      <PaymentIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               </TableCell>
 
               {/* Monto con ícono de editar */}

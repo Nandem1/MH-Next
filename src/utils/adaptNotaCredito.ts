@@ -1,4 +1,5 @@
 import { NotaCredito, NotaCreditoResponse } from "@/types/notaCredito";
+import { montoAEntero } from "@/utils/formatearMonto";
 
 const transformDriveUrl = (url: string) => {
   const regex = /\/file\/d\/(.*?)\/view/;
@@ -51,7 +52,7 @@ export function adaptNotaCredito(notaCredito: NotaCreditoResponse): NotaCredito 
     image_url_cloudinary: notaCredito.image_url_cloudinary,
     nombre_usuario: notaCredito.nombre_usuario,
     rut_proveedor: notaCredito.rut_proveedor || "undefined",
-    monto: notaCredito.monto || 0, // Usar monto real del API, 0 si no existe
+    monto: montoAEntero(notaCredito.monto || 0), // Usar monto real del API, 0 si no existe
     facturaAsociada: notaCredito.folio_factura_referenciada
       ? {
           folio: notaCredito.folio_factura_referenciada,
@@ -59,7 +60,7 @@ export function adaptNotaCredito(notaCredito: NotaCreditoResponse): NotaCredito 
           estado: estadoFactura,
           fechaIngreso: notaCredito.factura_fecha_registro,
           image_url_cloudinary: notaCredito.factura_image_url_cloudinary,
-          monto: notaCredito.factura_monto || 0, // Usar monto real de la factura asociada
+          monto: montoAEntero(notaCredito.factura_monto || 0), // Usar monto real de la factura asociada
         }
       : undefined,
   };

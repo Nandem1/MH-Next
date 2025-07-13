@@ -7,6 +7,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typogra
 import { useState, useEffect, useCallback } from "react";
 import { nominaChequeService } from "@/services/nominaChequeService";
 import { AsignarChequeRequest } from "@/types/nominaCheque";
+import { montoAEntero } from "@/utils/formatearMonto";
 
 interface FacturaEncontrada {
   id: string;
@@ -243,7 +244,7 @@ export function AsignarChequeModal({
                   <Box display="flex" justifyContent="space-between">
                     <Typography variant="body2" sx={{ color: "text.secondary" }}>Monto Factura:</Typography>
                     <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>
-                      ${facturaEncontrada.monto.toLocaleString()}
+                      ${montoAEntero(facturaEncontrada.monto).toLocaleString()}
                     </Typography>
                   </Box>
                 </Stack>

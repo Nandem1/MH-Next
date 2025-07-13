@@ -1,16 +1,25 @@
 "use client";
 
-import { Box, TextField, Button, CircularProgress, Autocomplete } from "@mui/material";
-
-
-
 import { useState } from "react";
-import { useResponsive } from "@/hooks/useResponsive";
-import { useUsuarios } from "@/hooks/useUsuarios";
-import { useProveedores } from "@/hooks/useProveedores";
+import {
+  Box,
+  TextField,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Stack,
+  IconButton,
+  Tooltip,
+  useTheme,
+} from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 
 interface FacturaSearchBarProps {
-  onSearch: (folio: string, local: string, usuario: string, proveedor: string) => void;
+  onSearch: (folio: string, local: string) => void;
   onClear: () => void;
   onLocalChange: (local: string) => void;
   onUsuarioChange: (usuario: string) => void;
@@ -18,14 +27,8 @@ interface FacturaSearchBarProps {
   localActual: string;
   usuarioActual: string;
   proveedorActual: string;
+  onGestionCheques?: () => void;
 }
-
-// Lista estática de locales
-const locales = [
-  { id: "LA CANTERA", nombre: "La Cantera" },
-  { id: "BALMACEDA", nombre: "Balmaceda" },
-  { id: "LIBERTADOR", nombre: "Libertador" },
-];
 
 export function FacturaSearchBar({
   onSearch,
@@ -36,33 +39,13 @@ export function FacturaSearchBar({
   localActual,
   usuarioActual,
   proveedorActual,
+  onGestionCheques,
 }: FacturaSearchBarProps) {
+  const theme = useTheme();
   const [folio, setFolio] = useState("");
-  const isSmall = useResponsive("(max-width:600px)");
-  
-  const { data: usuarios, isLoading: isLoadingUsuarios } = useUsuarios();
-  const { data: proveedores, isLoading: isLoadingProveedores } = useProveedores();
 
-  const handleLocalChange = (event: React.SyntheticEvent, newValue: { id: string; nombre: string } | null) => {
-    const selectedLocal = newValue ? newValue.id : "";
-    onLocalChange(selectedLocal);
-  };
-
-  const handleUsuarioChange = (event: React.SyntheticEvent, newValue: { id: number; nombre: string } | null) => {
-    const selectedUsuario = newValue ? newValue.id.toString() : "";
-    onUsuarioChange(selectedUsuario);
-  };
-
-  const handleProveedorChange = (event: React.SyntheticEvent, newValue: { id: number; nombre: string } | null) => {
-    const selectedProveedor = newValue ? newValue.id.toString() : "";
-    onProveedorChange(selectedProveedor);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (folio.trim() || localActual || usuarioActual || proveedorActual) {
-      onSearch(folio, localActual, usuarioActual, proveedorActual);
-    }
+  const handleSearch = () => {
+    onSearch(folio, localActual);
   };
 
   const handleClear = () => {
@@ -70,133 +53,114 @@ export function FacturaSearchBar({
     onClear();
   };
 
-  // Encontrar el usuario seleccionado para mostrar en el Autocomplete
-  const selectedUsuario = usuarios?.find(u => u.id.toString() === usuarioActual) || null;
-  
-  // Encontrar el proveedor seleccionado para mostrar en el Autocomplete
-  const selectedProveedor = proveedores?.find(p => p.id.toString() === proveedorActual) || null;
-  
-  // Encontrar el local seleccionado para mostrar en el Autocomplete
-  const selectedLocal = locales.find(l => l.id === localActual) || null;
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
 
   return (
     <Box
-      component="form"
-      onSubmit={handleSubmit}
       sx={{
-        display: "flex",
-        flexDirection: isSmall ? "column" : "row",
-        gap: 2,
-        mb: 1,
-        flexWrap: "wrap",
-        alignItems: "stretch",
-        justifyContent: "flex-start",
+        p: 3,
+        backgroundColor: "background.paper",
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 2,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
       }}
     >
-      <TextField
-        label="Buscar por Folio"
-        variant="outlined"
-        value={folio}
-        onChange={(e) => setFolio(e.target.value)}
-        fullWidth={isSmall}
-      />
-
-      <Autocomplete
-        disablePortal
-        options={proveedores || []}
-        getOptionLabel={(option) => option.nombre}
-        value={selectedProveedor}
-        onChange={handleProveedorChange}
-        loading={isLoadingProveedores}
-        fullWidth={isSmall}
-        sx={{ minWidth: isSmall ? "100%" : 250 }}
-        renderInput={(params) => (
+      <Stack spacing={2}>
+        {/* Primera fila: Búsqueda por folio */}
+        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
           <TextField
-            {...params}
-            label="Proveedor"
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {isLoadingProveedores ? <CircularProgress color="inherit" size={20} /> : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
-            }}
+            label="Buscar por folio"
+            value={folio}
+            onChange={(e) => setFolio(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Ingrese el folio de la factura"
+            sx={{ flexGrow: 1 }}
+            size="small"
           />
-        )}
-        noOptionsText="No se encontraron proveedores"
-        loadingText="Cargando proveedores..."
-        clearOnBlur
-        clearOnEscape
-      />
+          <Button
+            variant="contained"
+            onClick={handleSearch}
+            startIcon={<SearchIcon />}
+            sx={{ textTransform: "none" }}
+          >
+            Buscar
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={handleClear}
+            startIcon={<ClearIcon />}
+            sx={{ textTransform: "none" }}
+          >
+            Limpiar
+          </Button>
+          {onGestionCheques && (
+            <Tooltip title="Gestión de Cheques">
+              <IconButton
+                onClick={onGestionCheques}
+                sx={{
+                  bgcolor: theme.palette.primary.main,
+                  color: theme.palette.primary.contrastText,
+                  "&:hover": {
+                    bgcolor: theme.palette.primary.dark,
+                  },
+                }}
+              >
+                <AccountBalanceIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
 
-      <Autocomplete
-        disablePortal
-        options={locales}
-        getOptionLabel={(option) => option.nombre}
-        value={selectedLocal}
-        onChange={handleLocalChange}
-        fullWidth={isSmall}
-        sx={{ minWidth: isSmall ? "100%" : 250 }}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Local"
-          />
-        )}
-        noOptionsText="No se encontraron locales"
-        clearOnBlur
-        clearOnEscape
-      />
+        {/* Segunda fila: Filtros */}
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Local</InputLabel>
+            <Select
+              value={localActual}
+              label="Local"
+              onChange={(e) => onLocalChange(e.target.value)}
+            >
+              <MenuItem value="">Todos los locales</MenuItem>
+              <MenuItem value="LA CANTERA">LA CANTERA</MenuItem>
+              <MenuItem value="LIBERTADOR">LIBERTADOR</MenuItem>
+              <MenuItem value="BALMACEDA">BALMACEDA</MenuItem>
+            </Select>
+          </FormControl>
 
-      <Autocomplete
-        disablePortal
-        options={usuarios || []}
-        getOptionLabel={(option) => option.nombre}
-        value={selectedUsuario}
-        onChange={handleUsuarioChange}
-        loading={isLoadingUsuarios}
-        fullWidth={isSmall}
-        sx={{ minWidth: isSmall ? "100%" : 250 }}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Usuario"
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {isLoadingUsuarios ? <CircularProgress color="inherit" size={20} /> : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
-            }}
-          />
-        )}
-        noOptionsText="No se encontraron usuarios"
-        loadingText="Cargando usuarios..."
-        clearOnBlur
-        clearOnEscape
-      />
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Usuario</InputLabel>
+            <Select
+              value={usuarioActual}
+              label="Usuario"
+              onChange={(e) => onUsuarioChange(e.target.value)}
+            >
+              <MenuItem value="">Todos los usuarios</MenuItem>
+              <MenuItem value="1">Usuario 1</MenuItem>
+              <MenuItem value="2">Usuario 2</MenuItem>
+              <MenuItem value="3">Usuario 3</MenuItem>
+            </Select>
+          </FormControl>
 
-      <Button
-        variant="contained"
-        color="warning"
-        type="submit"
-        fullWidth={isSmall}
-      >
-        Buscar
-      </Button>
-
-      <Button
-        variant="outlined"
-        color="secondary"
-        onClick={handleClear}
-        fullWidth={isSmall}
-      >
-        Limpiar
-      </Button>
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Proveedor</InputLabel>
+            <Select
+              value={proveedorActual}
+              label="Proveedor"
+              onChange={(e) => onProveedorChange(e.target.value)}
+            >
+              <MenuItem value="">Todos los proveedores</MenuItem>
+              <MenuItem value="1">Proveedor 1</MenuItem>
+              <MenuItem value="2">Proveedor 2</MenuItem>
+              <MenuItem value="3">Proveedor 3</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+      </Stack>
     </Box>
   );
 }

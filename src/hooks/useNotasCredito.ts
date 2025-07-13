@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getNotasCredito, actualizarMontoNotaCredito } from "@/services/notaCreditoService";
+import { getNotasCredito, actualizarMontoNotaCredito, getNotasCreditoByProveedor, getNotasCreditoByFactura } from "@/services/notaCreditoService";
 import { NotaCredito } from "@/types/notaCredito";
 
 interface NotasCreditoQueryResult {
@@ -83,5 +83,23 @@ export const useActualizarMontoNotaCredito = () => {
         return old;
       });
     },
+  });
+}; 
+
+// Hook para obtener notas de crédito por proveedor
+export const useNotasCreditoByProveedor = (idProveedor: number, limit: number = 50) => {
+  return useQuery({
+    queryKey: ["notasCredito", "proveedor", idProveedor, limit],
+    queryFn: () => getNotasCreditoByProveedor(idProveedor, limit),
+    enabled: !!idProveedor, // Solo ejecutar si hay un ID de proveedor válido
+  });
+}; 
+
+// Hook para obtener notas de crédito de una factura específica
+export const useNotasCreditoByFactura = (idFactura: number) => {
+  return useQuery({
+    queryKey: ["notasCredito", "factura", idFactura],
+    queryFn: () => getNotasCreditoByFactura(idFactura),
+    enabled: !!idFactura, // Solo ejecutar si hay un ID de factura válido
   });
 }; 

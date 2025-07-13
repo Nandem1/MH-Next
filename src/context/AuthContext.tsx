@@ -40,9 +40,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string): Promise<LoginResult> => {
     setLoading(true);
     try {
-      const { user } = await loginService(email, password);
+      const { user, token } = await loginService(email, password);
       setUsuario(user);
 
+      // Guardar el token en localStorage
+      localStorage.setItem("token", token);
       localStorage.setItem("showLoginMessage", "true");
       router.push("/dashboard/inicio");
 
@@ -64,6 +66,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await logoutService();
       setUsuario(null);
+      // Limpiar el token al hacer logout
+      localStorage.removeItem("token");
       localStorage.setItem("showLogoutMessage", "true");
       router.push("/login");
     } catch (error) {

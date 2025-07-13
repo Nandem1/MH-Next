@@ -20,13 +20,14 @@ export const useProducto = () => {
     try {
       const response = await buscarProductoPorCodigo(codigo);
       
-      if (response.success && response.data.length > 0) {
-        setProducto(response.data[0]);
+      if (response.success && response.data) {
+        setProducto(response.data);
       } else {
         setProducto(null);
         setError('Producto no encontrado');
       }
     } catch (err) {
+      console.log('🔍 Hook Debug - Error capturado:', err);
       setProducto(null);
       setError(err instanceof Error ? err.message : 'Error al buscar producto');
     } finally {

@@ -10,6 +10,8 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import axios, { AxiosError } from "axios";
 import { useSnackbar } from "@/hooks/useSnackbar";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 type Local = {
   id: number;
   nombre: string;
@@ -92,7 +94,7 @@ export function ListaPreciosImporter() {
       formData.append("file", file);
 
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api-beta/${local.endpoint}`,
+        `${API_URL}/api-beta/${local.endpoint}`,
         formData,
         {
           headers: {

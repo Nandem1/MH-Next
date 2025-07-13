@@ -38,18 +38,26 @@ interface Producto {
 
 interface ProductoResponse {
   success: boolean;
-  data: Producto[];
+  data: Producto;
   total: number;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api-beta';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const buscarProductoPorCodigo = async (codigoBarras: string): Promise<ProductoResponse> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api-beta/producto/${codigoBarras}`);
+    const url = `${API_BASE_URL}/api-beta/productos/${codigoBarras}`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     
     if (!response.ok) {
-      throw new Error(`Error HTTP: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`Error HTTP: ${response.status} - ${errorText}`);
     }
     
     const data: ProductoResponse = await response.json();
