@@ -149,12 +149,6 @@ export function FacturaCard({
                       }),
                     }}
                   />
-                  {/* Mostrar correlativo del cheque en un span separado */}
-                  {factura.metodo_pago === "CHEQUE" && factura.cheque_correlativo && (
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                      #{factura.cheque_correlativo}
-                    </Typography>
-                  )}
                 </Box>
               )}
               <Tooltip title="Editar método de pago">

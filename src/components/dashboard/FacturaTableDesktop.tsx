@@ -152,12 +152,6 @@ export function FacturaTableDesktop({
                           }),
                         }}
                       />
-                      {/* Mostrar correlativo del cheque en un span separado */}
-                      {factura.metodo_pago === "CHEQUE" && factura.cheque_correlativo && (
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                          #{factura.cheque_correlativo}
-                        </Typography>
-                      )}
                     </>
                   )}
                   <Tooltip title="Editar método de pago">
