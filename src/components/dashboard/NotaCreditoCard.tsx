@@ -47,6 +47,13 @@ export function NotaCreditoCard({
           alt={`Nota de crédito ${notaCredito.folio}`}
           fill
           variant="card"
+          lazy={true}
+          quality={60}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          style={{
+            objectFit: "cover",
+            aspectRatio: "4/3", // Aspect ratio fijo para evitar CLS
+          }}
         />
       </Box>
       <CardContent sx={{ p: 2 }}>

@@ -5,21 +5,21 @@ import {
   Box,
   TextField,
   Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Stack,
   IconButton,
   Tooltip,
   useTheme,
+  Autocomplete,
+  CircularProgress,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import { useUsuarios } from "@/hooks/useUsuarios";
+import { useProveedores } from "@/hooks/useProveedores";
 
 interface FacturaSearchBarProps {
-  onSearch: (folio: string, local: string) => void;
+  onSearch: (folio: string, local: string, usuario: string, proveedor: string) => void;
   onClear: () => void;
   onLocalChange: (local: string) => void;
   onUsuarioChange: (usuario: string) => void;
@@ -29,6 +29,13 @@ interface FacturaSearchBarProps {
   proveedorActual: string;
   onGestionCheques?: () => void;
 }
+
+// Lista estática de locales
+const locales = [
+  { id: "LA CANTERA", nombre: "La Cantera" },
+  { id: "BALMACEDA", nombre: "Balmaceda" },
+  { id: "LIBERTADOR", nombre: "Libertador" },
+];
 
 export function FacturaSearchBar({
   onSearch,
@@ -43,9 +50,27 @@ export function FacturaSearchBar({
 }: FacturaSearchBarProps) {
   const theme = useTheme();
   const [folio, setFolio] = useState("");
+  
+  const { data: usuarios, isLoading: isLoadingUsuarios } = useUsuarios();
+  const { data: proveedores, isLoading: isLoadingProveedores } = useProveedores();
+
+  const handleLocalChange = (event: React.SyntheticEvent, newValue: { id: string; nombre: string } | null) => {
+    const selectedLocal = newValue ? newValue.id : "";
+    onLocalChange(selectedLocal);
+  };
+
+  const handleUsuarioChange = (event: React.SyntheticEvent, newValue: { id: number; nombre: string } | null) => {
+    const selectedUsuario = newValue ? newValue.id.toString() : "";
+    onUsuarioChange(selectedUsuario);
+  };
+
+  const handleProveedorChange = (event: React.SyntheticEvent, newValue: { id: number; nombre: string } | null) => {
+    const selectedProveedor = newValue ? newValue.id.toString() : "";
+    onProveedorChange(selectedProveedor);
+  };
 
   const handleSearch = () => {
-    onSearch(folio, localActual);
+    onSearch(folio, localActual, usuarioActual, proveedorActual);
   };
 
   const handleClear = () => {
@@ -58,6 +83,15 @@ export function FacturaSearchBar({
       handleSearch();
     }
   };
+
+  // Encontrar el usuario seleccionado para mostrar en el Autocomplete
+  const selectedUsuario = usuarios?.find(u => u.id.toString() === usuarioActual) || null;
+  
+  // Encontrar el proveedor seleccionado para mostrar en el Autocomplete
+  const selectedProveedor = proveedores?.find(p => p.id.toString() === proveedorActual) || null;
+  
+  // Encontrar el local seleccionado para mostrar en el Autocomplete
+  const selectedLocal = locales.find(l => l.id === localActual) || null;
 
   return (
     <Box
@@ -116,49 +150,86 @@ export function FacturaSearchBar({
           )}
         </Box>
 
-        {/* Segunda fila: Filtros */}
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Local</InputLabel>
-            <Select
-              value={localActual}
-              label="Local"
-              onChange={(e) => onLocalChange(e.target.value)}
-            >
-              <MenuItem value="">Todos los locales</MenuItem>
-              <MenuItem value="LA CANTERA">LA CANTERA</MenuItem>
-              <MenuItem value="LIBERTADOR">LIBERTADOR</MenuItem>
-              <MenuItem value="BALMACEDA">BALMACEDA</MenuItem>
-            </Select>
-          </FormControl>
+        {/* Segunda fila: Filtros dinámicos */}
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+          <Autocomplete
+            disablePortal
+            options={proveedores || []}
+            getOptionLabel={(option) => option.nombre}
+            value={selectedProveedor}
+            onChange={handleProveedorChange}
+            loading={isLoadingProveedores}
+            size="small"
+            sx={{ minWidth: 200 }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Proveedor"
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {isLoadingProveedores ? <CircularProgress color="inherit" size={20} /> : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+            noOptionsText="No se encontraron proveedores"
+            loadingText="Cargando proveedores..."
+            clearOnBlur
+            clearOnEscape
+          />
 
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Usuario</InputLabel>
-            <Select
-              value={usuarioActual}
-              label="Usuario"
-              onChange={(e) => onUsuarioChange(e.target.value)}
-            >
-              <MenuItem value="">Todos los usuarios</MenuItem>
-              <MenuItem value="1">Usuario 1</MenuItem>
-              <MenuItem value="2">Usuario 2</MenuItem>
-              <MenuItem value="3">Usuario 3</MenuItem>
-            </Select>
-          </FormControl>
+          <Autocomplete
+            disablePortal
+            options={locales}
+            getOptionLabel={(option) => option.nombre}
+            value={selectedLocal}
+            onChange={handleLocalChange}
+            size="small"
+            sx={{ minWidth: 200 }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Local"
+              />
+            )}
+            noOptionsText="No se encontraron locales"
+            clearOnBlur
+            clearOnEscape
+          />
 
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Proveedor</InputLabel>
-            <Select
-              value={proveedorActual}
-              label="Proveedor"
-              onChange={(e) => onProveedorChange(e.target.value)}
-            >
-              <MenuItem value="">Todos los proveedores</MenuItem>
-              <MenuItem value="1">Proveedor 1</MenuItem>
-              <MenuItem value="2">Proveedor 2</MenuItem>
-              <MenuItem value="3">Proveedor 3</MenuItem>
-            </Select>
-          </FormControl>
+          <Autocomplete
+            disablePortal
+            options={usuarios || []}
+            getOptionLabel={(option) => option.nombre}
+            value={selectedUsuario}
+            onChange={handleUsuarioChange}
+            loading={isLoadingUsuarios}
+            size="small"
+            sx={{ minWidth: 200 }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Usuario"
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {isLoadingUsuarios ? <CircularProgress color="inherit" size={20} /> : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+            noOptionsText="No se encontraron usuarios"
+            loadingText="Cargando usuarios..."
+            clearOnBlur
+            clearOnEscape
+          />
         </Box>
       </Stack>
     </Box>

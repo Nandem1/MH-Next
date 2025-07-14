@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
+import { useMobileOptimization } from "@/hooks/useMobileOptimization";
 import { Factura } from "@/types/factura";
 import { FacturaSearchBar } from "./FacturaSearchBar";
 import { FacturaTable } from "./FacturaTable";
 import { useFacturas } from "@/hooks/useFacturas";
+import { MobileImagePreloader } from "@/components/ui/MobileImagePreloader";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -17,6 +19,9 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export function FacturaPageContent() {
   // Hook para forzar un re-render después del primer mount y corregir glitch visual
   const mounted = useResponsive("(min-width:0px)");
+  
+  // Optimizaciones específicas para mobile
+  const { isMobile } = useMobileOptimization();
 
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
@@ -37,7 +42,7 @@ export function FacturaPageContent() {
   const facturas = data?.facturas ?? [];
   const totalFacturas = data?.total ?? 0;
 
-  const handleSearch = async (folio: string, local: string) => {
+  const handleSearch = async (folio: string, local: string, usuario: string, proveedor: string) => {
     try {
       setPage(1);
 
@@ -63,6 +68,9 @@ export function FacturaPageContent() {
       console.error("Error buscando factura:", err);
       setFacturaFiltrada([]);
     }
+    // Nota: usuario y proveedor se manejan automáticamente a través de los filtros del hook useFacturas
+    // Los parámetros se incluyen para mantener compatibilidad con la interfaz del componente
+    console.log("Filtros activos:", { local, usuario, proveedor });
   };
 
   const handleLocalChange = (nuevoLocal: string) => {
@@ -98,6 +106,9 @@ export function FacturaPageContent() {
   const facturasParaMostrar =
     facturaFiltrada !== null ? facturaFiltrada : facturas;
 
+  // Extraer URLs de imágenes para preloading
+  const imageUrls = facturas.slice(0, 5).map(factura => factura.image_url_cloudinary);
+
   return (
     <Box
       key={mounted ? "mounted" : "init"} // Fuerza remount tras mount inicial
@@ -109,6 +120,8 @@ export function FacturaPageContent() {
         gap: 2,
       }}
     >
+              {/* Preload de imágenes críticas optimizado para mobile */}
+        <MobileImagePreloader images={imageUrls} maxImages={isMobile ? 2 : 5} />
       <FacturaSearchBar
         onSearch={handleSearch}
         onClear={handleClearSearch}

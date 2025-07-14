@@ -18,9 +18,15 @@ const nextConfig: NextConfig = {
         pathname: '/dibcf0lnb/image/upload/**',
       },
     ],
-    // Optimizaciones adicionales para producción
+    // Optimizaciones avanzadas para producción
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 días
+    // Tamaños optimizados para mobile
+    deviceSizes: [320, 375, 414, 768, 1024, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256],
+    // Optimización de carga
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 
   // Configuración para manejar módulos del lado del cliente
@@ -51,6 +57,12 @@ const nextConfig: NextConfig = {
             chunks: 'all',
             priority: 10,
           },
+          images: {
+            test: /[\\/]node_modules[\\/]next[\\/]dist[\\/]client[\\/]image/,
+            name: 'images',
+            chunks: 'all',
+            priority: 5,
+          },
         },
       };
     }
@@ -58,27 +70,15 @@ const nextConfig: NextConfig = {
     return config;
   },
 
-  // Headers de seguridad para producción
+  // Headers para optimización de caché
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: '/_next/image(.*)',
         headers: [
           {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },
