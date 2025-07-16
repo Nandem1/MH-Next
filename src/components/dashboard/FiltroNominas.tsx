@@ -4,17 +4,17 @@ import { Box, TextField, Button, Typography, Paper, Chip, Stack, FormControl, In
 
 
 
-import type { FiltroNominas } from "@/types/nominaCheque";
 import { useState } from "react";
+import type { FiltrosNominas } from "@/types/nominaCheque";
 
 interface FiltroNominasProps {
-  filtro: FiltroNominas;
-  onFiltroChange: (filtro: FiltroNominas) => void;
+  filtro: FiltrosNominas;
+  onFiltroChange: (filtro: FiltrosNominas) => void;
   locales: { id: string; nombre: string }[];
 }
 
 export function FiltroNominas({ filtro, onFiltroChange, locales }: FiltroNominasProps) {
-  const [localFiltro, setLocalFiltro] = useState<FiltroNominas>(filtro);
+  const [localFiltro, setLocalFiltro] = useState<FiltrosNominas>(filtro);
   const theme = useTheme();
 
   const handleApplyFilters = () => {
@@ -22,7 +22,7 @@ export function FiltroNominas({ filtro, onFiltroChange, locales }: FiltroNominas
   };
 
   const handleClearFilters = () => {
-    const emptyFiltro: FiltroNominas = {};
+    const emptyFiltro: FiltrosNominas = {};
     setLocalFiltro(emptyFiltro);
     onFiltroChange(emptyFiltro);
   };
@@ -161,8 +161,8 @@ export function FiltroNominas({ filtro, onFiltroChange, locales }: FiltroNominas
           <TextField
             label="Fecha desde"
             type="date"
-            value={localFiltro.fechaDesde || ""}
-            onChange={(e) => setLocalFiltro({ ...localFiltro, fechaDesde: e.target.value })}
+            value={localFiltro.fecha_desde || ""}
+            onChange={(e) => setLocalFiltro({ ...localFiltro, fecha_desde: e.target.value })}
             InputLabelProps={{ shrink: true, style: { color: theme.palette.text.secondary } }}
             sx={{
               flex: 1,
@@ -197,8 +197,8 @@ export function FiltroNominas({ filtro, onFiltroChange, locales }: FiltroNominas
           <TextField
             label="Fecha hasta"
             type="date"
-            value={localFiltro.fechaHasta || ""}
-            onChange={(e) => setLocalFiltro({ ...localFiltro, fechaHasta: e.target.value })}
+            value={localFiltro.fecha_hasta || ""}
+            onChange={(e) => setLocalFiltro({ ...localFiltro, fecha_hasta: e.target.value })}
             InputLabelProps={{ shrink: true, style: { color: theme.palette.text.secondary } }}
             sx={{
               flex: 1,
@@ -304,12 +304,12 @@ export function FiltroNominas({ filtro, onFiltroChange, locales }: FiltroNominas
                     }}
                   />
                 )}
-                {(filtro.fechaDesde || filtro.fechaHasta) && (
+                {(filtro.fecha_desde || filtro.fecha_hasta) && (
                   <Chip
-                    label={`Fechas: ${filtro.fechaDesde || "..."} - ${filtro.fechaHasta || "..."}`}
+                    label={`Fechas: ${filtro.fecha_desde || "..."} - ${filtro.fecha_hasta || "..."}`}
                     size="small"
                     onDelete={() => {
-                      const newFiltro = { ...localFiltro, fechaDesde: "", fechaHasta: "" };
+                      const newFiltro = { ...localFiltro, fecha_desde: "", fecha_hasta: "" };
                       setLocalFiltro(newFiltro);
                       onFiltroChange(newFiltro);
                     }}

@@ -1,10 +1,15 @@
 "use client";
 
-import { Box, TextField, Button, CircularProgress, Autocomplete } from "@mui/material";
-
-
-
 import { useState } from "react";
+import {
+  Box,
+  TextField,
+  Button,
+  CircularProgress,
+  Autocomplete,
+} from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
 import { useResponsive } from "@/hooks/useResponsive";
 import { useUsuarios } from "@/hooks/useUsuarios";
 import { useProveedores } from "@/hooks/useProveedores";
@@ -22,9 +27,9 @@ interface NotaCreditoSearchBarProps {
 
 // Lista estática de locales
 const locales = [
-  { id: "LA CANTERA", nombre: "La Cantera" },
-  { id: "BALMACEDA", nombre: "Balmaceda" },
-  { id: "LIBERTADOR", nombre: "Libertador" },
+  { id: "LA CANTERA 3055", nombre: "LA CANTERA 3055" },
+  { id: "LIBERTADOR 1476", nombre: "LIBERTADOR 1476" },
+  { id: "BALMACEDA 599", nombre: "BALMACEDA 599" },
 ];
 
 export function NotaCreditoSearchBar({
@@ -84,119 +89,125 @@ export function NotaCreditoSearchBar({
       component="form"
       onSubmit={handleSubmit}
       sx={{
-        display: "flex",
-        flexDirection: isSmall ? "column" : "row",
-        gap: 2,
-        mb: 1,
-        flexWrap: "wrap",
-        alignItems: "stretch",
-        justifyContent: "flex-start",
+        p: 3,
+        backgroundColor: "background.paper",
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 2,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
       }}
     >
-      <TextField
-        label="Buscar por Folio"
-        variant="outlined"
-        value={folio}
-        onChange={(e) => setFolio(e.target.value)}
-        fullWidth={isSmall}
-      />
+      <Box sx={{ display: "flex", flexDirection: isSmall ? "column" : "row", gap: 2, alignItems: "stretch", flexWrap: "wrap" }}>
+        <TextField
+          label="Buscar por Folio"
+          variant="outlined"
+          value={folio}
+          onChange={(e) => setFolio(e.target.value)}
+          fullWidth={isSmall}
+          size="small"
+          placeholder="Ingrese el folio de la nota de crédito"
+        />
 
-      <Autocomplete
-        disablePortal
-        options={proveedores || []}
-        getOptionLabel={(option) => option.nombre}
-        value={selectedProveedor}
-        onChange={handleProveedorChange}
-        loading={isLoadingProveedores}
-        fullWidth={isSmall}
-        sx={{ minWidth: isSmall ? "100%" : 250 }}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Proveedor"
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {isLoadingProveedores ? <CircularProgress color="inherit" size={20} /> : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
-            }}
-          />
-        )}
-        noOptionsText="No se encontraron proveedores"
-        loadingText="Cargando proveedores..."
-        clearOnBlur
-        clearOnEscape
-      />
+        <Autocomplete
+          disablePortal
+          options={proveedores || []}
+          getOptionLabel={(option) => option.nombre}
+          value={selectedProveedor}
+          onChange={handleProveedorChange}
+          loading={isLoadingProveedores}
+          fullWidth={isSmall}
+          size="small"
+          sx={{ minWidth: isSmall ? "100%" : 200 }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Proveedor"
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {isLoadingProveedores ? <CircularProgress color="inherit" size={20} /> : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+          noOptionsText="No se encontraron proveedores"
+          loadingText="Cargando proveedores..."
+          clearOnBlur
+          clearOnEscape
+        />
 
-      <Autocomplete
-        disablePortal
-        options={locales}
-        getOptionLabel={(option) => option.nombre}
-        value={selectedLocal}
-        onChange={handleLocalChange}
-        fullWidth={isSmall}
-        sx={{ minWidth: isSmall ? "100%" : 250 }}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Local"
-          />
-        )}
-        noOptionsText="No se encontraron locales"
-        clearOnBlur
-        clearOnEscape
-      />
+        <Autocomplete
+          disablePortal
+          options={locales}
+          getOptionLabel={(option) => option.nombre}
+          value={selectedLocal}
+          onChange={handleLocalChange}
+          fullWidth={isSmall}
+          size="small"
+          sx={{ minWidth: isSmall ? "100%" : 200 }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Local"
+            />
+          )}
+          noOptionsText="No se encontraron locales"
+          clearOnBlur
+          clearOnEscape
+        />
 
-      <Autocomplete
-        disablePortal
-        options={usuarios || []}
-        getOptionLabel={(option) => option.nombre}
-        value={selectedUsuario}
-        onChange={handleUsuarioChange}
-        loading={isLoadingUsuarios}
-        fullWidth={isSmall}
-        sx={{ minWidth: isSmall ? "100%" : 250 }}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Usuario"
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {isLoadingUsuarios ? <CircularProgress color="inherit" size={20} /> : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
-            }}
-          />
-        )}
-        noOptionsText="No se encontraron usuarios"
-        loadingText="Cargando usuarios..."
-        clearOnBlur
-        clearOnEscape
-      />
+        <Autocomplete
+          disablePortal
+          options={usuarios || []}
+          getOptionLabel={(option) => option.nombre}
+          value={selectedUsuario}
+          onChange={handleUsuarioChange}
+          loading={isLoadingUsuarios}
+          fullWidth={isSmall}
+          size="small"
+          sx={{ minWidth: isSmall ? "100%" : 200 }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Usuario"
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {isLoadingUsuarios ? <CircularProgress color="inherit" size={20} /> : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+          noOptionsText="No se encontraron usuarios"
+          loadingText="Cargando usuarios..."
+          clearOnBlur
+          clearOnEscape
+        />
 
-      <Button
-        variant="contained"
-        color="warning"
-        type="submit"
-        fullWidth={isSmall}
-      >
-        Buscar
-      </Button>
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          startIcon={<SearchIcon />}
+          sx={{ textTransform: "none", minWidth: isSmall ? "100%" : "auto" }}
+        >
+          Buscar
+        </Button>
 
-      <Button
-        variant="outlined"
-        color="secondary"
-        onClick={handleClear}
-        fullWidth={isSmall}
-      >
-        Limpiar
-      </Button>
+        <Button
+          variant="outlined"
+          onClick={handleClear}
+          startIcon={<ClearIcon />}
+          sx={{ textTransform: "none", minWidth: isSmall ? "100%" : "auto" }}
+        >
+          Limpiar
+        </Button>
+      </Box>
     </Box>
   );
 } 

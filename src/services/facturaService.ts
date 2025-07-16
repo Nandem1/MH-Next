@@ -20,13 +20,13 @@ export const getFacturas = async (
   proveedor?: string
 ): Promise<{ facturas: Factura[]; total: number }> => {
   try {
-    const localMap: Record<string, number> = {
-      "LA CANTERA": 1,
-      LIBERTADOR: 2,
-      BALMACEDA: 3,
+    const localMapping: Record<string, number> = {
+      "LA CANTERA 3055": 1,
+      "LIBERTADOR 1476": 2,
+      "BALMACEDA 599": 3,
     };
 
-    const id_local = local ? localMap[local] : undefined;
+    const id_local = local ? localMapping[local] : undefined;
 
     const response = await axios.get<FacturaAPIResponse>(`${API_URL}/api-beta/facturas`, {
       params: {

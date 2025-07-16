@@ -27,7 +27,7 @@ export const useProducto = () => {
         setError('Producto no encontrado');
       }
     } catch (err) {
-      console.log('🔍 Hook Debug - Error capturado:', err);
+  
       setProducto(null);
       setError(err instanceof Error ? err.message : 'Error al buscar producto');
     } finally {

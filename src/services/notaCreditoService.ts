@@ -19,13 +19,13 @@ export const getNotasCredito = async (
   proveedor?: string
 ): Promise<{ notasCredito: NotaCredito[]; total: number }> => {
   try {
-    const localMap: Record<string, number> = {
-      "LA CANTERA": 1,
-      LIBERTADOR: 2,
-      BALMACEDA: 3,
+    const localMapping: Record<string, number> = {
+      "LA CANTERA 3055": 1,
+      "LIBERTADOR 1476": 2,
+      "BALMACEDA 599": 3,
     };
 
-    const id_local = local ? localMap[local] : undefined;
+    const id_local = local ? localMapping[local] : undefined;
 
     const response = await axios.get<NotaCreditoAPIResponse>(`${API_URL}/api-beta/notas_credito`, {
       params: {
@@ -86,7 +86,7 @@ export const actualizarMontoNotaCredito = async (id: string, monto: number): Pro
 // Nueva función para obtener notas de crédito de una factura específica
 export const getNotasCreditoByFactura = async (idFactura: number): Promise<{ success: boolean; data: { notas_credito: Array<{ id: number; folio_nc: string; monto: number; id_factura_ref: number }> } }> => {
   try {
-    console.log("🔍 Obteniendo notas de crédito de la factura:", idFactura);
+
     
     const response = await axios.get(`${API_URL}/api-beta/facturas/${idFactura}/notas-credito`, {
       headers: {
@@ -95,7 +95,7 @@ export const getNotasCreditoByFactura = async (idFactura: number): Promise<{ suc
       }
     });
     
-    console.log("✅ Notas de crédito de la factura obtenidas:", response.data);
+
     return response.data;
   } catch (error) {
     console.error("❌ Error obteniendo notas de crédito de la factura:", error);

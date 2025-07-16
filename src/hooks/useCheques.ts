@@ -10,7 +10,9 @@ import {
   getChequeByFactura,
   getChequesByProveedor,
   getEstadisticasChequesByProveedor,
-  getFacturasByCheque
+  getFacturasByCheque,
+  getChequesDisponibles,
+  updateChequeAsignacion
 } from "@/services/chequeService";
 import { getNotasCreditoByFactura } from "@/services/notaCreditoService";
 import { CrearChequeRequest, ActualizarChequeRequest } from "@/types/factura";
@@ -20,9 +22,22 @@ export const useCheques = (limit: number = 50, offset: number = 0) => {
   return useQuery({
     queryKey: ["cheques", limit, offset],
     queryFn: async () => {
-      console.log("🔍 Cargando cheques...");
+  
       const result = await getCheques(limit, offset);
-      console.log("✅ Cheques cargados:", result);
+      
+      return result;
+    },
+  });
+};
+
+// Hook para obtener cheques disponibles (nuevo sistema binario)
+export const useChequesDisponibles = (limit: number = 50, offset: number = 0) => {
+  return useQuery({
+    queryKey: ["cheques", "disponibles", limit, offset],
+    queryFn: async () => {
+  
+      const result = await getChequesDisponibles(limit, offset);
+      
       return result;
     },
   });
@@ -122,12 +137,12 @@ export function useNotasCreditoByCheque(facturas: { id_factura: number; folio: s
       // Obtener notas de crédito de todas las facturas en paralelo
       const promises = facturasValidas.map(async (factura) => {
         try {
-          console.log(`🔍 Obteniendo notas de crédito de factura ${factura.id_factura} (${factura.folio})`);
+  
           const response = await getNotasCreditoByFactura(factura.id_factura);
           const notasCredito = response.data?.notas_credito || [];
           const montoNotasCredito = notasCredito.reduce((sum: number, nc: { monto: number }) => sum + Math.round(nc.monto || 0), 0);
           
-          console.log(`✅ Factura ${factura.id_factura}: ${notasCredito.length} notas de crédito, total: ${montoNotasCredito}`);
+          
           
           return {
             facturaId: factura.id_factura,
@@ -157,7 +172,7 @@ export function useNotasCreditoByCheque(facturas: { id_factura: number; folio: s
         })));
       });
 
-      console.log(`📊 Total notas de crédito del cheque: ${totalNotasCredito} de ${facturasValidas.length} facturas`);
+      
 
       return {
         totalNotasCredito,
@@ -209,6 +224,21 @@ export const useDeleteCheque = () => {
     onSuccess: () => {
       // Invalidar queries de cheques para refrescar la lista
       queryClient.invalidateQueries({ queryKey: ["cheques"] });
+    },
+  });
+};
+
+// Hook para actualizar asignación de cheque (nuevo sistema binario)
+export const useUpdateChequeAsignacion = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ chequeId, asignado }: { chequeId: number; asignado: boolean }) => 
+      updateChequeAsignacion(chequeId, asignado),
+    onSuccess: () => {
+      // Invalidar queries de cheques para refrescar la lista
+      queryClient.invalidateQueries({ queryKey: ["cheques"] });
+      queryClient.invalidateQueries({ queryKey: ["cheques", "disponibles"] });
     },
   });
 }; 

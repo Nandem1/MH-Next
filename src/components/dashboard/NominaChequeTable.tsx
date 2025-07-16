@@ -1,21 +1,37 @@
 "use client";
 
-import { Paper, Button, Typography, IconButton, Box, Chip, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Stack, Tooltip, Collapse, useTheme } from "@mui/material";
-
-
-
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import AssignmentIcon from "@mui/icons-material/Assignment";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { NominaCheque, Cheque } from "@/types/nominaCheque";
 import { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Typography,
+  Button,
+  Chip,
+  Stack,
+  Box,
+  Collapse,
+  Tooltip,
+  useTheme,
+} from "@mui/material";
+import {
+  Visibility as VisibilityIcon,
+  Assignment as AssignmentIcon,
+  CheckCircle as CheckCircleIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+} from "@mui/icons-material";
+import { NominaCantera } from "@/types/nominaCheque";
+import { formatearMontoPesos } from "@/utils/formatearMonto";
 import { locales } from "@/hooks/useAuthStatus";
 
 interface NominaChequeTableProps {
-  nominas: NominaCheque[];
-  onViewNomina: (nomina: NominaCheque) => void;
+  nominas: NominaCantera[];
+  onViewNomina: (nomina: NominaCantera) => void;
   onAsignarCheque: (nominaId: string, chequeId: string) => void;
   onMarcarPagado: (nominaId: string, chequeId: string) => void;
 }
@@ -41,7 +57,7 @@ export function NominaChequeTable({
 
   const isExpanded = (id: string) => expandedRows.has(id);
 
-  const getChequeEstadoText = (estado: Cheque["estado"]) => {
+  const getChequeEstadoText = (estado: string) => {
     switch (estado) {
       case "DISPONIBLE":
         return "Disponible";
@@ -155,7 +171,7 @@ export function NominaChequeTable({
                 >
                   {/* Columna de expandir */}
                   <TableCell align="center" sx={{ width: 50 }}>
-                    <IconButton
+                    <Button
                       size="small"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -173,7 +189,7 @@ export function NominaChequeTable({
                       ) : (
                         <ExpandMoreIcon fontSize="small" />
                       )}
-                    </IconButton>
+                    </Button>
                   </TableCell>
 
                   <TableCell align="center" sx={{ py: 2 }}>
@@ -257,7 +273,7 @@ export function NominaChequeTable({
                   <TableCell align="center" sx={{ py: 2 }}>
                     <Stack spacing={0.5} alignItems="center">
                       <Typography variant="body2" fontWeight={600} sx={{ color: theme.palette.text.primary }}>
-                        {nomina.chequesPagados}/{nomina.totalCheques}
+                        {nomina.chequesPagados || 0}/{nomina.totalCheques || 0}
                       </Typography>
                       <Box
                         sx={{
@@ -270,7 +286,7 @@ export function NominaChequeTable({
                       >
                         <Box
                           sx={{
-                            width: `${(nomina.chequesPagados / nomina.totalCheques) * 100}%`,
+                            width: `${((nomina.chequesPagados || 0) / (nomina.totalCheques || 1)) * 100}%`,
                             height: "100%",
                             bgcolor: theme.palette.success.main,
                           }}
@@ -287,7 +303,7 @@ export function NominaChequeTable({
 
                   <TableCell align="center" sx={{ py: 2 }}>
                     <Typography variant="body2" noWrap sx={{ color: theme.palette.text.secondary }}>
-                      {new Date(nomina.fechaCreacion).toLocaleDateString()}
+                      {new Date(nomina.fechaCreacion || nomina.createdAt).toLocaleDateString()}
                     </Typography>
                   </TableCell>
 
@@ -381,8 +397,8 @@ export function NominaChequeTable({
                               </TableRow>
                             </TableHead>
                             <TableBody>
-                              {nomina.cheques.map((cheque) => (
-                                <TableRow key={cheque.id} sx={{ 
+                              {nomina.cheques?.map((cheque, index) => (
+                                <TableRow key={cheque.id || `cheque-${index}`} sx={{ 
                                   "&:not(:last-child)": {
                                     borderBottom: `1px solid ${theme.palette.divider}`,
                                   },
@@ -394,17 +410,17 @@ export function NominaChequeTable({
                                   </TableCell>
                                   <TableCell align="center" sx={{ py: 1.5 }}>
                                     <Chip
-                                      label={getChequeEstadoText(cheque.estado)}
+                                      label={getChequeEstadoText(cheque.estado || '')}
                                       size="small"
                                       sx={{
-                                        bgcolor: cheque.estado === "DISPONIBLE" ? theme.palette.grey[200] :
-                                                cheque.estado === "ASIGNADO" ? theme.palette.warning.light : theme.palette.success.light,
-                                        color: cheque.estado === "DISPONIBLE" ? theme.palette.text.secondary :
-                                               cheque.estado === "ASIGNADO" ? theme.palette.warning.dark : theme.palette.success.dark,
+                                        bgcolor: (cheque.estado || '') === "DISPONIBLE" ? theme.palette.grey[200] :
+                                                (cheque.estado || '') === "ASIGNADO" ? theme.palette.warning.light : theme.palette.success.light,
+                                        color: (cheque.estado || '') === "DISPONIBLE" ? theme.palette.text.secondary :
+                                               (cheque.estado || '') === "ASIGNADO" ? theme.palette.warning.dark : theme.palette.success.dark,
                                         fontWeight: 600,
                                         border: "1px solid",
-                                        borderColor: cheque.estado === "DISPONIBLE" ? theme.palette.divider :
-                                                   cheque.estado === "ASIGNADO" ? theme.palette.warning.main : theme.palette.success.main,
+                                        borderColor: (cheque.estado || '') === "DISPONIBLE" ? theme.palette.divider :
+                                                   (cheque.estado || '') === "ASIGNADO" ? theme.palette.warning.main : theme.palette.success.main,
                                       }}
                                     />
                                   </TableCell>
@@ -418,7 +434,7 @@ export function NominaChequeTable({
                                           {cheque.facturaAsociada.proveedor}
                                         </Typography>
                                         <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontWeight: 500 }}>
-                                          ${cheque.facturaAsociada.monto?.toLocaleString()}
+                                          ${formatearMontoPesos(cheque.facturaAsociada.monto)}
                                         </Typography>
                                       </Stack>
                                     ) : (
@@ -443,12 +459,12 @@ export function NominaChequeTable({
                                   </TableCell>
                                   <TableCell align="center" sx={{ py: 1.5 }}>
                                     <Stack direction="row" spacing={1} justifyContent="center">
-                                      {cheque.estado === "DISPONIBLE" && (
+                                      {(cheque.estado || '') === "DISPONIBLE" && (
                                         <Tooltip title="Asignar a factura">
                                           <Button
                                             variant="outlined"
                                             size="small"
-                                            onClick={() => onAsignarCheque(nomina.id, cheque.id)}
+                                            onClick={() => onAsignarCheque(nomina.id, cheque.id || '')}
                                             sx={{
                                               borderColor: theme.palette.warning.main,
                                               color: theme.palette.warning.dark,
@@ -464,12 +480,12 @@ export function NominaChequeTable({
                                           </Button>
                                         </Tooltip>
                                       )}
-                                      {cheque.estado === "ASIGNADO" && (
+                                      {(cheque.estado || '') === "ASIGNADO" && (
                                         <Tooltip title="Marcar como pagado">
                                           <Button
                                             variant="outlined"
                                             size="small"
-                                            onClick={() => onMarcarPagado(nomina.id, cheque.id)}
+                                            onClick={() => onMarcarPagado(nomina.id, cheque.id || '')}
                                             sx={{
                                               borderColor: theme.palette.success.main,
                                               color: theme.palette.success.dark,

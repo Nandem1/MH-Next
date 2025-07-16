@@ -1,73 +1,153 @@
 import { 
-  NominaCheque, 
-  NominaChequeResponse, 
-  ChequeResponse, 
-  CrearNominaChequeRequest, 
-  CrearChequeRequest,
-  AsignarChequeRequest,
-  MarcarPagadoRequest,
-  TrackingEnvio 
+  NominaCantera, 
+  NominaCanteraResponse, 
+  CrearNominaRequest, 
+  AsignarChequeRequest, 
+  ActualizarTrackingRequest,
+  ChequeAsignadoResponse,
+  TrackingEnvioResponse,
+  FiltrosNominas,
+  PaginationInfo
 } from "@/types/nominaCheque";
+import { getUsuarioAutenticado } from "@/services/authService";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-// Transformar respuesta del API a tipo interno
-const transformNominaResponse = (response: NominaChequeResponse): NominaCheque => {
+// Tipos para la respuesta del API
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+}
+
+interface NominasResponse {
+  data: NominaCanteraResponse[];
+  pagination: PaginationInfo;
+  filtros: FiltrosNominas;
+}
+
+// Función helper para obtener headers con autorización
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('authToken');
   return {
-    id: response.id,
-    nombre: response.nombre,
-    correlativoInicial: response.correlativo_inicial,
-    correlativoFinal: response.correlativo_final,
-    fechaCreacion: response.fecha_creacion,
-    creadoPor: response.creado_por,
-    local: response.local,
-    estado: response.estado as "ACTIVA" | "COMPLETADA" | "CANCELADA",
-    cheques: [], // Se cargarán por separado
-    totalCheques: response.total_cheques,
-    chequesDisponibles: response.cheques_disponibles,
-    chequesAsignados: response.cheques_asignados,
-    chequesPagados: response.cheques_pagados,
-          trackingEnvio: response.tracking_envio ? {
-        id: response.tracking_envio.id,
-        estado: response.tracking_envio.estado as "EN_ORIGEN" | "EN_TRANSITO" | "RECIBIDA",
-        localOrigen: response.tracking_envio.local_origen,
-        localDestino: response.tracking_envio.local_destino || "BALMACEDA 599",
-        fechaEnvio: response.tracking_envio.fecha_envio,
-        fechaRecepcion: response.tracking_envio.fecha_recepcion,
-        observaciones: response.tracking_envio.observaciones,
-        enviadoPor: response.tracking_envio.enviado_por,
-        recibidoPor: response.tracking_envio.recibido_por,
-      } : undefined,
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
   };
 };
 
-const transformChequeResponse = (response: ChequeResponse) => {
+// Helper para manejar diferentes estructuras de respuesta
+const parseNominasResponse = (responseData: ApiResponse<NominasResponse>): { data: NominaCanteraResponse[], pagination?: PaginationInfo, filtros?: FiltrosNominas } => {
+  // Si responseData.data es directamente un array (estructura antigua)
+  if (Array.isArray(responseData.data)) {
+    return {
+      data: responseData.data,
+      pagination: { page: 1, limit: 50, total: responseData.data.length, hasNext: false },
+      filtros: {}
+    };
+  }
+  
+  // Si responseData.data es un objeto con data, pagination, filtros (estructura nueva)
+  if (responseData.data && typeof responseData.data === 'object' && responseData.data.data) {
+    return {
+      data: responseData.data.data,
+      pagination: responseData.data.pagination,
+      filtros: responseData.data.filtros
+    };
+  }
+  
+  // Si responseData.data es directamente el array (otra variante)
+  if (Array.isArray(responseData.data)) {
+    return {
+      data: responseData.data,
+      pagination: { page: 1, limit: 50, total: responseData.data.length, hasNext: false },
+      filtros: {}
+    };
+  }
+  
+  throw new Error("Estructura de respuesta del API no reconocida");
+};
+
+// Transformar respuesta del API a tipo interno
+const transformNominaResponse = (response: NominaCanteraResponse): NominaCantera => {
+  
+  const transformedTracking = response.tracking_envio ? {
+    id: response.tracking_envio.id,
+    estado: response.tracking_envio.estado as "EN_ORIGEN" | "EN_TRANSITO" | "RECIBIDA",
+    localOrigen: response.tracking_envio.local_origen,
+    localDestino: response.tracking_envio.local_destino,
+    fechaEnvio: response.tracking_envio.fecha_envio,
+    fechaRecepcion: response.tracking_envio.fecha_recepcion,
+    observaciones: response.tracking_envio.observaciones,
+    enviadoPor: response.tracking_envio.enviado_por,
+    recibidoPor: response.tracking_envio.recibido_por,
+  } : undefined;
+  
+  // Transformar cheques de forma simplificada
+  const transformedCheques = response.cheques ? response.cheques.map(cheque => ({
+    id: cheque.id.toString(),
+    correlativo: cheque.correlativo,
+    monto: cheque.monto,
+    montoAsignado: cheque.monto_asignado,
+    createdAt: cheque.fecha_asignacion,
+    idUsuario: cheque.nombre_usuario_cheque,
+    facturas: undefined,
+    numeroCorrelativo: cheque.correlativo,
+    estado: "ASIGNADO" as const,
+    fechaAsignacion: cheque.fecha_asignacion,
+    fechaPago: undefined,
+    facturaAsociada: undefined,
+  })) : undefined;
+  
+
+  
   return {
-    id: response.id,
-    numeroCorrelativo: response.numero_correlativo,
-    estado: response.estado as "DISPONIBLE" | "ASIGNADO" | "PAGADO",
-    facturaAsociada: response.factura_asociada ? {
-      id: response.factura_asociada.id,
-      folio: response.factura_asociada.folio,
-      proveedor: response.factura_asociada.proveedor,
-      monto: response.factura_asociada.monto,
-      estado: response.factura_asociada.estado,
-      fechaIngreso: response.factura_asociada.fecha_ingreso,
-    } : undefined,
-    fechaAsignacion: response.fecha_asignacion,
-    fechaPago: response.fecha_pago,
+    id: response.id.toString(),
+    numeroNomina: response.numero_nomina,
+    fechaEmision: response.fecha_emision,
+    local: response.local_origen,
+    montoTotal: response.monto_total || 0,
+    estado: response.estado as "pendiente" | "pagada" | "vencida",
+    idUsuario: response.id_usuario.toString(),
+    createdAt: response.created_at,
+    updatedAt: response.updated_at,
+    creadoPor: response.creado_por,
+    trackingEnvio: transformedTracking,
+    cheques: transformedCheques,
+    
+    // Propiedades adicionales para la tabla
+    nombre: response.numero_nomina,
+    correlativoInicial: "",
+    correlativoFinal: "",
+    totalCheques: response.cantidad_cheques || 0,
+    chequesPagados: 0,
+    fechaCreacion: response.created_at,
   };
 };
 
 export const nominaChequeService = {
-  // Obtener todas las nóminas
-  async getNominas(): Promise<NominaCheque[]> {
+  // Obtener nóminas con filtros y paginación
+  async getNominas(filtros: FiltrosNominas = {}): Promise<{ nominas: NominaCantera[], pagination: PaginationInfo, filtros: FiltrosNominas }> {
     try {
-      const response = await fetch(`${API_BASE_URL}/nominas-cheque`, {
+      // Construir query string
+      const params = new URLSearchParams();
+      
+      if (filtros.page) params.append('page', filtros.page.toString());
+      if (filtros.limit) params.append('limit', filtros.limit.toString());
+      if (filtros.local) params.append('local', filtros.local);
+      if (filtros.usuario) params.append('usuario', filtros.usuario);
+      if (filtros.estado) params.append('estado', filtros.estado);
+      if (filtros.numero_nomina) params.append('numero_nomina', filtros.numero_nomina);
+      if (filtros.tracking_estado) params.append('tracking_estado', filtros.tracking_estado);
+      if (filtros.fecha_desde) params.append('fecha_desde', filtros.fecha_desde);
+      if (filtros.fecha_hasta) params.append('fecha_hasta', filtros.fecha_hasta);
+
+      const queryString = params.toString();
+      const url = `${API_BASE_URL}/api-beta/nominas${queryString ? `?${queryString}` : ''}`;
+
+
+
+      const response = await fetch(url, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         credentials: "include",
       });
 
@@ -75,225 +155,245 @@ export const nominaChequeService = {
         throw new Error("Error al obtener nóminas");
       }
 
-      const data: NominaChequeResponse[] = await response.json();
-      return data.map(transformNominaResponse);
+      const responseData: ApiResponse<NominasResponse> = await response.json();
+
+      
+      if (!responseData.success) {
+        throw new Error("La respuesta del API indica error");
+      }
+
+      // Usar el helper para parsear la respuesta
+      const parsedResponse = parseNominasResponse(responseData);
+
+
+      const transformedData = parsedResponse.data.map(transformNominaResponse);
+
+      // Log detallado de cada nómina
+      transformedData.forEach((nomina) => {
+        if (nomina.trackingEnvio) {
+          // Log tracking info if needed
+        }
+        
+        if (nomina.cheques && nomina.cheques.length > 0) {
+          nomina.cheques.forEach((cheque) => {
+            if (cheque.facturas && cheque.facturas.length > 0) {
+              cheque.facturas.forEach(() => {
+                // Log factura info if needed
+              });
+            }
+          });
+        }
+      });
+
+      return {
+        nominas: transformedData,
+        pagination: parsedResponse.pagination || { page: 1, limit: 10, total: transformedData.length, hasNext: false },
+        filtros: parsedResponse.filtros || {}
+      };
     } catch (error) {
       console.error("Error fetching nominas:", error);
       throw error;
     }
   },
 
-  // Obtener una nómina específica con sus cheques
-  async getNomina(id: string): Promise<NominaCheque> {
+  // Obtener nómina por ID
+  async getNomina(id: string): Promise<NominaCantera> {
     try {
-      const [nominaResponse, chequesResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/nominas-cheque/${id}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        }),
-        fetch(`${API_BASE_URL}/nominas-cheque/${id}/cheques`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        }),
-      ]);
+      const response = await fetch(`${API_BASE_URL}/api-beta/nominas/${id}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
 
-      if (!nominaResponse.ok || !chequesResponse.ok) {
+      if (!response.ok) {
         throw new Error("Error al obtener nómina");
       }
 
-      const nominaData: NominaChequeResponse = await nominaResponse.json();
-      const chequesData: ChequeResponse[] = await chequesResponse.json();
+      const responseData: ApiResponse<NominaCanteraResponse> = await response.json();
+      
+      if (!responseData.success) {
+        throw new Error("La respuesta del API indica error");
+      }
 
-      const nomina = transformNominaResponse(nominaData);
-      nomina.cheques = chequesData.map(transformChequeResponse);
-
-      return nomina;
+      return transformNominaResponse(responseData.data);
     } catch (error) {
       console.error("Error fetching nomina:", error);
       throw error;
     }
   },
 
-  // Crear nueva nómina
-  async crearNomina(request: CrearNominaChequeRequest): Promise<NominaCheque> {
+  // Obtener nómina completa con todos los detalles
+  async getNominaCompleta(id: string): Promise<NominaCantera> {
     try {
-      const correlativoFinal = (parseInt(request.correlativoInicial) + 9).toString().padStart(6, '0');
-      
-      const response = await fetch(`${API_BASE_URL}/nominas-cheque`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const response = await fetch(`${API_BASE_URL}/api-beta/nominas/${id}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
         credentials: "include",
-        body: JSON.stringify({
-          nombre: request.nombre,
-          correlativo_inicial: request.correlativoInicial,
-          correlativo_final: correlativoFinal,
-        }),
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Error response:", errorText);
+        throw new Error("Error al obtener nómina completa");
+      }
+
+      const responseData: ApiResponse<NominaCanteraResponse> = await response.json();
+      
+      if (!responseData.success) {
+        throw new Error("La respuesta del API indica error");
+      }
+
+
+
+      return transformNominaResponse(responseData.data);
+    } catch (error) {
+      console.error("Error fetching complete nomina:", error);
+      throw error;
+    }
+  },
+
+  // Crear nueva nómina
+  async crearNomina(request: CrearNominaRequest): Promise<NominaCantera> {
+    try {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const usuario = await getUsuarioAutenticado();
+      
+
+
+      
+      const payload = {
+        numero_nomina: request.numeroNomina,
+        fecha_emision: today,
+        local_origen: request.localOrigen,
+        creado_por: usuario?.user?.nombre || "Desconocido",
+      };
+      
+
+      
+      const response = await fetch(`${API_BASE_URL}/api-beta/nominas`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Error response:", errorText);
         throw new Error("Error al crear nómina");
       }
 
-      const data: NominaChequeResponse = await response.json();
-      return transformNominaResponse(data);
+      const responseData: ApiResponse<NominaCanteraResponse> = await response.json();
+
+      
+      if (!responseData.success) {
+        throw new Error("La respuesta del API indica error");
+      }
+
+      return transformNominaResponse(responseData.data);
     } catch (error) {
       console.error("Error creating nomina:", error);
       throw error;
     }
   },
 
-  // Crear cheque manualmente
-  async crearCheque(request: CrearChequeRequest): Promise<ChequeResponse> {
+  // Asignar cheque a nómina
+  async asignarCheque(nominaId: string, request: AsignarChequeRequest): Promise<void> {
     try {
-      const response = await fetch(`${API_BASE_URL}/cheques`, {
+
+      
+      const response = await fetch(`${API_BASE_URL}/api-beta/nominas/${nominaId}/cheques`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         credentials: "include",
         body: JSON.stringify({
-          numero_correlativo: request.numeroCorrelativo,
-          nomina_id: request.nominaId,
+          id_cheque: request.idCheque,
+          asignado_a_nomina: true, // Marcar como asignado a nómina
+          monto_asignado: request.montoAsignado, // Enviar el monto real del cheque
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Error al crear cheque");
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Error creating cheque:", error);
-      throw error;
-    }
-  },
-
-  // Asignar cheque a factura por folio
-  async asignarCheque(nominaId: string, chequeId: string, request: AsignarChequeRequest): Promise<void> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/nominas-cheque/${nominaId}/cheques/${chequeId}/asignar`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          factura_folio: request.facturaFolio,
-          monto_pagado: request.montoPagado,
-        }),
-      });
-
-      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error response:", errorText);
         throw new Error("Error al asignar cheque");
       }
+
+
     } catch (error) {
       console.error("Error assigning cheque:", error);
       throw error;
     }
   },
 
-  // Marcar cheque como pagado con monto y fecha
-  async marcarChequePagado(nominaId: string, chequeId: string, request: MarcarPagadoRequest): Promise<void> {
+  // Obtener cheques de una nómina
+  async getChequesNomina(nominaId: string): Promise<ChequeAsignadoResponse[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/nominas-cheque/${nominaId}/cheques/${chequeId}/pagar`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const response = await fetch(`${API_BASE_URL}/api-beta/nominas/${nominaId}/cheques`, {
+        method: "GET",
+        headers: getAuthHeaders(),
         credentials: "include",
-        body: JSON.stringify({
-          monto_pagado: request.montoPagado,
-          fecha_pago: request.fechaPago,
-        }),
       });
 
       if (!response.ok) {
-        throw new Error("Error al marcar cheque como pagado");
+        throw new Error("Error al obtener cheques de la nómina");
       }
+
+      const responseData: ApiResponse<ChequeAsignadoResponse[]> = await response.json();
+      
+      if (!responseData.success) {
+        throw new Error("La respuesta del API indica error");
+      }
+
+      return responseData.data;
     } catch (error) {
-      console.error("Error marking cheque as paid:", error);
+      console.error("Error fetching nomina cheques:", error);
       throw error;
     }
   },
 
-  // Buscar factura por folio (con debounce)
-  async buscarFacturaPorFolio(folio: string): Promise<{ id: string; folio: string; proveedor: string; monto: number } | null> {
+  // Obtener tracking de una nómina
+  async getTracking(nominaId: string): Promise<TrackingEnvioResponse | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/api-beta/facturas/${folio}`, {
+      const response = await fetch(`${API_BASE_URL}/api-beta/nominas/${nominaId}/tracking`, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         credentials: "include",
       });
 
       if (!response.ok) {
         if (response.status === 404) {
-          return null; // Factura no encontrada
+          return null; // No hay tracking
         }
-        throw new Error("Error al buscar factura");
+        throw new Error("Error al obtener tracking");
       }
 
-      const data = await response.json();
+      const responseData: ApiResponse<TrackingEnvioResponse> = await response.json();
       
-      // La respuesta es un array, tomamos el primer elemento
-      if (Array.isArray(data) && data.length > 0) {
-        const factura = data[0];
-        return {
-          id: factura.id.toString(),
-          folio: factura.folio,
-          proveedor: factura.proveedor,
-          monto: 0, // El API no devuelve monto, se puede agregar después
-        };
-      }
-      
-      return null; // No se encontró la factura
-    } catch (error) {
-      console.error("Error fetching factura by folio:", error);
-      throw error;
-    }
-  },
-
-  // Obtener facturas disponibles para asignar (mantener para compatibilidad)
-  async getFacturasDisponibles(): Promise<{ id: string; folio: string; proveedor: string; monto: number }[]> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/facturas/disponibles`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al obtener facturas disponibles");
+      if (!responseData.success) {
+        return null; // No hay tracking
       }
 
-      return await response.json();
+      return responseData.data;
     } catch (error) {
-      console.error("Error fetching available facturas:", error);
+      console.error("Error fetching tracking:", error);
       throw error;
     }
   },
 
   // Actualizar tracking de envío
-  async actualizarTracking(nominaId: string, trackingData: Partial<TrackingEnvio>): Promise<void> {
+  async actualizarTracking(nominaId: string, request: ActualizarTrackingRequest): Promise<void> {
     try {
-      const response = await fetch(`${API_BASE_URL}/nominas-cheque/${nominaId}/tracking`, {
+      const response = await fetch(`${API_BASE_URL}/api-beta/nominas/${nominaId}/tracking`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         credentials: "include",
-        body: JSON.stringify(trackingData),
+        body: JSON.stringify({
+          estado: request.estado,
+          fechaEnvio: request.fechaEnvio,
+          fechaRecepcion: request.fechaRecepcion,
+          observaciones: request.observaciones,
+        }),
       });
 
       if (!response.ok) {
@@ -301,6 +401,119 @@ export const nominaChequeService = {
       }
     } catch (error) {
       console.error("Error updating tracking:", error);
+      throw error;
+    }
+  },
+
+  // Crear tracking manualmente
+  async crearTracking(nominaId: string): Promise<void> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api-beta/nominas/${nominaId}/tracking`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify({
+          estado: "EN_ORIGEN",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al crear tracking");
+      }
+    } catch (error) {
+      console.error("Error creating tracking:", error);
+      throw error;
+    }
+  },
+
+  // Obtener historial de tracking
+  async getTrackingHistorial(nominaId: string): Promise<unknown[]> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api-beta/nominas/${nominaId}/tracking/historial`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al obtener historial de tracking");
+      }
+
+      const responseData: ApiResponse<unknown[]> = await response.json();
+      
+      if (!responseData.success) {
+        throw new Error("La respuesta del API indica error");
+      }
+
+      return responseData.data;
+    } catch (error) {
+      console.error("Error fetching tracking historial:", error);
+      throw error;
+    }
+  },
+
+  // Obtener todas las nóminas con tracking
+  async getNominasConTracking(): Promise<NominaCantera[]> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api-beta/nominas-tracking`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API Error Response:", errorText);
+        throw new Error(`Error al obtener nóminas con tracking: ${response.status} ${response.statusText}`);
+      }
+
+      const responseData: ApiResponse<NominasResponse> = await response.json();
+
+      
+      if (!responseData.success) {
+        throw new Error("La respuesta del API indica error");
+      }
+
+      // Usar el helper para parsear la respuesta
+      const parsedResponse = parseNominasResponse(responseData);
+
+
+      return parsedResponse.data.map(transformNominaResponse);
+    } catch (error) {
+      console.error("Error fetching nominas with tracking:", error);
+      throw error;
+    }
+  },
+
+  // Obtener nóminas por estado de tracking
+  async getNominasPorEstadoTracking(estado: string): Promise<NominaCantera[]> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api-beta/nominas-tracking/estado/${estado}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API Error Response:", errorText);
+        throw new Error(`Error al obtener nóminas por estado de tracking: ${response.status} ${response.statusText}`);
+      }
+
+      const responseData: ApiResponse<NominasResponse> = await response.json();
+
+      
+      if (!responseData.success) {
+        throw new Error("La respuesta del API indica error");
+      }
+
+      // Usar el helper para parsear la respuesta
+      const parsedResponse = parseNominasResponse(responseData);
+
+
+      return parsedResponse.data.map(transformNominaResponse);
+    } catch (error) {
+      console.error("Error fetching nominas by tracking status:", error);
       throw error;
     }
   },

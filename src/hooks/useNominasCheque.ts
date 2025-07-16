@@ -1,448 +1,320 @@
-import { useState, useEffect, useCallback } from "react";
-import { 
-  NominaCheque, 
-  CrearNominaChequeRequest, 
-  CrearChequeRequest,
-  AsignarChequeRequest,
-  MarcarPagadoRequest,
-  FiltroNominas, 
-  TrackingEnvio 
-} from "@/types/nominaCheque";
+import { useState, useCallback, useEffect } from "react";
 import { nominaChequeService } from "@/services/nominaChequeService";
-import { mockNominasCheque, mockFacturasDisponibles } from "@/data/nominasChequeMock";
-import { useAuthStatus } from "@/hooks/useAuthStatus";
+import { 
+  NominaCantera, 
+  CrearNominaRequest, 
+  AsignarChequeRequest, 
+  ActualizarTrackingRequest,
+  FiltrosNominas,
+  PaginationInfo
+} from "@/types/nominaCheque";
 
-// Flag para usar datos mock (cambiar a false cuando el backend esté listo)
-const USE_MOCK_DATA = true;
+// Estado inicial para filtros
+const initialFiltros: FiltrosNominas = {
+  page: 1,
+  limit: 10
+};
 
 export const useNominasCheque = () => {
-  const { usuario } = useAuthStatus();
-  const [nominas, setNominas] = useState<NominaCheque[]>([]);
-  const [nominasFiltradas, setNominasFiltradas] = useState<NominaCheque[]>([]);
-  const [filtro, setFiltro] = useState<FiltroNominas>({});
+  const [nominas, setNominas] = useState<NominaCantera[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedNomina, setSelectedNomina] = useState<NominaCheque | null>(null);
+  const [selectedNomina, setSelectedNomina] = useState<NominaCantera | null>(null);
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    hasNext: false
+  });
+  const [filtros, setFiltros] = useState<FiltrosNominas>(initialFiltros);
 
-  // Aplicar filtros
-  const aplicarFiltros = useCallback((nominasData: NominaCheque[], filtros: FiltroNominas) => {
-    let resultado = [...nominasData];
-
-    if (filtros.local) {
-      resultado = resultado.filter(nomina => nomina.local === filtros.local);
-    }
-
-    if (filtros.estado) {
-      resultado = resultado.filter(nomina => nomina.estado === filtros.estado);
-    }
-
-    if (filtros.fechaDesde) {
-      resultado = resultado.filter(nomina => 
-        new Date(nomina.fechaCreacion) >= new Date(filtros.fechaDesde!)
-      );
-    }
-
-    if (filtros.fechaHasta) {
-      resultado = resultado.filter(nomina => 
-        new Date(nomina.fechaCreacion) <= new Date(filtros.fechaHasta!)
-      );
-    }
-
-    return resultado;
-  }, []);
-
-  // Actualizar nóminas filtradas cuando cambien los filtros o las nóminas
-  useEffect(() => {
-    setNominasFiltradas(aplicarFiltros(nominas, filtro));
-  }, [nominas, filtro, aplicarFiltros]);
-
-  // Cargar todas las nóminas
-  const loadNominas = useCallback(async () => {
+  // Cargar nóminas con filtros
+  const loadNominas = useCallback(async (nuevosFiltros?: FiltrosNominas) => {
     try {
       setLoading(true);
       setError(null);
       
-      if (USE_MOCK_DATA) {
-        // Simular delay de red
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setNominas(mockNominasCheque);
-      } else {
-        const data = await nominaChequeService.getNominas();
-        setNominas(data);
+      const filtrosAplicar = nuevosFiltros || filtros;
+      const resultado = await nominaChequeService.getNominas(filtrosAplicar);
+      
+      setNominas(resultado.nominas);
+      setPagination(resultado.pagination);
+      // Solo actualizar filtros si se pasaron nuevos filtros
+      if (nuevosFiltros) {
+        setFiltros(resultado.filtros);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar nóminas");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, []); // Remover filtros de las dependencias para evitar bucle infinito
 
-  // Cargar una nómina específica con sus cheques
-  const loadNomina = useCallback(async (id: string) => {
+  // Aplicar filtros
+  const aplicarFiltros = useCallback(async (nuevosFiltros: FiltrosNominas) => {
     try {
       setLoading(true);
       setError(null);
       
-      if (USE_MOCK_DATA) {
-        // Simular delay de red
-        await new Promise(resolve => setTimeout(resolve, 300));
-        const nomina = mockNominasCheque.find(n => n.id === id);
-        if (!nomina) {
-          throw new Error("Nómina no encontrada");
-        }
-        setSelectedNomina(nomina);
-        return nomina;
-      } else {
-        const nomina = await nominaChequeService.getNomina(id);
-        setSelectedNomina(nomina);
-        return nomina;
-      }
+      const filtrosCombinados = {
+        ...nuevosFiltros,
+        page: 1 // Resetear a primera página al aplicar filtros
+      };
+      
+      const resultado = await nominaChequeService.getNominas(filtrosCombinados);
+      
+      setNominas(resultado.nominas);
+      setPagination(resultado.pagination);
+      setFiltros(resultado.filtros);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar nómina");
-      throw err;
+      setError(err instanceof Error ? err.message : "Error al aplicar filtros");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Crear nueva nómina
-  const crearNomina = useCallback(async (request: CrearNominaChequeRequest) => {
+  // Cambiar página
+  const cambiarPagina = useCallback(async (nuevaPagina: number) => {
     try {
       setLoading(true);
       setError(null);
       
-      if (USE_MOCK_DATA) {
-        // Simular delay de red
-        await new Promise(resolve => setTimeout(resolve, 800));
+      const filtrosActualizados = {
+        ...filtros,
+        page: nuevaPagina
+      };
+      
+      const resultado = await nominaChequeService.getNominas(filtrosActualizados);
+      
+      setNominas(resultado.nominas);
+      setPagination(resultado.pagination);
+      setFiltros(resultado.filtros);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al cambiar página");
+    } finally {
+      setLoading(false);
+    }
+  }, [filtros]);
+
+  // Cambiar límite por página
+  const cambiarLimite = useCallback(async (nuevoLimite: number) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const filtrosActualizados = {
+        ...filtros,
+        limit: nuevoLimite,
+        page: 1 // Resetear a primera página
+      };
+      
+      const resultado = await nominaChequeService.getNominas(filtrosActualizados);
+      
+      setNominas(resultado.nominas);
+      setPagination(resultado.pagination);
+      setFiltros(resultado.filtros);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al cambiar límite");
+    } finally {
+      setLoading(false);
+    }
+  }, [filtros]);
+
+  // Limpiar filtros
+  const limpiarFiltros = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const filtrosLimpios = {
+        page: 1,
+        limit: 10
+      };
+      
+      const resultado = await nominaChequeService.getNominas(filtrosLimpios);
+      
+      setNominas(resultado.nominas);
+      setPagination(resultado.pagination);
+      setFiltros(resultado.filtros);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al limpiar filtros");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Cargar nóminas al montar el componente
+  useEffect(() => {
+    const cargarInicial = async () => {
+      try {
+        setLoading(true);
+        setError(null);
         
-        // Generar correlativos
-        const correlativoFinal = (parseInt(request.correlativoInicial) + 9).toString().padStart(6, '0');
+        const resultado = await nominaChequeService.getNominas({
+          page: 1,
+          limit: 10
+        });
         
-        // Crear nueva nómina mock
-        const nuevaNomina: NominaCheque = {
-          id: (mockNominasCheque.length + 1).toString(),
-          nombre: request.nombre,
-          correlativoInicial: request.correlativoInicial,
-          correlativoFinal,
-          fechaCreacion: new Date().toISOString(),
-          creadoPor: usuario?.nombre || "Usuario Actual",
-          local: request.local,
-          estado: "ACTIVA",
-          totalCheques: 10,
-          chequesDisponibles: 10,
-          chequesAsignados: 0,
-          chequesPagados: 0,
-          trackingEnvio: {
-            id: `track-${mockNominasCheque.length + 1}`,
-            estado: "EN_ORIGEN",
-            localOrigen: request.local,
-            localDestino: "BALMACEDA 599",
-          },
-          cheques: Array.from({ length: 10 }, (_, i) => ({
-            id: `${mockNominasCheque.length + 1}-${i + 1}`,
-            numeroCorrelativo: (parseInt(request.correlativoInicial) + i).toString().padStart(6, '0'),
-            estado: "DISPONIBLE" as const,
-          })),
-        };
-        
-        // Agregar a la lista mock
-        mockNominasCheque.unshift(nuevaNomina);
-        setNominas(prev => [nuevaNomina, ...prev]);
-        return nuevaNomina;
-      } else {
-        const nuevaNomina = await nominaChequeService.crearNomina(request);
-        setNominas(prev => [nuevaNomina, ...prev]);
-        return nuevaNomina;
+        setNominas(resultado.nominas);
+        setPagination(resultado.pagination);
+        setFiltros(resultado.filtros);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error al cargar nóminas");
+      } finally {
+        setLoading(false);
       }
+    };
+    
+    cargarInicial();
+  }, []); // Solo se ejecuta al montar el componente
+
+  // Cargar nómina específica con detalles completos
+  const loadNomina = useCallback(async (id: string) => {
+    try {
+      setError(null);
+      const data = await nominaChequeService.getNominaCompleta(id);
+      setSelectedNomina(data);
+      return data;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al cargar nómina");
+      throw err;
+    }
+  }, []);
+
+  // Crear nueva nómina
+  const crearNomina = useCallback(async (request: CrearNominaRequest) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const nuevaNomina = await nominaChequeService.crearNomina(request);
+      setNominas(prev => [nuevaNomina, ...prev]);
+      return nuevaNomina;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al crear nómina");
       throw err;
     } finally {
       setLoading(false);
     }
-  }, [usuario?.nombre]);
+  }, []);
 
-  // Actualizar tracking de envío
-  const actualizarTracking = useCallback(async (nominaId: string, trackingData: Partial<TrackingEnvio>) => {
+  // Asignar cheque a nómina
+  const asignarCheque = useCallback(async (nominaId: string, request: AsignarChequeRequest) => {
     try {
       setError(null);
       
-      if (USE_MOCK_DATA) {
-        // Simular delay de red
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Encontrar la nómina
-        const nominaIndex = mockNominasCheque.findIndex(n => n.id === nominaId);
-        if (nominaIndex === -1) {
-          throw new Error("Nómina no encontrada");
-        }
-        
-        const nomina = mockNominasCheque[nominaIndex];
-        
-        // Actualizar tracking con información del usuario actual
-        if (nomina.trackingEnvio) {
-          nomina.trackingEnvio = {
-            ...nomina.trackingEnvio,
-            ...trackingData,
-            // Agregar información del usuario que realiza la acción
-            enviadoPor: trackingData.estado === "EN_TRANSITO" ? usuario?.nombre : nomina.trackingEnvio.enviadoPor,
-            recibidoPor: trackingData.estado === "RECIBIDA" ? usuario?.nombre : nomina.trackingEnvio.recibidoPor,
-          };
-        } else {
-                  nomina.trackingEnvio = {
-          id: `track-${nominaId}`,
-          estado: trackingData.estado || "EN_ORIGEN",
-          localOrigen: nomina.local,
-          localDestino: "BALMACEDA 599",
-          ...trackingData,
-          enviadoPor: trackingData.estado === "EN_TRANSITO" ? usuario?.nombre : undefined,
-          recibidoPor: trackingData.estado === "RECIBIDA" ? usuario?.nombre : undefined,
-        };
-        }
-        
-        // Actualizar estado local
-        setNominas(prev => [...prev]);
-        if (selectedNomina?.id === nominaId) {
-          setSelectedNomina({ ...nomina });
-        }
-      } else {
-        await nominaChequeService.actualizarTracking(nominaId, trackingData);
-        
-        // Actualizar la nómina seleccionada si es la misma
-        if (selectedNomina?.id === nominaId) {
-          await loadNomina(nominaId);
-        }
-        
-        // Actualizar la lista de nóminas
-        await loadNominas();
+  
+      
+      await nominaChequeService.asignarCheque(nominaId, request);
+      
+      // Recargar la nómina para obtener los datos actualizados
+      if (selectedNomina?.id === nominaId) {
+        await loadNomina(nominaId);
       }
+      
+      // Actualizar la lista de nóminas con los filtros actuales
+      const resultado = await nominaChequeService.getNominas(filtros);
+      setNominas(resultado.nominas);
+      setPagination(resultado.pagination);
+    } catch (err) {
+      console.error("❌ Error en asignarCheque:", err);
+      setError(err instanceof Error ? err.message : "Error al asignar cheque");
+      throw err;
+    }
+  }, [selectedNomina?.id, loadNomina, filtros]);
+
+  // Actualizar tracking de envío
+  const actualizarTracking = useCallback(async (nominaId: string, request: ActualizarTrackingRequest) => {
+    try {
+      setError(null);
+      
+      await nominaChequeService.actualizarTracking(nominaId, request);
+      
+      // Actualizar la nómina seleccionada si es la misma
+      if (selectedNomina?.id === nominaId) {
+        await loadNomina(nominaId);
+      }
+      
+      // Actualizar la lista de nóminas con los filtros actuales
+      const resultado = await nominaChequeService.getNominas(filtros);
+      setNominas(resultado.nominas);
+      setPagination(resultado.pagination);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al actualizar tracking");
       throw err;
     }
-  }, [selectedNomina?.id, loadNomina, loadNominas, usuario?.nombre]);
+  }, [selectedNomina?.id, loadNomina, filtros]);
 
-  // Crear cheque manualmente
-  const crearCheque = useCallback(async (request: CrearChequeRequest) => {
+  // Crear tracking manualmente
+  const crearTracking = useCallback(async (nominaId: string) => {
+    try {
+      setError(null);
+      
+      await nominaChequeService.crearTracking(nominaId);
+      
+      // Actualizar la nómina seleccionada si es la misma
+      if (selectedNomina?.id === nominaId) {
+        await loadNomina(nominaId);
+      }
+      
+      // Actualizar la lista de nóminas con los filtros actuales
+      const resultado = await nominaChequeService.getNominas(filtros);
+      setNominas(resultado.nominas);
+      setPagination(resultado.pagination);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al crear tracking");
+      throw err;
+    }
+  }, [selectedNomina?.id, loadNomina, filtros]);
+
+  // Obtener nóminas por estado de tracking
+  const getNominasPorEstadoTracking = useCallback(async (estado: string) => {
     try {
       setLoading(true);
       setError(null);
-      
-      if (USE_MOCK_DATA) {
-        // Simular delay de red
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Crear nuevo cheque mock
-        const nuevoCheque = {
-          id: `cheque-${Date.now()}`,
-          numeroCorrelativo: request.numeroCorrelativo,
-          estado: "DISPONIBLE" as const,
-        };
-        
-        // Si se especifica una nómina, agregarlo a esa nómina
-        if (request.nominaId) {
-          const nominaIndex = mockNominasCheque.findIndex(n => n.id === request.nominaId);
-          if (nominaIndex !== -1) {
-            mockNominasCheque[nominaIndex].cheques.push(nuevoCheque);
-            mockNominasCheque[nominaIndex].totalCheques += 1;
-            mockNominasCheque[nominaIndex].chequesDisponibles += 1;
-          }
-        }
-        
-        // Actualizar estado local
-        setNominas(prev => [...prev]);
-        return nuevoCheque;
-      } else {
-        const nuevoCheque = await nominaChequeService.crearCheque(request);
-        
-        // Si se asignó a una nómina, actualizar la lista
-        if (request.nominaId) {
-          await loadNominas();
-        }
-        
-        return nuevoCheque;
-      }
+      const data = await nominaChequeService.getNominasPorEstadoTracking(estado);
+      setNominas(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al crear cheque");
-      throw err;
+      setError(err instanceof Error ? err.message : "Error al filtrar nóminas");
     } finally {
       setLoading(false);
     }
-  }, [loadNominas]);
-
-  // Asignar cheque a factura por folio
-  const asignarCheque = useCallback(async (nominaId: string, chequeId: string, request: AsignarChequeRequest) => {
-    try {
-      setError(null);
-      
-      if (USE_MOCK_DATA) {
-        // Simular delay de red
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Encontrar la nómina y el cheque
-        const nominaIndex = mockNominasCheque.findIndex(n => n.id === nominaId);
-        if (nominaIndex === -1) {
-          throw new Error("Nómina no encontrada");
-        }
-        
-        const nomina = mockNominasCheque[nominaIndex];
-        const chequeIndex = nomina.cheques.findIndex(c => c.id === chequeId);
-        if (chequeIndex === -1) {
-          throw new Error("Cheque no encontrado");
-        }
-        
-        // Simular búsqueda de factura por folio
-        const factura = mockFacturasDisponibles.find(f => f.folio === request.facturaFolio);
-        if (!factura) {
-          throw new Error("Factura no encontrada");
-        }
-        
-        // Actualizar el cheque
-        nomina.cheques[chequeIndex] = {
-          ...nomina.cheques[chequeIndex],
-          estado: "ASIGNADO",
-          proveedor: factura.proveedor,
-          montoPagado: request.montoPagado || factura.monto,
-          facturaAsociada: {
-            id: factura.id,
-            folio: factura.folio,
-            proveedor: factura.proveedor,
-            monto: factura.monto,
-            estado: "ASIGNADA",
-            fechaIngreso: new Date().toISOString(),
-          },
-          fechaAsignacion: new Date().toISOString(),
-        };
-        
-        // Actualizar contadores
-        nomina.chequesDisponibles -= 1;
-        nomina.chequesAsignados += 1;
-        
-        // Actualizar estado local
-        setNominas(prev => [...prev]);
-        if (selectedNomina?.id === nominaId) {
-          setSelectedNomina({ ...nomina });
-        }
-      } else {
-        await nominaChequeService.asignarCheque(nominaId, chequeId, request);
-        
-        // Actualizar la nómina seleccionada si es la misma
-        if (selectedNomina?.id === nominaId) {
-          await loadNomina(nominaId);
-        }
-        
-        // Actualizar la lista de nóminas
-        await loadNominas();
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al asignar cheque");
-      throw err;
-    }
-  }, [selectedNomina?.id, loadNomina, loadNominas]);
-
-  // Marcar cheque como pagado con monto y fecha
-  const marcarChequePagado = useCallback(async (nominaId: string, chequeId: string, request: MarcarPagadoRequest) => {
-    try {
-      setError(null);
-      
-      if (USE_MOCK_DATA) {
-        // Simular delay de red
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Encontrar la nómina y el cheque
-        const nominaIndex = mockNominasCheque.findIndex(n => n.id === nominaId);
-        if (nominaIndex === -1) {
-          throw new Error("Nómina no encontrada");
-        }
-        
-        const nomina = mockNominasCheque[nominaIndex];
-        const chequeIndex = nomina.cheques.findIndex(c => c.id === chequeId);
-        if (chequeIndex === -1) {
-          throw new Error("Cheque no encontrado");
-        }
-        
-        const cheque = nomina.cheques[chequeIndex];
-        if (cheque.estado !== "ASIGNADO") {
-          throw new Error("Solo se pueden marcar como pagados cheques asignados");
-        }
-        
-        // Actualizar el cheque
-        nomina.cheques[chequeIndex] = {
-          ...cheque,
-          estado: "PAGADO",
-          montoPagado: request.montoPagado,
-          fechaPago: request.fechaPago,
-        };
-        
-        // Actualizar contadores
-        nomina.chequesAsignados -= 1;
-        nomina.chequesPagados += 1;
-        
-        // Actualizar estado local
-        setNominas(prev => [...prev]);
-        if (selectedNomina?.id === nominaId) {
-          setSelectedNomina({ ...nomina });
-        }
-      } else {
-        await nominaChequeService.marcarChequePagado(nominaId, chequeId, request);
-        
-        // Actualizar la nómina seleccionada si es la misma
-        if (selectedNomina?.id === nominaId) {
-          await loadNomina(nominaId);
-        }
-        
-        // Actualizar la lista de nóminas
-        await loadNominas();
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al marcar cheque como pagado");
-      throw err;
-    }
-  }, [selectedNomina?.id, loadNomina, loadNominas]);
-
-  // Obtener facturas disponibles
-  const getFacturasDisponibles = useCallback(async () => {
-    try {
-      if (USE_MOCK_DATA) {
-        // Simular delay de red
-        await new Promise(resolve => setTimeout(resolve, 300));
-        return mockFacturasDisponibles;
-      } else {
-        return await nominaChequeService.getFacturasDisponibles();
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al obtener facturas disponibles");
-      throw err;
-    }
   }, []);
 
-  // Limpiar error
-  const clearError = useCallback(() => {
-    setError(null);
+  // Obtener todas las nóminas con tracking
+  const getNominasConTracking = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await nominaChequeService.getNominasConTracking();
+      setNominas(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al cargar nóminas con tracking");
+    } finally {
+      setLoading(false);
+    }
   }, []);
-
-  // Cargar nóminas al montar el componente
-  useEffect(() => {
-    loadNominas();
-  }, [loadNominas]);
 
   return {
-    nominas: nominasFiltradas,
-    todasLasNominas: nominas,
+    nominas,
     selectedNomina,
-    filtro,
     loading,
     error,
+    crearNomina,
+    asignarCheque,
+    actualizarTracking,
+    crearTracking,
     loadNominas,
     loadNomina,
-    crearNomina,
-    crearCheque,
-    asignarCheque,
-    marcarChequePagado,
-    actualizarTracking,
-    getFacturasDisponibles,
-    clearError,
+    getNominasPorEstadoTracking,
+    getNominasConTracking,
     setSelectedNomina,
-    setFiltro,
+    setError,
+    pagination,
+    filtros,
+    aplicarFiltros,
+    cambiarPagina,
+    cambiarLimite,
+    limpiarFiltros,
   };
 }; 

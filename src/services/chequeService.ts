@@ -17,18 +17,38 @@ interface EstadisticasProveedor {
   monto_disponible: number;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api-beta";
+
+// Función helper para construir URLs correctamente
+const buildApiUrl = (endpoint: string): string => {
+
+
+
+  
+  const baseUrl = API_URL.endsWith('/api-beta') ? API_URL : `${API_URL}/api-beta`;
+  const finalUrl = `${baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+  
+
+
+  
+  return finalUrl;
+};
 
 // Función helper para obtener headers con autorización
 const getAuthHeaders = () => {
   const token = localStorage.getItem('authToken');
-  console.log("🔑 Token obtenido de localStorage:", token ? "✅ Presente" : "❌ Ausente");
-  console.log("🔑 Token (primeros 20 caracteres):", token ? token.substring(0, 20) + "..." : "No hay token");
+
+
+
   
-  return {
+  const headers = {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json'
   };
+  
+
+  
+  return headers;
 };
 
 // Obtener todos los cheques con información de uso
@@ -37,15 +57,17 @@ export const getCheques = async (
   offset: number = 0
 ): Promise<ChequesResponse> => {
   try {
-    console.log("🔍 Llamando endpoint de cheques:", `${API_URL}/api-beta/cheques`);
-    console.log("📋 Parámetros:", { limit, offset });
+    const url = buildApiUrl('/cheques');
+
+
+
     
-    const response = await axios.get<ChequesResponse>(`${API_URL}/api-beta/cheques`, {
+    const response = await axios.get<ChequesResponse>(url, {
       params: { limit, offset },
       headers: getAuthHeaders()
     });
     
-    console.log("✅ Respuesta del backend:", response.data);
+
     return response.data;
   } catch (error) {
     console.error("❌ Error obteniendo cheques:", error);
@@ -54,7 +76,9 @@ export const getCheques = async (
         status: error.response?.status,
         statusText: error.response?.statusText,
         data: error.response?.data,
-        url: error.config?.url
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: error.config?.headers
       });
     }
     throw new Error("No se pudieron cargar los cheques");
@@ -64,7 +88,7 @@ export const getCheques = async (
 // Obtener un cheque específico por ID
 export const getChequeById = async (id: number): Promise<ChequeResponse> => {
   try {
-    const response = await axios.get<ChequeResponse>(`${API_URL}/api-beta/cheques/${id}`, {
+    const response = await axios.get<ChequeResponse>(buildApiUrl(`/cheques/${id}`), {
       headers: getAuthHeaders()
     });
     return response.data;
@@ -77,7 +101,7 @@ export const getChequeById = async (id: number): Promise<ChequeResponse> => {
 // Obtener un cheque por correlativo
 export const getChequeByCorrelativo = async (correlativo: string): Promise<ChequeResponse> => {
   try {
-    const response = await axios.get<ChequeResponse>(`${API_URL}/api-beta/cheques/correlativo/${correlativo}`, {
+    const response = await axios.get<ChequeResponse>(buildApiUrl(`/cheques/correlativo/${correlativo}`), {
       headers: getAuthHeaders()
     });
     return response.data;
@@ -90,7 +114,7 @@ export const getChequeByCorrelativo = async (correlativo: string): Promise<Chequ
 // Crear un nuevo cheque
 export const createCheque = async (data: CrearChequeRequest): Promise<ChequeResponse> => {
   try {
-    const response = await axios.post<ChequeResponse>(`${API_URL}/api-beta/cheques`, data, {
+    const response = await axios.post<ChequeResponse>(buildApiUrl('/cheques'), data, {
       headers: getAuthHeaders()
     });
     return response.data;
@@ -103,7 +127,7 @@ export const createCheque = async (data: CrearChequeRequest): Promise<ChequeResp
 // Actualizar un cheque existente
 export const updateCheque = async (id: number, data: ActualizarChequeRequest): Promise<ChequeResponse> => {
   try {
-    const response = await axios.put<ChequeResponse>(`${API_URL}/api-beta/cheques/${id}`, data, {
+    const response = await axios.put<ChequeResponse>(buildApiUrl(`/cheques/${id}`), data, {
       headers: getAuthHeaders()
     });
     return response.data;
@@ -116,7 +140,7 @@ export const updateCheque = async (id: number, data: ActualizarChequeRequest): P
 // Eliminar un cheque (solo si no tiene facturas asociadas)
 export const deleteCheque = async (id: number): Promise<void> => {
   try {
-    await axios.delete(`${API_URL}/api-beta/cheques/${id}`, {
+    await axios.delete(buildApiUrl(`/cheques/${id}`), {
       headers: getAuthHeaders()
     });
   } catch (error) {
@@ -128,7 +152,7 @@ export const deleteCheque = async (id: number): Promise<void> => {
 // Obtener información del cheque asociado a una factura
 export const getChequeByFactura = async (facturaId: number): Promise<ChequeResponse> => {
   try {
-    const response = await axios.get<ChequeResponse>(`${API_URL}/api-beta/facturas/${facturaId}/cheque`, {
+    const response = await axios.get<ChequeResponse>(buildApiUrl(`/facturas/${facturaId}/cheque`), {
       headers: getAuthHeaders()
     });
     return response.data;
@@ -145,7 +169,7 @@ export const getChequesByProveedor = async (
   offset: number = 0
 ): Promise<ChequesPorProveedorResponse> => {
   try {
-    const response = await axios.get<ChequesPorProveedorResponse>(`${API_URL}/api-beta/cheques/proveedor/${idProveedor}`, {
+    const response = await axios.get<ChequesPorProveedorResponse>(buildApiUrl(`/cheques/proveedor/${idProveedor}`), {
       params: { limit, offset },
       headers: getAuthHeaders()
     });
@@ -170,7 +194,7 @@ export const getChequesByProveedor = async (
 // Obtener estadísticas de cheques por proveedor
 export const getEstadisticasChequesByProveedor = async (idProveedor: number): Promise<{ success: boolean; data: EstadisticasProveedor }> => {
   try {
-    const response = await axios.get(`${API_URL}/api-beta/cheques/proveedor/${idProveedor}/estadisticas`, {
+    const response = await axios.get(buildApiUrl(`/cheques/proveedor/${idProveedor}/estadisticas`), {
       headers: getAuthHeaders()
     });
     return response.data;
@@ -183,16 +207,152 @@ export const getEstadisticasChequesByProveedor = async (idProveedor: number): Pr
 // Obtener facturas de un cheque específico
 export const getFacturasByCheque = async (idCheque: number): Promise<{ success: boolean; data: { facturas: Array<{ id_factura: number; folio: string; monto_asignado: number; monto_factura: number; id_proveedor: number; proveedor: string; rut_proveedor: string }> } }> => {
   try {
-    console.log("🔍 Obteniendo facturas del cheque:", idCheque);
+
     
-    const response = await axios.get(`${API_URL}/api-beta/cheques/${idCheque}/facturas`, {
+    const response = await axios.get(buildApiUrl(`/cheques/${idCheque}/facturas`), {
       headers: getAuthHeaders()
     });
     
-    console.log("✅ Facturas del cheque obtenidas:", response.data);
+
     return response.data;
   } catch (error) {
     console.error("❌ Error obteniendo facturas del cheque:", error);
     throw new Error("No se pudieron cargar las facturas del cheque");
+  }
+}; 
+
+// Verificar si un cheque está asignado a alguna nómina
+export const checkChequeAsignadoANomina = async (chequeId: number): Promise<boolean> => {
+  try {
+
+    
+    // Hacemos una consulta para verificar si el cheque está en alguna nómina
+    // Por ahora, vamos a hacer una consulta simple
+    const response = await axios.get(buildApiUrl(`/cheques/${chequeId}/nominas`), {
+      headers: getAuthHeaders()
+    });
+    
+
+    
+    // Si hay respuesta y tiene datos, significa que está asignado
+    return response.data && response.data.success && response.data.data && response.data.data.length > 0;
+  } catch (error) {
+    // Si el endpoint no existe o hay error 404, asumimos que no está asignado
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      
+      return false;
+    }
+    
+    console.error("❌ Error verificando asignación a nómina:", error);
+    // En caso de error, asumimos que no está asignado para no bloquear
+    return false;
+  }
+};
+
+// Obtener cheques disponibles para nóminas (no asignados a ninguna nómina)
+export const getChequesDisponiblesParaNominas = async (
+  limit: number = 50,
+  offset: number = 0
+): Promise<ChequesResponse> => {
+  try {
+
+    
+    // Primero obtenemos todos los cheques
+    const allCheques = await getCheques(limit, offset);
+    
+    if (!allCheques || !allCheques.data) {
+      throw new Error("No se pudieron cargar los cheques");
+    }
+    
+
+    
+    // Verificamos cada cheque para ver si está asignado a alguna nómina
+    const chequesDisponibles = [];
+    
+    for (const cheque of allCheques.data) {
+      const estaAsignado = await checkChequeAsignadoANomina(cheque.id);
+      
+
+      
+      if (!estaAsignado) {
+        chequesDisponibles.push(cheque);
+      }
+    }
+    
+
+    
+    return {
+      success: true,
+      data: chequesDisponibles,
+      total: chequesDisponibles.length
+    };
+  } catch (error) {
+    console.error("❌ Error obteniendo cheques disponibles para nóminas:", error);
+    throw new Error("No se pudieron cargar los cheques disponibles para nóminas");
+  }
+};
+
+// NUEVAS FUNCIONES PARA SISTEMA BINARIO
+
+// Obtener cheques disponibles usando el nuevo endpoint
+export const getChequesDisponibles = async (
+  limit: number = 50,
+  offset: number = 0
+): Promise<ChequesResponse> => {
+  try {
+
+    
+    const response = await axios.get<ChequesResponse>(buildApiUrl('/cheques/disponibles'), {
+      params: { limit, offset },
+      headers: getAuthHeaders()
+    });
+    
+
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error obteniendo cheques disponibles:", error);
+    if (axios.isAxiosError(error)) {
+      console.error("📊 Detalles del error:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: error.config?.headers
+      });
+    }
+    throw new Error("No se pudieron cargar los cheques disponibles");
+  }
+};
+
+// Actualizar estado de asignación de un cheque
+export const updateChequeAsignacion = async (
+  chequeId: number, 
+  asignado: boolean
+): Promise<{ success: boolean; message: string }> => {
+  try {
+
+    
+    const response = await axios.patch(buildApiUrl(`/cheques/${chequeId}/asignacion`), {
+      asignado: asignado
+    }, {
+      headers: getAuthHeaders()
+    });
+    
+
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error actualizando asignación del cheque:", error);
+    if (axios.isAxiosError(error)) {
+      console.error("📊 Detalles del error:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: error.config?.headers
+      });
+    }
+    throw new Error("No se pudo actualizar la asignación del cheque");
   }
 }; 

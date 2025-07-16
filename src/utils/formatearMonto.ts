@@ -61,3 +61,14 @@ export function stringMontoAEntero(montoString: string): number {
   // Redondear a entero
   return Math.round(monto);
 } 
+
+// Formatear monto a pesos chilenos sin decimales
+export const formatearMontoPesos = (monto: number | string): string => {
+  const numMonto = typeof monto === 'string' ? parseFloat(monto) || 0 : monto || 0;
+  return new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(numMonto);
+}; 

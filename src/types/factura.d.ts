@@ -52,6 +52,8 @@ export interface Cheque {
   cantidad_facturas?: number; // Número de facturas que usa este cheque
   nombre_usuario?: string; // Nombre del usuario que creó el cheque
   facturas?: FacturaChequeInfo[]; // Lista de facturas asociadas
+  // Nuevo campo para sistema binario de asignación a nóminas
+  asignado_a_nomina?: boolean; // Indica si el cheque está asignado a una nómina
 }
 
 // Información de factura asociada a un cheque
