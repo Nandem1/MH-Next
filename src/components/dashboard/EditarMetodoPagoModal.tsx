@@ -109,6 +109,10 @@ export function EditarMetodoPagoModal({
       notasCredito: notasCreditoFacturaActual
     };
   };
+
+  // Calcular si el monto es 0 (para validación)
+  const montoNeto = calcularMontoNeto();
+  const montoEsCero = montoNeto.montoNeto === 0;
   
   const cheques = chequesData?.data?.cheques || [];
   
@@ -427,9 +431,38 @@ export function EditarMetodoPagoModal({
                 </Alert>
               ) : null;
             })()}
+
+            {/* Alerta cuando el monto es 0 */}
+            {montoEsCero && (
+              <Alert 
+                severity="warning" 
+                sx={{ 
+                  mb: 3, 
+                  borderRadius: "8px",
+                  border: `1px solid ${theme.palette.warning.light}`,
+                  bgcolor: theme.palette.mode === 'light' ? "#fffbeb" : "#2d1b1b",
+                }}
+              >
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  <strong>Monto no configurado:</strong> Esta factura tiene un monto de $0, lo que indica que no se ha configurado el monto correctamente.
+                </Typography>
+                <Typography variant="body2" sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                  <strong>Monto actual:</strong> ${montoNeto.montoFactura.toLocaleString('es-CL')} | 
+                  {montoNeto.totalNotasCredito > 0 && (
+                    <>
+                      <strong> Notas de crédito:</strong> <span style={{ color: theme.palette.error.main }}>-${Math.round(montoNeto.totalNotasCredito).toLocaleString('es-CL')}</span> | 
+                    </>
+                  )}
+                  <strong> Monto neto:</strong> <span style={{ color: theme.palette.success.main }}>$0</span>
+                </Typography>
+                <Typography variant="body2" sx={{ fontSize: '0.875rem', color: 'text.secondary', mt: 1 }}>
+                  No se puede cambiar el método de pago hasta que se configure un monto válido para la factura.
+                </Typography>
+              </Alert>
+            )}
             
             {/* Método de Pago */}
-            <FormControl fullWidth margin="normal" disabled={loading}>
+            <FormControl fullWidth margin="normal" disabled={loading || montoEsCero}>
               <InputLabel>Método de Pago</InputLabel>
               <Select
                 value={metodoPago}
@@ -478,7 +511,7 @@ export function EditarMetodoPagoModal({
               onChange={(e) => setMontoPagado(e.target.value)}
               placeholder={`Monto de la factura: $${montoAEntero(factura.monto).toLocaleString('es-CL')}`}
               margin="normal"
-              disabled={loading}
+              disabled={loading || montoEsCero}
               type="number"
               inputProps={{
                 min: 0,
@@ -526,7 +559,7 @@ export function EditarMetodoPagoModal({
                 </Typography>
                 
                 {/* Selector de tipo de cheque */}
-                <FormControl fullWidth margin="normal" disabled={loading}>
+                <FormControl fullWidth margin="normal" disabled={loading || montoEsCero}>
                   <InputLabel>Tipo de Cheque</InputLabel>
                   <Select
                     value={usarChequeExistente ? "existente" : "nuevo"}
@@ -581,7 +614,7 @@ export function EditarMetodoPagoModal({
                             {...params}
                             label="Seleccionar Cheque Existente"
                             margin="normal"
-                            disabled={loading}
+                            disabled={loading || montoEsCero}
                             InputProps={{
                               ...params.InputProps,
                               endAdornment: (
@@ -639,7 +672,7 @@ export function EditarMetodoPagoModal({
                     placeholder="Ej: CH-001-2024"
                     margin="normal"
                     required
-                    disabled={loading}
+                    disabled={loading || montoEsCero}
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         borderRadius: "8px",
@@ -732,7 +765,7 @@ export function EditarMetodoPagoModal({
           <Button
             type="submit"
             variant="contained"
-            disabled={loading}
+            disabled={loading || montoEsCero}
             sx={{
               borderRadius: "8px",
               textTransform: "none",

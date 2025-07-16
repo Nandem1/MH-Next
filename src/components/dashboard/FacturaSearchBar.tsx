@@ -10,6 +10,8 @@ import {
   IconButton,
   Tooltip,
   useTheme,
+  Autocomplete,
+  CircularProgress,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -81,6 +83,15 @@ export function FacturaSearchBar({
     setFolio("");
     onClear();
   };
+
+  // Encontrar el usuario seleccionado para mostrar en el Autocomplete
+  const selectedUsuario = usuarios?.find(u => u.id.toString() === usuarioActual) || null;
+  
+  // Encontrar el proveedor seleccionado para mostrar en el Autocomplete
+  const selectedProveedor = proveedores?.find(p => p.id.toString() === proveedorActual) || null;
+  
+  // Encontrar el local seleccionado para mostrar en el Autocomplete
+  const selectedLocal = locales.find(l => l.id === localActual) || null;
 
   // Encontrar el usuario seleccionado para mostrar en el Autocomplete
   const selectedUsuario = usuarios?.find(u => u.id.toString() === usuarioActual) || null;

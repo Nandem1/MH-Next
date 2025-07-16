@@ -30,32 +30,35 @@ export function FacturaTableDesktop({
 }: FacturaTableDesktopProps) {
   const theme = useTheme();
 
-  const getPagoColor = (metodoPago: string) => {
-    switch (metodoPago) {
-      case "POR_PAGAR":
-        return "warning";
-      case "CHEQUE":
-        return "info";
-      case "TRANSFERENCIA":
-        return "success";
-      case "EFECTIVO":
-        return "primary";
-      default:
-        return "default";
-    }
-  };
-
   const getPagoText = (factura: Factura) => {
     if (!factura.metodo_pago || factura.metodo_pago === "POR_PAGAR") {
       return "POR PAGAR";
     }
     
-    if (factura.metodo_pago === "CHEQUE" && factura.cheque_correlativo) {
-      return `CHEQUE #${factura.cheque_correlativo}`;
+    // Para cheques, siempre mostrar solo "Cheque" - el correlativo se mostrará en un span separado
+    if (factura.metodo_pago === "CHEQUE") {
+      return "Cheque";
     }
     
     return factura.metodo_pago;
   };
+
+  const getPagoColor = (metodoPago: string) => {
+    switch (metodoPago) {
+      case "POR_PAGAR":
+        return "warning"; // Naranja vibrante - más llamativo
+      case "CHEQUE":
+        return "info"; // Azul eléctrico - moderno y confiable
+      case "TRANSFERENCIA":
+        return "success"; // Verde suave - sutil
+      case "EFECTIVO":
+        return "default"; // Gris elegante - discreto
+      default:
+        return "default";
+    }
+  };
+
+
 
   return (
     <TableContainer
@@ -111,17 +114,45 @@ export function FacturaTableDesktop({
                 </Stack>
               </TableCell>
 
-              {/* PAGADO CON con ícono de editar */}
+              {/* PAGADO CON con diseño minimalista al estilo Vercel */}
               <TableCell align="center">
-                <Box sx={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Box sx={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 0.5 }}>
                   {factura.isUpdating ? (
                     <CircularProgress size={16} />
                   ) : (
-                    <Chip
-                      label={getPagoText(factura)}
-                      color={getPagoColor(factura.metodo_pago || "POR_PAGAR")}
-                      size="small"
-                    />
+                    <>
+                      <Chip
+                        label={getPagoText(factura)}
+                        color={getPagoColor(factura.metodo_pago || "POR_PAGAR")}
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                          fontSize: '0.75rem',
+                          height: '20px',
+                          '& .MuiChip-label': {
+                            px: 1,
+                            fontWeight: 500,
+                          },
+                          // Estilos especiales para estados principales
+                          ...(factura.metodo_pago === "POR_PAGAR" && {
+                            borderColor: '#ff9800',
+                            color: '#ff9800',
+                            backgroundColor: 'rgba(255, 152, 0, 0.08)',
+                            '&:hover': {
+                              backgroundColor: 'rgba(255, 152, 0, 0.12)',
+                            },
+                          }),
+                          ...(factura.metodo_pago === "CHEQUE" && {
+                            borderColor: '#2196f3',
+                            color: '#2196f3',
+                            backgroundColor: 'rgba(33, 150, 243, 0.08)',
+                            '&:hover': {
+                              backgroundColor: 'rgba(33, 150, 243, 0.12)',
+                            },
+                          }),
+                        }}
+                      />
+                    </>
                   )}
                   <Tooltip title="Editar método de pago">
                     <IconButton
@@ -133,7 +164,6 @@ export function FacturaTableDesktop({
                         right: -12,
                         top: "50%",
                         transform: "translateY(-50%)",
-                        ml: 1,
                         width: 24,
                         height: 24,
                         color: theme.palette.primary.main,

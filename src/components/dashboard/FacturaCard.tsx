@@ -30,13 +30,13 @@ export function FacturaCard({
   const getPagoColor = (metodoPago: string) => {
     switch (metodoPago) {
       case "POR_PAGAR":
-        return "warning";
+        return "warning"; // Naranja vibrante - más llamativo
       case "CHEQUE":
-        return "info";
+        return "info"; // Azul eléctrico - moderno y confiable
       case "TRANSFERENCIA":
-        return "success";
+        return "success"; // Verde suave - sutil
       case "EFECTIVO":
-        return "primary";
+        return "default"; // Gris elegante - discreto
       default:
         return "default";
     }
@@ -47,8 +47,9 @@ export function FacturaCard({
       return "POR PAGAR";
     }
     
-    if (factura.metodo_pago === "CHEQUE" && factura.cheque_correlativo) {
-      return `CHEQUE #${factura.cheque_correlativo}`;
+    // Para cheques, siempre mostrar solo "Cheque" - el correlativo se mostrará en un span separado
+    if (factura.metodo_pago === "CHEQUE") {
+      return "Cheque";
     }
     
     return factura.metodo_pago;
@@ -71,6 +72,13 @@ export function FacturaCard({
           alt={`Factura ${factura.folio}`}
           fill
           variant="card"
+          lazy={true}
+          quality={60}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          style={{
+            objectFit: "cover",
+            aspectRatio: "4/3", // Aspect ratio fijo para evitar CLS
+          }}
         />
       </Box>
       <CardContent sx={{ p: 2 }}>
@@ -101,7 +109,7 @@ export function FacturaCard({
               </Typography>
             </Box>
 
-            {/* PAGADO CON con ícono de editar */}
+            {/* PAGADO CON con diseño minimalista */}
             <Box display="flex" alignItems="center">
               <Typography variant="body2" color="text.secondary">
                 Pagado con:
@@ -109,12 +117,39 @@ export function FacturaCard({
               {factura.isUpdating ? (
                 <CircularProgress size={16} sx={{ ml: 1 }} />
               ) : (
-                <Chip
-                  label={getPagoText(factura)}
-                  color={getPagoColor(factura.metodo_pago || "POR_PAGAR")}
-                  size="small"
-                  sx={{ ml: 1 }}
-                />
+                <Box sx={{ ml: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.2 }}>
+                  <Chip
+                    label={getPagoText(factura)}
+                    color={getPagoColor(factura.metodo_pago || "POR_PAGAR")}
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      fontSize: '0.75rem',
+                      height: '20px',
+                      '& .MuiChip-label': {
+                        px: 1,
+                        fontWeight: 500,
+                      },
+                      // Estilos especiales para estados principales
+                      ...(factura.metodo_pago === "POR_PAGAR" && {
+                        borderColor: '#ff9800',
+                        color: '#ff9800',
+                        backgroundColor: 'rgba(255, 152, 0, 0.08)',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 152, 0, 0.12)',
+                        },
+                      }),
+                      ...(factura.metodo_pago === "CHEQUE" && {
+                        borderColor: '#2196f3',
+                        color: '#2196f3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.08)',
+                        '&:hover': {
+                          backgroundColor: 'rgba(33, 150, 243, 0.12)',
+                        },
+                      }),
+                    }}
+                  />
+                </Box>
               )}
               <Tooltip title="Editar método de pago">
                 <IconButton
