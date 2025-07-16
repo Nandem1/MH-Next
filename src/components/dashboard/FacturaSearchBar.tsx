@@ -10,8 +10,10 @@ import {
   IconButton,
   Tooltip,
   useTheme,
-  Autocomplete,
-  CircularProgress,
+  Chip,
+  Stack,
+  Paper,
+  Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -84,38 +86,40 @@ export function FacturaSearchBar({
     onClear();
   };
 
-  // Encontrar el usuario seleccionado para mostrar en el Autocomplete
+  // Encontrar los valores seleccionados para mostrar en los Autocomplete
   const selectedUsuario = usuarios?.find(u => u.id.toString() === usuarioActual) || null;
-  
-  // Encontrar el proveedor seleccionado para mostrar en el Autocomplete
   const selectedProveedor = proveedores?.find(p => p.id.toString() === proveedorActual) || null;
-  
-  // Encontrar el local seleccionado para mostrar en el Autocomplete
   const selectedLocal = locales.find(l => l.id === localActual) || null;
 
-  // Encontrar el usuario seleccionado para mostrar en el Autocomplete
-  const selectedUsuario = usuarios?.find(u => u.id.toString() === usuarioActual) || null;
-  
-  // Encontrar el proveedor seleccionado para mostrar en el Autocomplete
-  const selectedProveedor = proveedores?.find(p => p.id.toString() === proveedorActual) || null;
-  
-  // Encontrar el local seleccionado para mostrar en el Autocomplete
-  const selectedLocal = locales.find(l => l.id === localActual) || null;
+  // Verificar si hay filtros activos
+  const hasActiveFilters = folio.trim() || localActual || usuarioActual || proveedorActual;
 
   return (
-    <Box
-      component="form"
-      onSubmit={handleSubmit}
+    <Paper
+      elevation={0}
       sx={{
+        mb: 4,
         p: 3,
-        backgroundColor: "background.paper",
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: 2,
-        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+        bgcolor: "background.paper",
+        border: `1px solid ${theme.palette.divider}`,
+        borderRadius: "12px",
       }}
     >
-      <Box sx={{ display: "flex", flexDirection: isSmall ? "column" : "row", gap: 2, alignItems: "stretch", flexWrap: "wrap" }}>
+      <Typography variant="h6" fontWeight={600} sx={{ color: "text.primary", mb: 3 }}>
+        Filtros
+      </Typography>
+
+      <Box
+        component="form"
+        onSubmit={handleSubmit}
+        sx={{
+          display: "flex",
+          flexDirection: isSmall ? "column" : "row",
+          gap: 2,
+          alignItems: "stretch",
+          flexWrap: "wrap",
+        }}
+      >
         <TextField
           label="Buscar por Folio"
           variant="outlined"
@@ -124,6 +128,37 @@ export function FacturaSearchBar({
           fullWidth={isSmall}
           size="small"
           placeholder="Ingrese el folio de la factura"
+          sx={{
+            flex: 1,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "8px",
+              color: theme.palette.text.primary,
+              "& fieldset": {
+                borderColor: theme.palette.divider,
+              },
+              "&:hover fieldset": {
+                borderColor: theme.palette.text.primary,
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: theme.palette.primary.main,
+              },
+            },
+            "& .MuiInputLabel-root": {
+              color: theme.palette.text.secondary,
+              "&.Mui-focused": {
+                color: theme.palette.primary.main,
+              },
+            },
+            input: {
+              color: theme.palette.text.primary,
+            },
+          }}
+          InputProps={{
+            style: { color: theme.palette.text.primary },
+          }}
+          InputLabelProps={{
+            style: { color: theme.palette.text.secondary },
+          }}
         />
 
         <Autocomplete
@@ -135,7 +170,28 @@ export function FacturaSearchBar({
           loading={isLoadingProveedores}
           fullWidth={isSmall}
           size="small"
-          sx={{ minWidth: isSmall ? "100%" : 200 }}
+          sx={{ 
+            minWidth: isSmall ? "100%" : 200,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "8px",
+              color: theme.palette.text.primary,
+              "& fieldset": {
+                borderColor: theme.palette.divider,
+              },
+              "&:hover fieldset": {
+                borderColor: theme.palette.text.primary,
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: theme.palette.primary.main,
+              },
+            },
+            "& .MuiInputLabel-root": {
+              color: theme.palette.text.secondary,
+              "&.Mui-focused": {
+                color: theme.palette.primary.main,
+              },
+            },
+          }}
           renderInput={(params) => (
             <TextField
               {...params}
@@ -165,7 +221,28 @@ export function FacturaSearchBar({
           onChange={handleLocalChange}
           fullWidth={isSmall}
           size="small"
-          sx={{ minWidth: isSmall ? "100%" : 200 }}
+          sx={{ 
+            minWidth: isSmall ? "100%" : 200,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "8px",
+              color: theme.palette.text.primary,
+              "& fieldset": {
+                borderColor: theme.palette.divider,
+              },
+              "&:hover fieldset": {
+                borderColor: theme.palette.text.primary,
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: theme.palette.primary.main,
+              },
+            },
+            "& .MuiInputLabel-root": {
+              color: theme.palette.text.secondary,
+              "&.Mui-focused": {
+                color: theme.palette.primary.main,
+              },
+            },
+          }}
           renderInput={(params) => (
             <TextField
               {...params}
@@ -186,7 +263,28 @@ export function FacturaSearchBar({
           loading={isLoadingUsuarios}
           fullWidth={isSmall}
           size="small"
-          sx={{ minWidth: isSmall ? "100%" : 200 }}
+          sx={{ 
+            minWidth: isSmall ? "100%" : 200,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "8px",
+              color: theme.palette.text.primary,
+              "& fieldset": {
+                borderColor: theme.palette.divider,
+              },
+              "&:hover fieldset": {
+                borderColor: theme.palette.text.primary,
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: theme.palette.primary.main,
+              },
+            },
+            "& .MuiInputLabel-root": {
+              color: theme.palette.text.secondary,
+              "&.Mui-focused": {
+                color: theme.palette.primary.main,
+              },
+            },
+          }}
           renderInput={(params) => (
             <TextField
               {...params}
@@ -208,41 +306,131 @@ export function FacturaSearchBar({
           clearOnEscape
         />
 
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          startIcon={<SearchIcon />}
-          sx={{ textTransform: "none", minWidth: isSmall ? "100%" : "auto" }}
-        >
-          Buscar
-        </Button>
+        <Stack direction="row" spacing={2} sx={{ minWidth: isSmall ? "100%" : "auto" }}>
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            startIcon={<SearchIcon />}
+            sx={{ 
+              textTransform: "none", 
+              borderRadius: "8px",
+              px: 3,
+              py: 1,
+              bgcolor: theme.palette.primary.main,
+              color: theme.palette.primary.contrastText,
+              "&:hover": {
+                bgcolor: theme.palette.primary.dark,
+              },
+            }}
+          >
+            Buscar
+          </Button>
 
-        <Button
-          variant="outlined"
-          onClick={handleClear}
-          startIcon={<ClearIcon />}
-          sx={{ textTransform: "none", minWidth: isSmall ? "100%" : "auto" }}
-        >
-          Limpiar
-        </Button>
+          <Button
+            variant="outlined"
+            onClick={handleClear}
+            startIcon={<ClearIcon />}
+            sx={{ 
+              textTransform: "none", 
+              borderRadius: "8px",
+              px: 3,
+              py: 1,
+              borderColor: theme.palette.divider,
+              color: theme.palette.text.primary,
+              "&:hover": {
+                borderColor: theme.palette.text.primary,
+                bgcolor: theme.palette.action.hover,
+              },
+            }}
+          >
+            Limpiar
+          </Button>
 
-        {onGestionCheques && (
-          <Tooltip title="Gestión de Cheques">
-            <IconButton
-              onClick={onGestionCheques}
-              sx={{
-                bgcolor: theme.palette.primary.main,
-                color: theme.palette.primary.contrastText,
-                "&:hover": {
-                  bgcolor: theme.palette.primary.dark,
-                },
-              }}
-            >
-              <AccountBalanceIcon />
-            </IconButton>
-          </Tooltip>
-        )}
+          {onGestionCheques && (
+            <Tooltip title="Gestión de Cheques">
+              <IconButton
+                onClick={onGestionCheques}
+                sx={{
+                  bgcolor: theme.palette.primary.main,
+                  color: theme.palette.primary.contrastText,
+                  borderRadius: "8px",
+                  "&:hover": {
+                    bgcolor: theme.palette.primary.dark,
+                  },
+                }}
+              >
+                <AccountBalanceIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Stack>
       </Box>
-    </Box>
+
+      {/* Mostrar filtros activos */}
+      {hasActiveFilters && (
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 2 }}>
+          {folio && (
+            <Chip
+              label={`Folio: ${folio}`}
+              size="small"
+              onDelete={() => {
+                setFolio("");
+                onSearch("", localActual, usuarioActual, proveedorActual);
+              }}
+              sx={{
+                bgcolor: theme.palette.mode === 'light' ? theme.palette.grey[200] : theme.palette.grey[800],
+                color: theme.palette.text.primary,
+                fontWeight: 500,
+              }}
+            />
+          )}
+          {selectedLocal && (
+            <Chip
+              label={`Local: ${selectedLocal.nombre}`}
+              size="small"
+              onDelete={() => {
+                onLocalChange("");
+                onSearch(folio, "", usuarioActual, proveedorActual);
+              }}
+              sx={{
+                bgcolor: theme.palette.mode === 'light' ? theme.palette.grey[200] : theme.palette.grey[800],
+                color: theme.palette.text.primary,
+                fontWeight: 500,
+              }}
+            />
+          )}
+          {selectedUsuario && (
+            <Chip
+              label={`Usuario: ${selectedUsuario.nombre}`}
+              size="small"
+              onDelete={() => {
+                onUsuarioChange("");
+                onSearch(folio, localActual, "", proveedorActual);
+              }}
+              sx={{
+                bgcolor: theme.palette.mode === 'light' ? theme.palette.grey[200] : theme.palette.grey[800],
+                color: theme.palette.text.primary,
+                fontWeight: 500,
+              }}
+            />
+          )}
+          {selectedProveedor && (
+            <Chip
+              label={`Proveedor: ${selectedProveedor.nombre}`}
+              size="small"
+              onDelete={() => {
+                onProveedorChange("");
+                onSearch(folio, localActual, usuarioActual, "");
+              }}
+              sx={{
+                bgcolor: theme.palette.mode === 'light' ? theme.palette.grey[200] : theme.palette.grey[800],
+                color: theme.palette.text.primary,
+                fontWeight: 500,
+              }}
+            />
+          )}
+        </Stack>
+      )}
+    </Paper>
   );
 }
