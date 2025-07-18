@@ -172,7 +172,7 @@ export default function RegisterPage() {
           color: "text.secondary",
         }}
       >
-        © 2025 Mercado House SPA · Desarrollado por{" "}
+        © 2025 Mercado House SPA · Desarrollado por{" "}
         <Link
           href="https://github.com/Nandem1"
           target="_blank"

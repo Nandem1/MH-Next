@@ -1,5 +1,10 @@
 import { VencimientosPageContent } from "@/components/dashboard/VencimientosPageContent";
 import Box from "@mui/material/Box";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Vencimientos",
+};
 
 export default function VencimientosPage() {
   return (

@@ -6,8 +6,17 @@ import { Inter } from "next/font/google";
 import { CssBaseline } from "@mui/material";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Metadata } from "next";
 
 const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: {
+    default: "Mercado House",
+    template: "%s ⋮ Mercado House"
+  },
+  description: "Sistema de gestión de facturas y documentos electrónicos",
+};
 
 export default function RootLayout({
   children,
