@@ -79,8 +79,8 @@ export function useMetrics() {
     // Cargar métricas iniciales
     fetchMetrics();
 
-    // Actualizar métricas cada 10 segundos
-    const interval = setInterval(fetchMetrics, 10000);
+    // Actualizar métricas cada 5 segundos (coincide con WebSocket)
+    const interval = setInterval(fetchMetrics, 5000);
 
     return () => clearInterval(interval);
   }, []);
