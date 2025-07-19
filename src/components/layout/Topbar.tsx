@@ -10,6 +10,7 @@ import { Sun, Moon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { drawerWidth } from "@/constants/layout";
 import { useCallback, useEffect } from "react";
+import { MetricsIndicator } from "@/components/ui/MetricsIndicator";
 
 interface TopbarProps {
   handleDrawerToggle: () => void;
@@ -71,6 +72,9 @@ export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
             Workspace
           </Typography>
         </Box>
+
+        {/* CENTRO - Métricas */}
+        <MetricsIndicator />
 
         {/* DERECHA */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>

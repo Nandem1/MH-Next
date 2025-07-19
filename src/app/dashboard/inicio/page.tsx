@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { useSnackbar } from "@/hooks/useSnackbar";
 import { usePrefetch } from "@/hooks/usePrefetch";
 import Footer from "@/components/shared/Footer";
+import { MetricsDashboard } from "@/components/ui/MetricsDashboard";
 
 export default function InicioPage() {
   const { open, message, severity, showSnackbar, handleClose } = useSnackbar();
@@ -61,17 +62,20 @@ export default function InicioPage() {
           textAlign: "center",
           gap: 2,
           px: { xs: 2, md: 3 },
-          mt: 8, // ✅ deja espacio para el Topbar fijo
+          mt: 12, // ✅ aumentado de 8 a 12 para más separación del Topbar
         }}
       >
-        <Typography variant="h3" fontWeight="bold">
-          Bienvenido al Panel de Control
+        <Typography variant="h4" fontWeight="bold" sx={{ color: "text.primary" }}>
+          Dashboard
         </Typography>
 
-        <Typography variant="subtitle1" color="text.secondary">
-          Aquí podrás gestionar tus facturas, usuarios y configuración.
+        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 400 }}>
+          Monitoreo en tiempo real del sistema y métricas de rendimiento.
         </Typography>
       </Box>
+
+      {/* Dashboard de Métricas */}
+      <MetricsDashboard />
 
       <Footer />
 
