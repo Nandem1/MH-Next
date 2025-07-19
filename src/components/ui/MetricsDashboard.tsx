@@ -220,7 +220,7 @@ export function MetricsDashboard() {
           </Box>
           
           <Typography variant="h5" sx={{ color: getDatabaseColor(metrics.database.activeConnections), mb: 0.5, fontWeight: 700 }}>
-            {metrics.database.status || (metrics.database.activeConnections > 0 ? 'Online' : 'Offline')}
+            {(metrics.database.status || (metrics.database.activeConnections > 0 ? 'Online' : 'Offline')).charAt(0).toUpperCase() + (metrics.database.status || (metrics.database.activeConnections > 0 ? 'Online' : 'Offline')).slice(1).toLowerCase()}
           </Typography>
           
           <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
