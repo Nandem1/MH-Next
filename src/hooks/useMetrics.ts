@@ -60,9 +60,11 @@ export function useMetrics() {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        // Usar la URL de la API configurada o por defecto localhost:5000
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-        const url = `${apiUrl}/api/monitoring/metrics`;
+        // Usar la URL de la API configurada (que será redirigida por next.config.ts)
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+        
+        // Usar /api-beta/ para que use el rewrite a tu backend de Railway
+        const url = `${apiUrl}/api-beta/monitoring/metrics`;
         
         console.log('Fetching metrics from:', url);
         
