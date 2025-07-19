@@ -189,10 +189,10 @@ export function MetricsDashboard() {
           
           <Box sx={{ display: "flex", gap: 2 }}>
             <Typography variant="caption" color="text.secondary">
-              {metrics.cache.totalKeys.toLocaleString()} keys
+              {(metrics.cache.totalKeys || 0).toLocaleString()} keys
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {(metrics.cache.hitRate * 100).toFixed(1)}% hit rate
+              {((metrics.cache.hitRate || 0) * 100).toFixed(1)}% hit rate
             </Typography>
           </Box>
         </Paper>
@@ -229,10 +229,10 @@ export function MetricsDashboard() {
           
           <Box sx={{ display: "flex", gap: 2 }}>
             <Typography variant="caption" color="text.secondary">
-              {metrics.database.activeConnections} connections
+              {metrics.database.activeConnections || 0} connections
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {metrics.database.totalQueries.toLocaleString()} queries
+              {(metrics.database.totalQueries || 0).toLocaleString()} queries
             </Typography>
           </Box>
         </Paper>
@@ -328,7 +328,7 @@ export function MetricsDashboard() {
           </Box>
           
           <Typography variant="h5" sx={{ color: theme.palette.info.main, mb: 0.5, fontWeight: 700 }}>
-            {metrics.requests.total.toLocaleString()}
+            {(metrics.requests.total || 0).toLocaleString()}
           </Typography>
           
           <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
@@ -337,10 +337,10 @@ export function MetricsDashboard() {
           
           <Box sx={{ display: "flex", gap: 2 }}>
             <Typography variant="caption" color="text.secondary">
-              {metrics.requests.errors.length} errors
+              {(metrics.requests.errors || []).length} errors
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {metrics.requests.slowRequests.length} slow
+              {(metrics.requests.slowRequests || []).length} slow
             </Typography>
           </Box>
         </Paper>
@@ -371,14 +371,14 @@ export function MetricsDashboard() {
               Top Endpoints
             </Typography>
             <List dense sx={{ py: 0 }}>
-              {Object.entries(metrics.requests.byEndpoint)
-                .sort(([,a], [,b]) => b.count - a.count)
+              {Object.entries(metrics.requests.byEndpoint || {})
+                .sort(([,a], [,b]) => (b.count || 0) - (a.count || 0))
                 .slice(0, 5)
                 .map(([endpoint, data]) => (
                   <ListItem key={endpoint} sx={{ px: 0, py: 0.5 }}>
                     <ListItemText
                       primary={endpoint}
-                      secondary={`${data.count} requests • ${Math.round(data.avgTime)}ms avg`}
+                      secondary={`${data.count || 0} requests • ${Math.round(data.avgTime || 0)}ms avg`}
                       primaryTypographyProps={{ fontSize: "0.8rem", fontWeight: 500 }}
                       secondaryTypographyProps={{ fontSize: "0.7rem" }}
                     />
@@ -400,13 +400,13 @@ export function MetricsDashboard() {
             <Typography variant="body2" fontWeight={600} gutterBottom>
               Recent Errors
             </Typography>
-            {metrics.requests.errors.length > 0 ? (
+            {(metrics.requests.errors || []).length > 0 ? (
               <List dense sx={{ py: 0 }}>
-                {metrics.requests.errors.slice(0, 5).map((error, index) => (
+                {(metrics.requests.errors || []).slice(0, 5).map((error, index) => (
                   <ListItem key={index} sx={{ px: 0, py: 0.5 }}>
                     <ListItemText
-                      primary={`${error.endpoint} (${error.statusCode})`}
-                      secondary={new Date(error.timestamp).toLocaleString()}
+                      primary={`${error.endpoint || 'Unknown'} (${error.statusCode || 0})`}
+                      secondary={error.timestamp ? new Date(error.timestamp).toLocaleString() : 'No timestamp'}
                       primaryTypographyProps={{ fontSize: "0.8rem", fontWeight: 500, color: "error.main" }}
                       secondaryTypographyProps={{ fontSize: "0.7rem" }}
                     />
@@ -434,13 +434,13 @@ export function MetricsDashboard() {
               Redis Keys
             </Typography>
             <List dense sx={{ py: 0 }}>
-              {Object.entries(metrics.cache.byPrefix)
-                .sort(([,a], [,b]) => b - a)
+              {Object.entries(metrics.cache.byPrefix || {})
+                .sort(([,a], [,b]) => (b || 0) - (a || 0))
                 .map(([prefix, count]) => (
                   <ListItem key={prefix} sx={{ px: 0, py: 0.5 }}>
                     <ListItemText
                       primary={prefix}
-                      secondary={`${count} keys`}
+                      secondary={`${count || 0} keys`}
                       primaryTypographyProps={{ fontSize: "0.8rem", fontWeight: 500 }}
                       secondaryTypographyProps={{ fontSize: "0.7rem" }}
                     />
@@ -453,7 +453,7 @@ export function MetricsDashboard() {
 
       <Box sx={{ mt: 2, textAlign: "center" }}>
         <Typography variant="caption" color="text.secondary">
-          Last updated: {new Date(metrics.timestamp).toLocaleString()}
+          Last updated: {metrics.timestamp ? new Date(metrics.timestamp).toLocaleString() : 'No timestamp'}
         </Typography>
       </Box>
     </Box>
