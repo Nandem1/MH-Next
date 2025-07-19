@@ -10,13 +10,59 @@ import MemoryIcon from "@mui/icons-material/Memory";
 import QueryStatsIcon from "@mui/icons-material/QueryStats";
 
 export function MetricsDashboard() {
-  const { metrics, isLoading } = useMetrics();
+  const { metrics, isLoading, error } = useMetrics();
   const theme = useTheme();
 
-  if (isLoading || !metrics) {
+  if (isLoading) {
     return (
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h6" gutterBottom sx={{ mb: 2, fontWeight: 600, color: "text.primary" }}>
+          System Metrics
+        </Typography>
         <LinearProgress />
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          Loading metrics...
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h6" gutterBottom sx={{ mb: 2, fontWeight: 600, color: "text.primary" }}>
+          System Metrics
+        </Typography>
+        <Box sx={{ 
+          p: 3, 
+          border: `1px solid ${theme.palette.error.light}`, 
+          borderRadius: 1, 
+          bgcolor: theme.palette.error.light + '10',
+          textAlign: 'center'
+        }}>
+          <Typography variant="body1" color="error.main" sx={{ mb: 1, fontWeight: 500 }}>
+            Unable to load metrics
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {error}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Check if the monitoring server is running and accessible
+          </Typography>
+        </Box>
+      </Box>
+    );
+  }
+
+  if (!metrics) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h6" gutterBottom sx={{ mb: 2, fontWeight: 600, color: "text.primary" }}>
+          System Metrics
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          No metrics data available
+        </Typography>
       </Box>
     );
   }

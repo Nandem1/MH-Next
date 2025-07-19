@@ -60,30 +60,70 @@ export function useMetrics() {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/monitoring/metrics`);
+        // Usar la URL de la API configurada o por defecto localhost:5000
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const url = `${apiUrl}/api/monitoring/metrics`;
+        
+        console.log('Fetching metrics from:', url);
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          // Agregar timeout para evitar esperas infinitas
+          signal: AbortSignal.timeout(10000), // 10 segundos timeout
+        });
         
         if (!response.ok) {
-          throw new Error(`Error ${response.status}: ${response.statusText}`);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         const data = await response.json();
+        console.log('Metrics received:', data);
+        
         setMetrics(data);
         setIsLoading(false);
+        setError(null);
       } catch (err) {
         console.error('Error fetching metrics:', err);
-        setError(err instanceof Error ? err.message : "Error al cargar métricas");
+        
+        // Manejar diferentes tipos de errores
+        let errorMessage = "Error al cargar métricas";
+        
+        if (err instanceof Error) {
+          if (err.name === 'AbortError') {
+            errorMessage = "Timeout: El servidor no respondió en 10 segundos";
+          } else if (err.message.includes('Failed to fetch')) {
+            errorMessage = "No se pudo conectar al servidor de métricas";
+          } else {
+            errorMessage = err.message;
+          }
+        }
+        
+        setError(errorMessage);
         setIsLoading(false);
+        
+        // En producción, no seguir intentando si hay errores persistentes
+        if (process.env.NODE_ENV === 'production') {
+          console.warn('Stopping metrics polling due to persistent errors');
+          return;
+        }
       }
     };
 
     // Cargar métricas iniciales
     fetchMetrics();
 
-    // Actualizar métricas cada 5 segundos (coincide con WebSocket)
-    const interval = setInterval(fetchMetrics, 5000);
+    // Solo continuar polling si no hay errores persistentes
+    const interval = setInterval(() => {
+      if (!error) {
+        fetchMetrics();
+      }
+    }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [error]);
 
   return { metrics, isLoading, error };
 } 
