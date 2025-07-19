@@ -15,6 +15,10 @@ import RotateLeftIcon from "@mui/icons-material/RotateLeft";
 import ChecklistIcon from "@mui/icons-material/Checklist";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
+import InventoryIcon from "@mui/icons-material/Inventory";
+import AddIcon from "@mui/icons-material/Add";
+import HomeIcon from "@mui/icons-material/Home";
+import StorageIcon from "@mui/icons-material/Storage";
 import Image from "next/image";
 
 import { useRouter, usePathname } from "next/navigation";
@@ -34,8 +38,10 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
   const isMobile = useMediaQuery("(max-width:900px)");
   const { logout, usuario } = useAuth();
   const [openDTE, setOpenDTE] = useState(false);
+  const [openBodega, setOpenBodega] = useState(false);
 
   const handleSubmenuClick = () => setOpenDTE(!openDTE);
+  const handleBodegaClick = () => setOpenBodega(!openBodega);
 
   const goTo = (path: string) => {
     router.push(path);
@@ -199,6 +205,53 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
                   <ChecklistIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText primary="Nóminas" />
+              </ListItemButton>
+            </List>
+          </Collapse>
+
+          {/* BODEGA (submenu) */}
+          <ListItem disablePadding>
+            <ListItemButton onClick={handleBodegaClick}>
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <InventoryIcon />
+              </ListItemIcon>
+              <ListItemText primary="Bodega" />
+              {openBodega ? <ExpandLess /> : <ExpandMore />}
+            </ListItemButton>
+          </ListItem>
+          <Collapse in={openBodega} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={pathname === "/dashboard/bodega/inicio"}
+                onClick={() => goTo("/dashboard/bodega/inicio")}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <HomeIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Inicio" />
+              </ListItemButton>
+
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={pathname === "/dashboard/bodega/nuevo-movimiento"}
+                onClick={() => goTo("/dashboard/bodega/nuevo-movimiento")}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <AddIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Nuevo Movimiento" />
+              </ListItemButton>
+
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={pathname === "/dashboard/bodega/stock-general"}
+                onClick={() => goTo("/dashboard/bodega/stock-general")}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <StorageIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Stock General" />
               </ListItemButton>
             </List>
           </Collapse>
