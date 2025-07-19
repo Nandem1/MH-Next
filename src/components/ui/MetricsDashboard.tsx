@@ -73,7 +73,7 @@ export function MetricsDashboard() {
     return theme.palette.error.main;
   };
 
-  const getCacheColor = (hitRate: number, connected: boolean) => {
+  const getCacheColor = (connected: boolean) => {
     if (connected) return theme.palette.success.main;
     return theme.palette.error.main;
   };
@@ -84,7 +84,7 @@ export function MetricsDashboard() {
   };
 
   const getMemoryColor = (memoryUsage: string) => {
-    const memoryMB = parseFloat(memoryUsage.replace(' MB', ''));
+    const memoryMB = parseFloat(memoryUsage);
     if (memoryMB < 100) return theme.palette.success.main;
     if (memoryMB < 200) return theme.palette.warning.main;
     return theme.palette.error.main;
@@ -140,7 +140,7 @@ export function MetricsDashboard() {
           </Box>
           
           <Typography variant="h5" sx={{ color: getPerformanceColor(metrics.performance.avgResponseTime), mb: 0.5, fontWeight: 700 }}>
-            {Math.round(metrics.performance.avgResponseTime)}ms
+            {metrics.performance.avg_response_time_ms}
           </Typography>
           
           <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
@@ -149,10 +149,10 @@ export function MetricsDashboard() {
           
           <Box sx={{ display: "flex", gap: 2 }}>
             <Typography variant="caption" color="text.secondary">
-              Max: {Math.round(metrics.performance.maxResponseTime)}ms
+              Max: {metrics.performance.max_response_time_ms}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Min: {Math.round(metrics.performance.minResponseTime)}ms
+              Min: {metrics.performance.min_response_time_ms}
             </Typography>
           </Box>
         </Paper>
@@ -173,13 +173,13 @@ export function MetricsDashboard() {
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-            <StorageIcon sx={{ color: getCacheColor(metrics.cache.hitRate, metrics.cache.connected), mr: 1, fontSize: "1.2rem" }} />
+            <StorageIcon sx={{ color: getCacheColor(metrics.cache.connected), mr: 1, fontSize: "1.2rem" }} />
             <Typography variant="body2" fontWeight={600} color="text.primary">
               Redis
             </Typography>
           </Box>
           
-          <Typography variant="h5" sx={{ color: getCacheColor(metrics.cache.hitRate, metrics.cache.connected), mb: 0.5, fontWeight: 700 }}>
+          <Typography variant="h5" sx={{ color: getCacheColor(metrics.cache.connected), mb: 0.5, fontWeight: 700 }}>
             {metrics.cache.connected ? 'Online' : 'Offline'}
           </Typography>
           
@@ -192,7 +192,7 @@ export function MetricsDashboard() {
               {(metrics.cache.totalKeys || 0).toLocaleString()} keys
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {((metrics.cache.hitRate || 0) * 100).toFixed(1)}% hit rate
+              {metrics.cache.hit_rate_percentage || 'N/A'} hit rate
             </Typography>
           </Box>
         </Paper>
@@ -220,7 +220,7 @@ export function MetricsDashboard() {
           </Box>
           
           <Typography variant="h5" sx={{ color: getDatabaseColor(metrics.database.activeConnections), mb: 0.5, fontWeight: 700 }}>
-            {metrics.database.activeConnections > 0 ? 'Online' : 'Offline'}
+            {metrics.database.status || (metrics.database.activeConnections > 0 ? 'Online' : 'Offline')}
           </Typography>
           
           <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
@@ -229,7 +229,7 @@ export function MetricsDashboard() {
           
           <Box sx={{ display: "flex", gap: 2 }}>
             <Typography variant="caption" color="text.secondary">
-              {metrics.database.activeConnections || 0} connections
+              {metrics.database.active_connections || metrics.database.activeConnections || 0} connections
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {(metrics.database.totalQueries || 0).toLocaleString()} queries
@@ -260,7 +260,7 @@ export function MetricsDashboard() {
           </Box>
           
           <Typography variant="h5" sx={{ color: getMemoryColor(metrics.system.memoryUsage), mb: 0.5, fontWeight: 700 }}>
-            {metrics.system.memoryUsage}MB
+            {metrics.system.memory.heapUsed || metrics.system.memoryUsage}MB
           </Typography>
           
           <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
@@ -269,7 +269,7 @@ export function MetricsDashboard() {
           
           <Box sx={{ display: "flex", gap: 2 }}>
             <Typography variant="caption" color="text.secondary">
-              CPU: {metrics.system.cpuUsage}
+              CPU: {metrics.system.cpu.usage_percentage || metrics.system.cpuUsage}
             </Typography>
           </Box>
         </Paper>
@@ -328,7 +328,7 @@ export function MetricsDashboard() {
           </Box>
           
           <Typography variant="h5" sx={{ color: theme.palette.info.main, mb: 0.5, fontWeight: 700 }}>
-            {(metrics.requests.total || 0).toLocaleString()}
+            {(metrics.requests.total_requests || metrics.requests.total || 0).toLocaleString()}
           </Typography>
           
           <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
@@ -337,10 +337,10 @@ export function MetricsDashboard() {
           
           <Box sx={{ display: "flex", gap: 2 }}>
             <Typography variant="caption" color="text.secondary">
-              {(metrics.requests.errors || []).length} errors
+              {metrics.requests.errors_count || (metrics.requests.errors || []).length} errors
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {(metrics.requests.slowRequests || []).length} slow
+              {metrics.requests.slow_requests_count || (metrics.requests.slowRequests || []).length} slow
             </Typography>
           </Box>
         </Paper>
@@ -371,19 +371,32 @@ export function MetricsDashboard() {
               Top Endpoints
             </Typography>
             <List dense sx={{ py: 0 }}>
-              {Object.entries(metrics.requests.byEndpoint || {})
-                .sort(([,a], [,b]) => (b.count || 0) - (a.count || 0))
-                .slice(0, 5)
-                .map(([endpoint, data]) => (
-                  <ListItem key={endpoint} sx={{ px: 0, py: 0.5 }}>
+              {(metrics.requests.top_endpoints || []).length > 0 ? (
+                metrics.requests.top_endpoints.slice(0, 5).map((endpoint, index) => (
+                  <ListItem key={index} sx={{ px: 0, py: 0.5 }}>
                     <ListItemText
-                      primary={endpoint}
-                      secondary={`${data.count || 0} requests • ${Math.round(data.avgTime || 0)}ms avg`}
+                      primary={endpoint.endpoint}
+                      secondary={`${endpoint.count || 0} requests • ${Math.round(endpoint.avgTime || 0)}ms avg`}
                       primaryTypographyProps={{ fontSize: "0.8rem", fontWeight: 500 }}
                       secondaryTypographyProps={{ fontSize: "0.7rem" }}
                     />
                   </ListItem>
-                ))}
+                ))
+              ) : (
+                Object.entries(metrics.requests.byEndpoint || {})
+                  .sort(([,a], [,b]) => (b.count || 0) - (a.count || 0))
+                  .slice(0, 5)
+                  .map(([endpoint, data]) => (
+                    <ListItem key={endpoint} sx={{ px: 0, py: 0.5 }}>
+                      <ListItemText
+                        primary={endpoint}
+                        secondary={`${data.count || 0} requests • ${Math.round(data.avgTime || 0)}ms avg`}
+                        primaryTypographyProps={{ fontSize: "0.8rem", fontWeight: 500 }}
+                        secondaryTypographyProps={{ fontSize: "0.7rem" }}
+                      />
+                    </ListItem>
+                  ))
+              )}
             </List>
           </Paper>
 
@@ -455,6 +468,11 @@ export function MetricsDashboard() {
         <Typography variant="caption" color="text.secondary">
           Last updated: {metrics.timestamp ? new Date(metrics.timestamp).toLocaleString() : 'No timestamp'}
         </Typography>
+        {metrics.version && (
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+            v{metrics.version} • {metrics.generated_by || 'Monitoring System'}
+          </Typography>
+        )}
       </Box>
     </Box>
   );

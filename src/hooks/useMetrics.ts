@@ -20,20 +20,29 @@ interface MetricsData {
       statusCode: number;
       timestamp: string;
     }>;
+    total_requests: number;
+    slow_requests_count: number;
+    errors_count: number;
+    top_endpoints: Array<{
+      endpoint: string;
+      count: number;
+      avgTime: number;
+    }>;
   };
   performance: {
     avgResponseTime: number;
     maxResponseTime: number;
-    minResponseTime: number;
+    minResponseTime: number | null;
+    avg_response_time_ms: string;
+    max_response_time_ms: string;
+    min_response_time_ms: string;
   };
   cache: {
-    hitRate: number;
-    totalHits: number;
-    totalMisses: number;
-    memoryUsage: number;
     connected: boolean;
     totalKeys: number;
     byPrefix: Record<string, number>;
+    status: string;
+    hit_rate_percentage: string;
   };
   database: {
     activeConnections: number;
@@ -43,13 +52,39 @@ interface MetricsData {
       executionTime: number;
       timestamp: string;
     }>;
+    status: string;
+    active_connections: number;
   };
   system: {
     memoryUsage: string;
-    uptime: number;
     cpuUsage: string;
+    uptime: number;
+    memory: {
+      heapUsed: string;
+      heapTotal: string;
+      external: string;
+      rss: string;
+    };
+    cpu: {
+      usage_percentage: string;
+      user_time: string;
+      system_time: string;
+    };
+    uptime_hours: string;
+    node_version: string;
+    platform: string;
+    environment: string;
   };
   timestamp: string;
+  redis: {
+    connected: boolean;
+    keys: number;
+    memory: string;
+    status: string;
+    memory_mb: string;
+  };
+  version: string;
+  generated_by: string;
 }
 
 export function useMetrics() {
