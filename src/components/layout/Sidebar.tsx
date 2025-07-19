@@ -1,6 +1,6 @@
 "use client";
 
-import { Divider, Box, Typography, Button, useMediaQuery, Toolbar, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Collapse, Drawer } from "@mui/material";
+import { Divider, Box, Typography, Button, useMediaQuery, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Collapse, Drawer } from "@mui/material";
 
 
 
@@ -15,6 +15,7 @@ import RotateLeftIcon from "@mui/icons-material/RotateLeft";
 import ChecklistIcon from "@mui/icons-material/Checklist";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
+import Image from "next/image";
 
 import { useRouter, usePathname } from "next/navigation";
 
@@ -56,41 +57,87 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
 
   const drawerContent = (
     <Box display="flex" flexDirection="column" height="100%">
-      {!isMobile && <Toolbar />}
-      {isMobile && usuario?.nombre && (
+      {/* Logo y header del sidebar */}
+      <Box
+        sx={{
+          px: 2,
+          py: 0,
+          height: { xs: "auto", md: 64 }, // Altura automática en móvil, fija en desktop
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          bgcolor: "background.paper",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 1,
+        }}
+      >
+        {/* Logo - Solo visible en desktop */}
         <Box
           sx={{
-            px: 2,
-            py: 1.5,
-            borderBottom: "1px solid",
-            borderColor: "divider",
-            bgcolor: "background.paper",
+            width: "100%",
+            maxWidth: 120,
+            height: 40,
+            position: "relative",
+            display: { xs: "none", md: "flex" }, // Oculto en móvil, visible en desktop
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          <Typography variant="body2" fontWeight={500}>
-            Hola, {usuario.nombre}
-          </Typography>
-          {usuario.id_local !== null && (
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              display="block"
-            >
-              {getNombreLocal(usuario.id_local)}
-            </Typography>
-          )}
-          <Button
-            variant="outlined"
-            color="primary"
-            size="small"
-            onClick={logout}
-            fullWidth
-            sx={{ mt: 1, textTransform: "none" }}
-          >
-            Cerrar sesión
-          </Button>
+          <Image
+            src="/assets/multihouse-logo-black.png"
+            alt="Mercado House"
+            fill
+            style={{
+              objectFit: "contain",
+              objectPosition: "center",
+              filter: "brightness(0) invert(1)", // Hace el logo blanco
+              transform: "scale(1.3)", // Hace zoom a la imagen
+            }}
+            priority
+          />
         </Box>
-      )}
+        
+        {/* Información del usuario solo en mobile */}
+        {isMobile && usuario?.nombre && (
+          <Box sx={{ 
+            textAlign: "left", 
+            mt: 2, 
+            mb: 2,
+            width: "100%",
+            px: 0.5 
+          }}>
+            <Typography variant="body2" fontWeight={500}>
+              Hola, {usuario.nombre}
+            </Typography>
+            {usuario.id_local !== null && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
+                {getNombreLocal(usuario.id_local)}
+              </Typography>
+            )}
+            <Button
+              variant="outlined"
+              color="primary"
+              size="small"
+              onClick={logout}
+              sx={{ 
+                mt: 1, 
+                textTransform: "none",
+                width: "100%",
+                mx: 0,
+                display: "block"
+              }}
+            >
+              Cerrar sesión
+            </Button>
+          </Box>
+        )}
+      </Box>
 
       <Divider />
       <Box flexGrow={1}>

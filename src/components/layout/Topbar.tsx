@@ -68,7 +68,7 @@ export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
             </IconButton>
           )}
           <Typography variant="h6" noWrap component="div">
-            MH Dashboard
+            Workspace
           </Typography>
         </Box>
 
