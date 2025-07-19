@@ -56,6 +56,7 @@ export function useMetrics() {
   const [metrics, setMetrics] = useState<MetricsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -66,36 +67,42 @@ export function useMetrics() {
         // Usar /api-beta/ para que use el rewrite a tu backend de Railway
         const url = `${apiUrl}/api-beta/monitoring/metrics`;
         
-        console.log('Fetching metrics from:', url);
+        console.log(`[Metrics] Fetching from: ${url} (attempt ${retryCount + 1})`);
+        
+        const startTime = Date.now();
         
         const response = await fetch(url, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
-          // Agregar timeout para evitar esperas infinitas
-          signal: AbortSignal.timeout(10000), // 10 segundos timeout
+          // Timeout optimizado para Railway (más generoso)
+          signal: AbortSignal.timeout(20000), // 20 segundos timeout para Railway
         });
+        
+        const endTime = Date.now();
+        console.log(`[Metrics] Response time: ${endTime - startTime}ms`);
         
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         const data = await response.json();
-        console.log('Metrics received:', data);
+        console.log('[Metrics] Data received successfully:', data);
         
         setMetrics(data);
         setIsLoading(false);
         setError(null);
+        setRetryCount(0); // Reset retry count on success
       } catch (err) {
-        console.error('Error fetching metrics:', err);
+        console.error('[Metrics] Error fetching metrics:', err);
         
         // Manejar diferentes tipos de errores
         let errorMessage = "Error al cargar métricas";
         
         if (err instanceof Error) {
           if (err.name === 'AbortError') {
-            errorMessage = "Timeout: El servidor no respondió en 10 segundos";
+            errorMessage = "Timeout: El servidor no respondió en 20 segundos";
           } else if (err.message.includes('Failed to fetch')) {
             errorMessage = "No se pudo conectar al servidor de métricas";
           } else {
@@ -105,11 +112,11 @@ export function useMetrics() {
         
         setError(errorMessage);
         setIsLoading(false);
+        setRetryCount(prev => prev + 1);
         
-        // En producción, no seguir intentando si hay errores persistentes
-        if (process.env.NODE_ENV === 'production') {
-          console.warn('Stopping metrics polling due to persistent errors');
-          return;
+        // En producción, reducir la frecuencia de polling si hay errores
+        if (process.env.NODE_ENV === 'production' && retryCount > 2) {
+          console.warn('[Metrics] Too many retries, reducing polling frequency');
         }
       }
     };
@@ -117,15 +124,17 @@ export function useMetrics() {
     // Cargar métricas iniciales
     fetchMetrics();
 
-    // Solo continuar polling si no hay errores persistentes
+    // Polling optimizado para Railway: 10 segundos (coincide con WebSocket refresh)
     const interval = setInterval(() => {
-      if (!error) {
+      if (!error || retryCount < 3) { // Continuar intentando hasta 3 errores
         fetchMetrics();
+      } else {
+        console.warn('[Metrics] Stopping polling due to persistent errors');
       }
-    }, 5000);
+    }, 10000); // 10 segundos para coincidir con Railway
 
     return () => clearInterval(interval);
-  }, [error]);
+  }, [error, retryCount]);
 
   return { metrics, isLoading, error };
 } 
