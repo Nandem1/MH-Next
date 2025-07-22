@@ -68,31 +68,43 @@ const parseNominasResponse = (responseData: ApiResponse<NominasResponse>): { dat
 
 // Transformar respuesta del API a tipo interno
 const transformNominaResponse = (response: NominaCanteraResponse): NominaCantera => {
+  // Log para debugging
+  if (!response.id) {
+    console.warn('⚠️ Nomina response missing id:', response);
+  }
+  
+  if (response.cheques) {
+    response.cheques.forEach((cheque, index) => {
+      if (!cheque.id) {
+        console.warn(`⚠️ Cheque ${index} missing id:`, cheque);
+      }
+    });
+  }
   
   const transformedTracking = response.tracking_envio ? {
-    id: response.tracking_envio.id,
+    id: response.tracking_envio.id || '',
     estado: response.tracking_envio.estado as "EN_ORIGEN" | "EN_TRANSITO" | "RECIBIDA",
-    localOrigen: response.tracking_envio.local_origen,
-    localDestino: response.tracking_envio.local_destino,
-    fechaEnvio: response.tracking_envio.fecha_envio,
-    fechaRecepcion: response.tracking_envio.fecha_recepcion,
-    observaciones: response.tracking_envio.observaciones,
-    enviadoPor: response.tracking_envio.enviado_por,
-    recibidoPor: response.tracking_envio.recibido_por,
+    localOrigen: response.tracking_envio.local_origen || '',
+    localDestino: response.tracking_envio.local_destino || '',
+    fechaEnvio: response.tracking_envio.fecha_envio || '',
+    fechaRecepcion: response.tracking_envio.fecha_recepcion || '',
+    observaciones: response.tracking_envio.observaciones || '',
+    enviadoPor: response.tracking_envio.enviado_por || '',
+    recibidoPor: response.tracking_envio.recibido_por || '',
   } : undefined;
   
   // Transformar cheques de forma simplificada
   const transformedCheques = response.cheques ? response.cheques.map(cheque => ({
-    id: cheque.id.toString(),
-    correlativo: cheque.correlativo,
-    monto: cheque.monto,
-    montoAsignado: cheque.monto_asignado,
-    createdAt: cheque.fecha_asignacion,
-    idUsuario: cheque.nombre_usuario_cheque,
+    id: cheque.id?.toString() || '0',
+    correlativo: cheque.correlativo || '',
+    monto: cheque.monto || 0,
+    montoAsignado: cheque.monto_asignado || 0,
+    createdAt: cheque.fecha_asignacion || '',
+    idUsuario: cheque.nombre_usuario_cheque || '',
     facturas: undefined,
-    numeroCorrelativo: cheque.correlativo,
+    numeroCorrelativo: cheque.correlativo || '',
     estado: "ASIGNADO" as const,
-    fechaAsignacion: cheque.fecha_asignacion,
+    fechaAsignacion: cheque.fecha_asignacion || '',
     fechaPago: undefined,
     facturaAsociada: undefined,
   })) : undefined;
@@ -100,26 +112,26 @@ const transformNominaResponse = (response: NominaCanteraResponse): NominaCantera
 
   
   return {
-    id: response.id.toString(),
-    numeroNomina: response.numero_nomina,
-    fechaEmision: response.fecha_emision,
-    local: response.local_origen,
+    id: response.id?.toString() || '0',
+    numeroNomina: response.numero_nomina || '',
+    fechaEmision: response.fecha_emision || '',
+    local: response.local_origen || '',
     montoTotal: response.monto_total || 0,
     estado: response.estado as "pendiente" | "pagada" | "vencida",
-    idUsuario: response.id_usuario.toString(),
-    createdAt: response.created_at,
-    updatedAt: response.updated_at,
-    creadoPor: response.creado_por,
+    idUsuario: response.id_usuario?.toString() || '0',
+    createdAt: response.created_at || '',
+    updatedAt: response.updated_at || '',
+    creadoPor: response.creado_por || '',
     trackingEnvio: transformedTracking,
     cheques: transformedCheques,
     
     // Propiedades adicionales para la tabla
-    nombre: response.numero_nomina,
+    nombre: response.numero_nomina || '',
     correlativoInicial: "",
     correlativoFinal: "",
     totalCheques: response.cantidad_cheques || 0,
     chequesPagados: 0,
-    fechaCreacion: response.created_at,
+    fechaCreacion: response.created_at || '',
   };
 };
 
@@ -243,7 +255,8 @@ export const nominaChequeService = {
         throw new Error("La respuesta del API indica error");
       }
 
-
+      // Log para debugging
+      console.log('📋 Nomina response data:', responseData.data);
 
       return transformNominaResponse(responseData.data);
     } catch (error) {
