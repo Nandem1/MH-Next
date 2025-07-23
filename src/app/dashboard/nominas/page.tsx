@@ -692,7 +692,14 @@ export default function NominasPage() {
                      gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, 
                      gap: 2 
                    }}>
-                    {selectedNomina.cheques.map((cheque) => (
+                    {selectedNomina.cheques
+                      .sort((a, b) => {
+                        // Ordenar por correlativo numérico si es posible, sino alfabéticamente
+                        const correlativoA = parseInt(a.correlativo) || 0;
+                        const correlativoB = parseInt(b.correlativo) || 0;
+                        return correlativoA - correlativoB;
+                      })
+                      .map((cheque) => (
                       <Box
                         key={cheque.id}
                         sx={{
