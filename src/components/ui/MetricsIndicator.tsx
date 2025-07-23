@@ -65,7 +65,7 @@ export function MetricsIndicator() {
       </Tooltip>
 
       {/* Errors */}
-      {metrics.requests.errors.length > 0 && (
+      {metrics.requests.errors && metrics.requests.errors.length > 0 && (
         <Tooltip title={`${metrics.requests.errors.length} errors detected`}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             <Box

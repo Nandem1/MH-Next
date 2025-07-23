@@ -3,7 +3,6 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Configuración optimizada para producción
   reactStrictMode: true,
-  swcMinify: true, // Usar SWC para minificación (más rápido que Terser)
   
   // Configuración de compresión
   compress: true,

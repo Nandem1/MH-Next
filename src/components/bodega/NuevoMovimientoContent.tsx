@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Box,
   Typography,
@@ -32,9 +32,8 @@ import {
   Clear as ClearIcon,
 } from "@mui/icons-material";
 import { useAuth } from "@/hooks/useAuth";
-import { stockService } from "@/services/stockService";
-import { useProducto } from "@/hooks/useProducto";
-import axios from "axios";
+import { useStock } from "@/hooks/useStock";
+import stockService from "@/services/stockService";
 import { 
   StockProducto, 
   MOTIVOS_ENTRADA, 
@@ -55,145 +54,75 @@ interface NuevoMovimientoContentProps {
 export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
   const theme = useTheme();
   const { usuario } = useAuth();
+  const { 
+    entradaMultiple, 
+    salidaMultiple, 
+    loadingEntradaMultiple, 
+    loadingSalidaMultiple,
+  } = useStock(usuario?.id_local || 1);
   const [productos, setProductos] = useState<StockProducto[]>([]);
   const [motivo, setMotivo] = useState<string>("");
   const [observaciones, setObservaciones] = useState<string>("");
-  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showScanner, setShowScanner] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
-  const [colaEscaneos, setColaEscaneos] = useState<string[]>([]);
-  const [procesandoCola, setProcesandoCola] = useState(false);
-  const [todosLosProductos, setTodosLosProductos] = useState<StockProducto[]>([]);
-  const [productosCargados, setProductosCargados] = useState(false);
-
+  const [isBuscandoProducto, setIsBuscandoProducto] = useState(false);
   // Producto temporal para agregar
   const [tempProducto, setTempProducto] = useState<StockProducto>({
     codigo_producto: "",
-    tipo_item: "producto", // Mantenemos el valor por defecto pero no lo mostramos
-    cantidad: 1, // Siempre 1 por defecto
-    cantidad_minima: 0, // Siempre 0
+    tipo_item: "producto",
+    cantidad: 1,
+    cantidad_minima: 0,
   });
-
-  // Hook para información del producto (mantenemos para compatibilidad)
-  const {
-    setCodigoBarras,
-    limpiarProducto,
-  } = useProducto();
 
   const motivos = tipo === "entrada" ? MOTIVOS_ENTRADA : MOTIVOS_SALIDA;
 
-  // Monitorear cambios en el código de producto
-  useEffect(() => {
-    setCodigoBarras(tempProducto.codigo_producto);
-  }, [tempProducto.codigo_producto, setCodigoBarras]);
+  // Flujo POS optimizado - Sin carga inicial ni búsquedas automáticas
 
-  // Cargar productos al montar el componente
-  useEffect(() => {
-    const cargarProductos = async () => {
-      try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/productos`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
-        setTodosLosProductos(response.data);
-        setProductosCargados(true);
-        console.log("✅ Productos cargados:", response.data.length);
-      } catch (error) {
-        console.error("❌ Error cargando productos:", error);
-        setError("Error cargando productos");
-      }
-    };
-
-    cargarProductos();
-  }, []);
-
-  // Buscar producto instantáneamente en productos cargados
-  const buscarProductoInstantaneo = (codigo: string): StockProducto | null => {
-    if (!productosCargados) return null;
-    
-    // Buscar primero por código exacto
-    const productoEncontrado = todosLosProductos.find(p => p.codigo_producto === codigo);
-    
-    if (productoEncontrado) {
-      console.log("🎯 Producto encontrado:", productoEncontrado.nombre_producto);
-      return productoEncontrado;
+  // Flujo POS optimizado - Buscar producto real y agregar al carrito
+  const agregarProductoDirecto = async (codigo: string) => {
+    // Protección contra múltiples llamadas
+    if (isBuscandoProducto) {
+      return;
     }
     
-    // Si no es producto, buscar si es pack
-    const pack = todosLosProductos.find(p => p.codigo_producto === codigo && p.tipo_item === "pack");
-    if (pack) {
-      console.log("📦 Pack encontrado:", pack.nombre_producto);
-      return pack;
-    }
+    setIsBuscandoProducto(true);
+    setError(null); // Limpiar errores anteriores
     
-    console.log("❌ Producto no encontrado:", codigo);
-    return null;
-  };
-
-  // Procesar cola de escaneos de forma instantánea
-  useEffect(() => {
-    const procesarCola = async () => {
-      if (colaEscaneos.length > 0 && !procesandoCola && productosCargados) {
-        setProcesandoCola(true);
-        const codigoActual = colaEscaneos[0];
-        
-        // Buscar producto instantáneamente
-        const productoEncontrado = buscarProductoInstantaneo(codigoActual);
-        
-        if (productoEncontrado) {
-          // Agregar directamente al carrito
-          const productoParaAgregar = {
-            ...productoEncontrado,
-            cantidad: 1,
-            cantidad_minima: productoEncontrado.cantidad_minima || 0,
+    try {
+      // Buscar producto real en el backend con cache optimizado
+      const productoReal = await stockService.getProductoByBarcode(codigo);
+      
+      // Verificar si ya existe en el carrito
+      const existingIndex = productos.findIndex(p => p.codigo_producto === productoReal.codigo_producto);
+      
+      if (existingIndex >= 0) {
+        // Sumar cantidad usando patrón funcional para evitar problemas con React Strict Mode
+        setProductos(prev => {
+          const updated = [...prev];
+          const cantidadAnterior = updated[existingIndex].cantidad;
+          updated[existingIndex] = {
+            ...updated[existingIndex],
+            cantidad: cantidadAnterior + productoReal.cantidad
           };
-          
-          // Lógica de pack vs producto
-          if (productoEncontrado.tipo_item === "pack") {
-            // Buscar el producto individual correspondiente
-            const productoIndividual = todosLosProductos.find(p => 
-              p.tipo_item === "producto" && 
-              p.nombre_producto === productoEncontrado.nombre_producto
-            );
-            
-            if (productoIndividual) {
-              productoParaAgregar.codigo_producto = productoIndividual.codigo_producto;
-              productoParaAgregar.cantidad = productoEncontrado.cantidad * productoIndividual.cantidad;
-              console.log("📦 Pack convertido a producto:", productoIndividual.nombre_producto, "x", productoParaAgregar.cantidad);
-            }
-          }
-          
-          // Agregar al carrito
-          setProductos(prev => {
-            const existingIndex = prev.findIndex(p => p.codigo_producto === productoParaAgregar.codigo_producto);
-            if (existingIndex >= 0) {
-              // Sumar cantidades
-              const updated = [...prev];
-              updated[existingIndex].cantidad += productoParaAgregar.cantidad;
-              console.log("➕ Cantidad sumada:", updated[existingIndex].cantidad);
-              return updated;
-            } else {
-              // Agregar nuevo producto
-              console.log("➕ Nuevo producto agregado:", productoParaAgregar.nombre_producto);
-              return [...prev, productoParaAgregar];
-            }
-          });
-          
-          setNotification(`✅ ${productoParaAgregar.nombre_producto} agregado`);
-          setTimeout(() => setNotification(null), 1000);
-        } else {
-          setError(`❌ Producto no encontrado: ${codigoActual}`);
-        }
-        
-        // Remover de la cola
-        setColaEscaneos(prev => prev.slice(1));
-        setProcesandoCola(false);
+          return updated;
+        });
+        setNotification(`✅ Cantidad aumentada: ${productoReal.nombre_producto} (${productoReal.cantidad} unidades)`);
+      } else {
+        // Agregar nuevo producto con datos reales
+        setProductos(prev => [...prev, productoReal]);
+        setNotification(`✅ Producto agregado: ${productoReal.nombre_producto} (${productoReal.cantidad} unidades)`);
       }
-    };
-
-    procesarCola();
-  }, [colaEscaneos, procesandoCola, productosCargados, todosLosProductos]);
+    } catch (error) {
+      console.error('Error buscando producto:', error);
+      setError(`❌ Producto no encontrado: ${codigo}`);
+    } finally {
+      setIsBuscandoProducto(false);
+    }
+    
+    setTimeout(() => setNotification(null), 2000);
+  };
 
 
 
@@ -211,8 +140,8 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
     if (event.key === 'Enter' && tempProducto.codigo_producto.trim()) {
       event.preventDefault();
       
-      // Agregar a la cola de escaneos
-      setColaEscaneos(prev => [...prev, tempProducto.codigo_producto]);
+      // Agregar producto directamente al carrito
+      agregarProductoDirecto(tempProducto.codigo_producto);
       
       // Limpiar el campo inmediatamente para el siguiente escaneo
       setTempProducto({
@@ -221,10 +150,6 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
         cantidad: 1,
         cantidad_minima: 0,
       });
-      
-      // Mostrar notificación de que se agregó a la cola
-      setNotification(`Código ${tempProducto.codigo_producto} agregado a la cola (${colaEscaneos.length + 1} pendientes)`);
-      setTimeout(() => setNotification(null), 1500);
     }
   };
 
@@ -263,7 +188,6 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
       return;
     }
 
-    setLoading(true);
     setError(null);
     setSuccess(null);
 
@@ -281,28 +205,24 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
         observaciones: observaciones || undefined,
       };
 
-      const response = tipo === "entrada" 
-        ? await stockService.entradaMultiple(request)
-        : await stockService.salidaMultiple(request);
-
-      if (response.success) {
-        setSuccess(response.message);
-        setProductos([]);
-        setMotivo("");
-        setObservaciones("");
-        setNotification(null);
-        limpiarProducto();
+      if (tipo === "entrada") {
+        entradaMultiple(request);
       } else {
-        setError("Error al procesar el movimiento");
+        salidaMultiple(request);
       }
+
+      // Limpiar formulario después del envío
+      setProductos([]);
+      setMotivo("");
+      setObservaciones("");
+      setNotification(null);
+      setSuccess("Movimiento registrado correctamente");
     } catch (err: unknown) {
       console.error("Error:", err);
       const errorMessage = err && typeof err === 'object' && 'response' in err 
         ? (err.response as { data?: { error?: string } })?.data?.error || "Error al procesar el movimiento"
         : "Error al procesar el movimiento";
       setError(errorMessage);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -313,23 +233,14 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
     setError(null);
     setSuccess(null);
     setNotification(null);
-    limpiarProducto();
   };
 
   const totalProductos = productos.length;
   const totalCantidad = productos.reduce((sum, p) => sum + p.cantidad, 0);
+  
 
-  // Debug: mostrar estado del carrito
-  useEffect(() => {
-    if (productos.length > 0) {
-      console.log("Estado actual del carrito:", productos.map(p => ({
-        codigo: p.codigo_producto,
-        nombre: p.nombre_producto,
-        cantidad: p.cantidad,
-        tipo: p.tipo_item
-      })));
-    }
-  }, [productos]);
+
+
 
   return (
     <Box>
@@ -372,10 +283,7 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
                 💡 Flujo POS
               </Typography>
               <Typography variant="body2" sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
-                {productosCargados ? 
-                  "Escanea códigos de barras rápidamente. Procesamiento instantáneo." :
-                  "Cargando productos... Espera un momento."
-                }
+                Escanea códigos de barras rápidamente. Procesamiento instantáneo.
               </Typography>
             </Box>
 
@@ -387,11 +295,11 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
                 value={tempProducto.codigo_producto}
                 onChange={(e) => setTempProducto({ ...tempProducto, codigo_producto: e.target.value })}
                 onKeyPress={handleKeyPress}
-                placeholder={!productosCargados ? "Cargando productos..." : "Ingrese código o escanee"}
+                placeholder={isBuscandoProducto ? "Buscando producto..." : "Ingrese código o escanee"}
                 size="small"
-                disabled={!productosCargados}
+                disabled={isBuscandoProducto}
                 InputProps={{
-                  endAdornment: !productosCargados ? (
+                  endAdornment: isBuscandoProducto ? (
                     <CircularProgress size={16} />
                   ) : undefined,
                 }}
@@ -404,7 +312,6 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
               />
               <IconButton 
                 onClick={() => setShowScanner(true)}
-                disabled={!productosCargados}
                 sx={{ 
                   border: 1, 
                   borderColor: "divider",
@@ -429,11 +336,6 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
                 Productos ({totalProductos})
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                {colaEscaneos.length > 0 && (
-                  <Typography variant="body2" sx={{ color: "info.main", fontWeight: 500 }}>
-                    Cola: {colaEscaneos.length} pendientes
-                  </Typography>
-                )}
                 <Typography variant="body2" color="text.secondary">
                   {totalCantidad} unidades
                 </Typography>
@@ -595,7 +497,7 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
                 variant="contained"
                 startIcon={<SaveIcon />}
                 onClick={handleSubmit}
-                disabled={loading || productos.length === 0 || !motivo}
+                disabled={(loadingEntradaMultiple || loadingSalidaMultiple) || productos.length === 0 || !motivo}
                 sx={{ 
                   flex: 1,
                   borderRadius: 1,
@@ -605,13 +507,13 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
                   fontSize: "0.875rem"
                 }}
               >
-                {loading ? <CircularProgress size={16} /> : `Registrar ${tipo}`}
+                {(loadingEntradaMultiple || loadingSalidaMultiple) ? <CircularProgress size={16} /> : `Registrar ${tipo}`}
               </Button>
               <Button
                 variant="outlined"
                 startIcon={<ClearIcon />}
                 onClick={handleClear}
-                disabled={loading}
+                disabled={loadingEntradaMultiple || loadingSalidaMultiple}
                 sx={{ 
                   borderRadius: 1,
                   textTransform: "none",

@@ -48,7 +48,7 @@ export const useNominasCheque = () => {
     } finally {
       setLoading(false);
     }
-  }, []); // Remover filtros de las dependencias para evitar bucle infinito
+  }, [filtros]); // Incluir filtros en las dependencias
 
   // Aplicar filtros
   const aplicarFiltros = useCallback(async (nuevosFiltros: FiltrosNominas) => {

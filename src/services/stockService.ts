@@ -1,218 +1,242 @@
-import axios from "axios";
-import { 
-  StockEntradaRequest, 
-  StockSalidaRequest, 
-  StockEntradaMultipleRequest, 
+import axios from 'axios';
+import {
+  StockProducto,
+  StockEntradaMultipleRequest,
   StockSalidaMultipleRequest,
-  StockEntradaResponse,
-  StockSalidaResponse,
-  StockMultipleResponse,
+  StockEntradaRequest,
+  StockSalidaRequest,
   StockLocalResponse,
   StockBajoResponse,
   StockMovimientosResponse,
   StockProductosMovidosResponse,
   StockReporteResponse,
-  StockProductoResponse
-} from "@/types/stock";
+  StockResponse,
+  POSProductoResponse,
+  ProductoArticulo,
+  ProductoPack,
+  FiltrosMovimientos,
+  MovimientosResponse
+} from '@/types/stock';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_GO_API_URL || 'http://localhost:8080/api/v1';
 
-// Helper para headers de autenticación
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("authToken");
-  return {
-    "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-};
+// Configuración base de axios
+const stockApi = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Interceptor para agregar token de autenticación
+stockApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Interceptor para manejar errores
+stockApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('Stock API Error:', error.response?.data || error.message);
+    return Promise.reject(error);
+  }
+);
 
 export const stockService = {
-  // 1. Entrada Individual de Stock
-  async entradaIndividual(request: StockEntradaRequest): Promise<StockEntradaResponse> {
-    try {
-      const response = await axios.post<StockEntradaResponse>(
-        `${API_URL}/api-beta/stock/entrada`,
-        request,
-        { headers: getAuthHeaders() }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error en entrada individual:", error);
-      throw error;
-    }
+  // 🔐 Autenticación
+  async login(username: string, password: string) {
+    const response = await stockApi.post('/auth/login', {
+      username,
+      password,
+    });
+    return response.data;
   },
 
-  // 2. Salida Individual de Stock
-  async salidaIndividual(request: StockSalidaRequest): Promise<StockSalidaResponse> {
-    try {
-      const response = await axios.post<StockSalidaResponse>(
-        `${API_URL}/api-beta/stock/salida`,
-        request,
-        { headers: getAuthHeaders() }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error en salida individual:", error);
-      throw error;
-    }
+  // 📦 Entrada Individual de Stock (Backend Go)
+  async entradaIndividual(data: StockEntradaRequest): Promise<StockResponse> {
+    const response = await stockApi.post('/stock/entrada', data);
+    return response.data;
   },
 
-  // 3. Entrada Múltiple de Stock (Tipo POS)
-  async entradaMultiple(request: StockEntradaMultipleRequest): Promise<StockMultipleResponse> {
-    try {
-      const response = await axios.post<StockMultipleResponse>(
-        `${API_URL}/api-beta/stock/entrada-multiple`,
-        request,
-        { headers: getAuthHeaders() }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error en entrada múltiple:", error);
-      throw error;
-    }
+  // 📤 Salida Individual de Stock (Backend Go)
+  async salidaIndividual(data: StockSalidaRequest): Promise<StockResponse> {
+    const response = await stockApi.post('/stock/salida', data);
+    return response.data;
   },
 
-  // 4. Salida Múltiple de Stock (Tipo POS)
-  async salidaMultiple(request: StockSalidaMultipleRequest): Promise<StockMultipleResponse> {
-    try {
-      const response = await axios.post<StockMultipleResponse>(
-        `${API_URL}/api-beta/stock/salida-multiple`,
-        request,
-        { headers: getAuthHeaders() }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error en salida múltiple:", error);
-      throw error;
-    }
+  // 🛒 Entrada Múltiple de Stock (Backend Go)
+  async entradaMultiple(data: StockEntradaMultipleRequest): Promise<StockResponse> {
+    const response = await stockApi.post('/stock/entrada-multiple', data);
+    return response.data;
   },
 
-  // 5. Consultar Stock por Local
-  async consultarStockLocal(idLocal: number): Promise<StockLocalResponse> {
-    try {
-      const response = await axios.get<StockLocalResponse>(
-        `${API_URL}/api-beta/stock/local/${idLocal}`,
-        { headers: getAuthHeaders() }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error consultando stock local:", error);
-      throw error;
-    }
+  // 🛒 Salida Múltiple de Stock (Backend Go)
+  async salidaMultiple(data: StockSalidaMultipleRequest): Promise<StockResponse> {
+    const response = await stockApi.post('/stock/salida-multiple', data);
+    return response.data;
   },
 
-  // 6. Productos con Stock Bajo
-  async consultarStockBajo(idLocal: number): Promise<StockBajoResponse> {
-    try {
-      const response = await axios.get<StockBajoResponse>(
-        `${API_URL}/api-beta/stock/bajo-stock/${idLocal}`,
-        { headers: getAuthHeaders() }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error consultando stock bajo:", error);
-      throw error;
-    }
+  // 📊 Consultar Stock por Local (Backend Go)
+  async getStockLocal(idLocal: number): Promise<StockLocalResponse> {
+    const response = await stockApi.get(`/stock/local/${idLocal}`);
+    return response.data;
   },
 
-  // 7. Historial de Movimientos
-  async consultarMovimientos(
-    idLocal: number, 
-    limit: number = 50, 
-    offset: number = 0
-  ): Promise<StockMovimientosResponse> {
-    try {
-      const response = await axios.get<StockMovimientosResponse>(
-        `${API_URL}/api-beta/stock/movimientos/${idLocal}`,
-        {
-          params: { limit, offset },
-          headers: getAuthHeaders()
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error consultando movimientos:", error);
-      throw error;
-    }
+  // ⚠️ Productos con Stock Bajo (Backend Go)
+  async getStockBajo(idLocal: number): Promise<StockBajoResponse> {
+    const response = await stockApi.get(`/stock/bajo-stock/${idLocal}`);
+    return response.data;
   },
 
-  // 8. Productos Más/Menos Movidos
-  async consultarProductosMovidos(
+  // 📈 Historial de Movimientos (Backend Go)
+  async getMovimientos(idLocal: number, filtros?: Record<string, unknown>): Promise<StockMovimientosResponse> {
+    const params = new URLSearchParams();
+    
+    if (filtros?.tipo_movimiento) {
+      params.append('tipo', filtros.tipo_movimiento as string);
+    }
+    if (filtros?.fecha_desde) {
+      params.append('fecha_desde', filtros.fecha_desde as string);
+    }
+    if (filtros?.fecha_hasta) {
+      params.append('fecha_hasta', filtros.fecha_hasta as string);
+    }
+    if (filtros?.limit) {
+      params.append('limit', filtros.limit.toString());
+    }
+    if (filtros?.offset) {
+      params.append('offset', filtros.offset.toString());
+    }
+
+    const queryString = params.toString();
+    const url = `/stock/movimientos/${idLocal}${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await stockApi.get(url);
+    return response.data;
+  },
+
+  // 📊 Productos Más/Menos Movidos (Backend Go)
+  async getProductosMovidos(
     idLocal: number, 
     tipo: 'mas' | 'menos' = 'mas', 
     limit: number = 10
   ): Promise<StockProductosMovidosResponse> {
-    try {
-      const response = await axios.get<StockProductosMovidosResponse>(
-        `${API_URL}/api-beta/stock/productos-movidos/${idLocal}`,
-        {
-          params: { tipo, limit },
-          headers: getAuthHeaders()
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error consultando productos movidos:", error);
-      throw error;
-    }
+    const response = await stockApi.get(`/stock/productos-movidos/${idLocal}?tipo=${tipo}&limit=${limit}`);
+    return response.data;
   },
 
-  // 9. Reporte Completo de Stock
-  async consultarReporte(idLocal: number): Promise<StockReporteResponse> {
-    try {
-      const response = await axios.get<StockReporteResponse>(
-        `${API_URL}/api-beta/stock/reporte/${idLocal}`,
-        { headers: getAuthHeaders() }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error consultando reporte:", error);
-      throw error;
-    }
+  // 📋 Reporte Completo de Stock (Backend Go)
+  async getReporteStock(idLocal: number): Promise<StockReporteResponse> {
+    const response = await stockApi.get(`/stock/reporte/${idLocal}`);
+    return response.data;
   },
 
-  // 10. Consultar Stock de Producto Específico
-  async consultarStockProducto(
-    codigoProducto: string, 
-    idLocal: number
-  ): Promise<StockProductoResponse> {
-    try {
-      const response = await axios.get<StockProductoResponse>(
-        `${API_URL}/api-beta/stock/producto/${codigoProducto}`,
-        {
-          params: { id_local: idLocal },
-          headers: getAuthHeaders()
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error consultando stock producto:", error);
-      throw error;
-    }
+  // 🔍 Consultar Stock de Producto Específico
+  async getStockProducto(codigoProducto: string, idLocal: number): Promise<StockResponse> {
+    const response = await stockApi.get(`/stock/producto/${codigoProducto}?id_local=${idLocal}`);
+    return response.data;
   },
 
-  // 11. Inicializar Stock (Primera Vez)
-  async inicializarStock(request: {
+  // 🚀 Búsqueda Rápida de Producto por Código de Barras (POS)
+  async getProductoByBarcode(barcode: string): Promise<StockProducto> {
+    const response = await stockApi.get<POSProductoResponse>(`/pos/producto/${barcode}`);
+    
+    if (response.data.success && response.data.data.producto) {
+      const producto = response.data.data.producto;
+      
+      // Helper para normalizar strings
+      const normalizeString = (str: string) => str?.toUpperCase() || '';
+      
+      // Adaptar la respuesta del backend al formato interno
+      if ('id' in producto) {
+        // Es un artículo
+        const articulo = producto as ProductoArticulo;
+        return {
+          codigo_producto: normalizeString(articulo.codigo),
+          tipo_item: 'producto' as const,
+          cantidad: 1,
+          cantidad_minima: 0,
+          nombre_producto: normalizeString(articulo.nombre),
+          codigo_barras: normalizeString(articulo.codigo_barra_interno),
+        };
+      } else {
+        // Es un pack
+        const pack = producto as ProductoPack;
+        return {
+          codigo_producto: normalizeString(pack.codigo_articulo), // Usar el código del artículo individual
+          tipo_item: 'producto' as const,
+          cantidad: pack.cantidad_articulo, // Multiplicar por la cantidad del pack
+          cantidad_minima: 0,
+          nombre_producto: normalizeString(pack.nombre_articulo),
+          codigo_barras: normalizeString(pack.cod_barra_articulo),
+        };
+      }
+    }
+    
+    throw new Error('Producto no encontrado');
+  },
+
+  // 🏗️ Inicializar Stock (Primera Vez)
+  async inicializarStock(data: {
     productos: Array<{
       codigo_producto: string;
-      tipo_item: 'producto' | 'pack';
+      tipo_item?: 'producto' | 'pack';
       cantidad_inicial: number;
-      cantidad_minima: number;
+      cantidad_minima?: number;
     }>;
     id_local: number;
     id_usuario: number;
     observaciones?: string;
-  }): Promise<StockMultipleResponse> {
-    try {
-      const response = await axios.post<StockMultipleResponse>(
-        `${API_URL}/api-beta/stock/inicializar`,
-        request,
-        { headers: getAuthHeaders() }
-      );
-      return response.data;
-    } catch (error) {
-      console.error("Error inicializando stock:", error);
-      throw error;
+  }): Promise<StockResponse> {
+    const response = await stockApi.post('/stock/inicializar', data);
+    return response.data;
+  },
+
+  // 🏥 Health Check
+  async healthCheck(): Promise<{ status: string; services: Record<string, unknown> }> {
+    const response = await stockApi.get('/health');
+    return response.data;
+  },
+
+  // 🔄 Movimientos con filtros avanzados (usando el endpoint de la documentación original)
+  async getMovimientosAvanzados(filtros: FiltrosMovimientos): Promise<MovimientosResponse> {
+    const params = new URLSearchParams();
+    
+    if (filtros.id_local) {
+      params.append('local', filtros.id_local.toString());
     }
+    if (filtros.tipo_movimiento) {
+      params.append('tipo', filtros.tipo_movimiento);
+    }
+    if (filtros.fecha_desde) {
+      params.append('fecha_desde', filtros.fecha_desde);
+    }
+    if (filtros.fecha_hasta) {
+      params.append('fecha_hasta', filtros.fecha_hasta);
+    }
+
+    const queryString = params.toString();
+    const url = `/movimientos${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await stockApi.get(url);
+    return response.data;
+  },
+
+  // 📊 Stock bajo (usando el endpoint de la documentación original)
+  async getStockBajoOriginal(idLocal: number): Promise<StockBajoResponse> {
+    const response = await stockApi.get(`/stock/bajo/${idLocal}`);
+    return response.data;
+  },
+
+  // 🔍 Stock de producto específico (usando el endpoint de la documentación original)
+  async getStockProductoOriginal(codigoProducto: string, idLocal: number): Promise<StockResponse> {
+    const response = await stockApi.get(`/stock/producto/${codigoProducto}?local=${idLocal}`);
+    return response.data;
   }
-}; 
+};
+
+export default stockService; 

@@ -236,6 +236,60 @@ export interface StockProductoResponse {
   timestamp: string;
 }
 
+// Nuevos tipos para el endpoint POS
+export interface ProductoArticulo {
+  id: number;
+  codigo: string;
+  nombre: string;
+  unidad: string;
+  precio: number;
+  codigo_barra_interno: string;
+  codigo_barra_externo: string;
+  descripcion: string;
+  es_servicio: boolean;
+  es_exento: boolean;
+  id_categoria: number;
+  disponible_para_venta: boolean;
+  activo: boolean;
+  origen: string;
+  codigo_final: string;
+  lista_precio_detalle: number;
+  lista_updated_at: string;
+}
+
+export interface ProductoPack {
+  codigo: string;
+  nombre: string;
+  precio: number;
+  codigo_barra_interno: string;
+  codigo_barra_externo: string;
+  es_servicio: boolean;
+  es_exento: boolean;
+  disponible_para_venta: boolean;
+  activo: boolean;
+  origen: string;
+  codigo_final: string;
+  codigo_pack: string;
+  nombre_pack: string;
+  precio_base: number;
+  cantidad_articulo: number;
+  codigo_articulo: string;
+  cod_barra_articulo: string;
+  nombre_articulo: string;
+  lista_precio_detalle: number;
+  lista_updated_at: string;
+}
+
+export interface POSProductoResponse {
+  success: boolean;
+  message: string;
+  data: {
+    cache_hit: boolean;
+    latency_ms: number;
+    producto: ProductoArticulo | ProductoPack;
+  };
+}
+
 // Motivos predefinidos
 export const MOTIVOS_ENTRADA = [
   'compra_proveedor',
@@ -249,6 +303,22 @@ export const MOTIVOS_SALIDA = [
   'traspaso_salida',
   'ajuste_inventario_negativo'
 ] as const;
+
+export interface FiltrosMovimientos {
+  id_local?: number;
+  tipo_movimiento?: 'entrada' | 'salida';
+  fecha_desde?: string;
+  fecha_hasta?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface MovimientosResponse {
+  success: boolean;
+  data: StockMovimiento[];
+  total: number;
+  filtros: FiltrosMovimientos;
+}
 
 export type MotivoEntrada = typeof MOTIVOS_ENTRADA[number];
 export type MotivoSalida = typeof MOTIVOS_SALIDA[number]; 
