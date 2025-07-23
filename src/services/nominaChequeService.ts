@@ -109,14 +109,23 @@ const transformNominaResponse = (response: NominaCanteraResponse): NominaCantera
     facturaAsociada: undefined,
   })) : undefined;
   
-
+  // Calcular monto total basado en los cheques asignados si están disponibles
+  let montoTotalCalculado = response.monto_total || 0;
+  if (transformedCheques && transformedCheques.length > 0) {
+    montoTotalCalculado = transformedCheques.reduce((total, cheque) => total + (cheque.montoAsignado || 0), 0);
+    console.log('💰 Calculando monto total:', {
+      montoTotalOriginal: response.monto_total,
+      cheques: transformedCheques.map(c => ({ correlativo: c.correlativo, montoAsignado: c.montoAsignado })),
+      montoTotalCalculado
+    });
+  }
   
   return {
     id: response.id?.toString() || '0',
     numeroNomina: response.numero_nomina || '',
     fechaEmision: response.fecha_emision || '',
     local: response.local_origen || '',
-    montoTotal: response.monto_total || 0,
+    montoTotal: montoTotalCalculado,
     estado: response.estado as "pendiente" | "pagada" | "vencida",
     idUsuario: response.id_usuario?.toString() || '0',
     createdAt: response.created_at || '',
@@ -257,6 +266,7 @@ export const nominaChequeService = {
 
       // Log para debugging
       console.log('📋 Nomina response data:', responseData.data);
+      console.log('📋 Cheques en response:', responseData.data.cheques);
 
       return transformNominaResponse(responseData.data);
     } catch (error) {
