@@ -16,6 +16,8 @@ export interface FacturaResponse {
   monto_pagado?: number | string; // Puede venir como string del backend
   cheque_correlativo?: string;
   id_proveedor?: number; // ID del proveedor para usar en endpoints
+  // Nuevo campo para disponibilidad en nóminas
+  asignado_a_nomina?: boolean; // Indica si la factura está asignada a una nómina
 }
 
 export interface Factura {
@@ -38,6 +40,8 @@ export interface Factura {
   pendingMonto?: number; // Monto pendiente de confirmación
   pendingMetodoPago?: string; // Método de pago pendiente de confirmación
   id_proveedor?: number; // ID del proveedor para usar en endpoints
+  // Nuevo campo para disponibilidad en nóminas
+  asignado_a_nomina?: boolean; // Indica si la factura está asignada a una nómina
 }
 
 // Nueva estructura para cheques con múltiples facturas

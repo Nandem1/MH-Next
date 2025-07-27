@@ -44,5 +44,7 @@ export function adaptFactura(factura: FacturaResponse): Factura {
     monto_pagado: factura.monto_pagado ? montoAEntero(typeof factura.monto_pagado === 'string' ? parseFloat(factura.monto_pagado) : factura.monto_pagado) : undefined,
     cheque_correlativo: factura.cheque_correlativo,
     id_proveedor: factura.id_proveedor, // ID del proveedor para endpoints
+    // Nuevo campo para disponibilidad en nóminas
+    asignado_a_nomina: factura.asignado_a_nomina || false,
   };
 }

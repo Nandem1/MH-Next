@@ -10,7 +10,9 @@ export interface NominaCantera {
   createdAt: string;
   updatedAt: string;
   creadoPor: string; // Nuevo campo
+  tipoNomina: "cheques" | "facturas" | "mixta"; // Nuevo campo para nóminas híbridas
   cheques?: ChequeAsignado[];
+  facturas?: FacturaAsignada[]; // Nuevo campo para facturas asignadas
   trackingEnvio?: TrackingEnvio;
   
   // Propiedades adicionales para la tabla
@@ -19,6 +21,8 @@ export interface NominaCantera {
   correlativoFinal?: string;
   totalCheques?: number;
   chequesPagados?: number;
+  totalFacturas?: number; // Nuevo campo
+  balance?: number; // Nuevo campo para balance (facturas - cheques)
   fechaCreacion?: string; // Alias para createdAt
 }
 
@@ -52,6 +56,21 @@ export interface FacturaAsociada {
   monto: number;
   estado: string;
   fechaIngreso: string;
+  notasCredito?: NotaCredito[];
+}
+
+// Nuevo tipo para facturas asignadas a nóminas
+export interface FacturaAsignada {
+  id: string;
+  folio: string;
+  proveedor: string;
+  monto: number;
+  montoAsignado: number; // Monto asignado a la nómina
+  estado: string;
+  fechaIngreso: string;
+  fechaAsignacion: string;
+  idUsuario: string;
+  nombreUsuario: string;
   notasCredito?: NotaCredito[];
 }
 
@@ -98,8 +117,9 @@ export interface PaginationInfo {
 
 // Request types
 export interface CrearNominaRequest {
-  numeroNomina: string;
-  localOrigen: string;
+  nombre: string;
+  fecha: string; // formato: YYYY-MM-DD
+  tipo_nomina?: 'cheques' | 'facturas' | 'mixta'; // opcional, default: 'cheques'
 }
 
 export interface AsignarChequeRequest {
@@ -131,15 +151,22 @@ export interface NominaCanteraResponse {
   numero_nomina: string;
   fecha_emision: string;
   estado: string;
-  local_origen: string; // Campo que faltaba
-  creado_por: string; // Campo que faltaba
+  local_origen: string;
+  creado_por: string;
   created_at: string;
   updated_at: string;
-  nombre_usuario: string; // Campo que faltaba
-  id_usuario: number; // Cambiado a number
+  nombre_usuario: string;
+  id_usuario: number;
   monto_total: number;
-  cantidad_cheques: number; // Campo que faltaba
-  cheques?: ChequeAsignadoResponse[]; // Cheques asignados a la nómina
+  cantidad_cheques: number;
+  tipo_nomina?: string; // Nuevo campo para nóminas híbridas
+  cantidad_facturas?: number; // Nuevo campo
+  total_facturas?: number; // Nuevo campo
+  total_cheques?: number; // Nuevo campo
+  balance?: number; // Nuevo campo
+  cheques?: ChequeAsignadoResponse[];
+  facturas?: FacturaAsignadaResponse[]; // Nuevo campo para facturas asignadas
+  facturas_asignadas?: FacturaAsignadaResponse[]; // Campo para facturas asignadas en nóminas mixtas
   tracking_envio?: {
     id: string;
     estado: string;
@@ -148,11 +175,12 @@ export interface NominaCanteraResponse {
     fecha_envio?: string;
     fecha_recepcion?: string;
     observaciones?: string;
-    enviado_por?: string; // Actualizado para coincidir con el backend
-    recibido_por?: string; // Actualizado para coincidir con el backend
+    enviado_por?: string;
+    recibido_por?: string;
   };
 }
 
+// Tipo para cheques asignados (estructura antigua)
 export interface ChequeAsignadoResponse {
   id: number;
   correlativo: string;
@@ -171,6 +199,18 @@ export interface ChequeAsignadoResponse {
   }[];
 }
 
+// Tipo para cheques asignados (estructura nueva del backend)
+export interface ChequeAsignadoResponseNuevo {
+  id: number;
+  id_cheque: number;
+  monto_asignado: number;
+  numero: string;
+  monto: number;
+  banco: string;
+  estado: string;
+  fecha_emision: string;
+}
+
 export interface TrackingEnvioResponse {
   id: string;
   estado: string;
@@ -181,4 +221,58 @@ export interface TrackingEnvioResponse {
   observaciones?: string;
   enviado_por?: string;
   recibido_por?: string;
-} 
+}
+
+// Nuevos tipos para nóminas híbridas
+export interface CrearNominaMixtaRequest {
+  nombre: string;
+  fecha: string; // formato: YYYY-MM-DD
+  cheques: Array<{
+    idCheque: number;
+    montoAsignado: number;
+  }>;
+  facturas: Array<{
+    idFactura: number;
+    montoAsignado: number;
+  }>;
+}
+
+export interface AsignarFacturaRequest {
+  idFactura: number;
+  montoAsignado: number;
+}
+
+export interface FacturaAsignadaResponse {
+  id: number;
+  id_factura: number;
+  monto_asignado: number;
+  created_at: string;
+  folio: string;
+  monto_factura: number;
+  estado: number;
+  fecha_factura: string;
+  nombre_proveedor: string;
+  rut_proveedor: string;
+  nombre_local: string;
+  nombre_usuario_factura: string;
+}
+
+// Nuevos tipos para respuestas del backend
+
+
+
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data?: T;
+}
+
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  hasNext: boolean;
+}
+
+ 

@@ -73,3 +73,50 @@ export const actualizarMetodoPagoFactura = async (data: ActualizarMetodoPagoRequ
     throw new Error("No se pudo actualizar el método de pago de la factura");
   }
 };
+
+// ===== NUEVOS MÉTODOS PARA NÓMINAS HÍBRIDAS =====
+
+// Obtener facturas disponibles (no asignadas a nóminas)
+export const getFacturasDisponibles = async (filtros: {
+  page?: number;
+  limit?: number;
+  proveedor?: string;
+} = {}): Promise<{
+  data: Factura[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    hasNext: boolean;
+  };
+}> => {
+  try {
+    const params = new URLSearchParams();
+    
+    if (filtros.page) params.append('page', filtros.page.toString());
+    if (filtros.limit) params.append('limit', filtros.limit.toString());
+    if (filtros.proveedor) params.append('proveedor', filtros.proveedor);
+    // ❌ Eliminado: filtros.estado - ya no se usa para disponibilidad
+
+    const queryString = params.toString();
+    const url = `${API_URL}/api-beta/facturas/disponibles${queryString ? `?${queryString}` : ''}`;
+
+    const response = await axios.get(url);
+
+    return response.data;
+  } catch (error) {
+    console.error("Error obteniendo facturas disponibles:", error);
+    throw new Error("No se pudieron cargar las facturas disponibles");
+  }
+};
+
+// Obtener facturas asignadas a una nómina específica
+export const getFacturasAsignadas = async (nominaId: string): Promise<Factura[]> => {
+  try {
+    const response = await axios.get(`${API_URL}/api-beta/nominas/${nominaId}/facturas`);
+    return response.data.data.map((f: FacturaResponse) => adaptFactura(f));
+  } catch (error) {
+    console.error("Error obteniendo facturas asignadas:", error);
+    throw new Error("No se pudieron cargar las facturas asignadas");
+  }
+};

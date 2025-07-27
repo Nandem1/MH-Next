@@ -45,8 +45,8 @@ export function NuevaNominaModal({
     }
 
     const request: CrearNominaRequest = {
-      numeroNomina: numeroNomina.trim(),
-      localOrigen: usuario.local_id.toString(),
+      nombre: numeroNomina.trim(),
+      fecha: new Date().toISOString().split('T')[0], // Formato YYYY-MM-DD
     };
 
     try {

@@ -6,7 +6,9 @@ import {
   AsignarChequeRequest, 
   ActualizarTrackingRequest,
   FiltrosNominas,
-  PaginationInfo
+  PaginationInfo,
+  CrearNominaMixtaRequest,
+  AsignarFacturaRequest
 } from "@/types/nominaCheque";
 
 // Estado inicial para filtros
@@ -172,7 +174,9 @@ export const useNominasCheque = () => {
   const loadNomina = useCallback(async (id: string) => {
     try {
       setError(null);
-      const data = await nominaChequeService.getNominaCompleta(id);
+      
+      // Siempre usar el endpoint que trae las facturas para ambos tipos de nómina
+      const data = await nominaChequeService.getNominaCompletaConFacturas(id);
       setSelectedNomina(data);
       return data;
     } catch (err) {
@@ -197,6 +201,71 @@ export const useNominasCheque = () => {
       setLoading(false);
     }
   }, []);
+
+  // Crear nómina mixta
+  const crearNominaMixta = useCallback(async (request: CrearNominaMixtaRequest) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const nuevaNomina = await nominaChequeService.crearNominaMixta(request);
+      setNominas(prev => [nuevaNomina, ...prev]);
+      return nuevaNomina;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al crear nómina mixta");
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Asignar facturas a nómina
+  const asignarFacturas = useCallback(async (nominaId: string, facturas: AsignarFacturaRequest[]) => {
+    try {
+      setError(null);
+      
+      // El servicio ya retorna la nómina actualizada
+      const nominaActualizada = await nominaChequeService.asignarFacturasANomina(nominaId, facturas);
+      
+      // Actualizar la nómina seleccionada si es la misma
+      if (selectedNomina?.id === nominaId) {
+        setSelectedNomina(nominaActualizada);
+      }
+      
+      // Actualizar la lista de nóminas con los filtros actuales
+      const resultado = await nominaChequeService.getNominas(filtros);
+      setNominas(resultado.nominas);
+      setPagination(resultado.pagination);
+    } catch (err) {
+      console.error("❌ Error en asignarFacturas:", err);
+      setError(err instanceof Error ? err.message : "Error al asignar facturas");
+      throw err;
+    }
+  }, [selectedNomina?.id, filtros]);
+
+  // Convertir nómina a mixta
+  const convertirNominaAMixta = useCallback(async (nominaId: string, facturas: AsignarFacturaRequest[]) => {
+    try {
+      setError(null);
+      
+      // El servicio ya retorna la nómina actualizada
+      const nominaActualizada = await nominaChequeService.convertirNominaAMixta(nominaId, facturas);
+      
+      // Actualizar la nómina seleccionada si es la misma
+      if (selectedNomina?.id === nominaId) {
+        setSelectedNomina(nominaActualizada);
+      }
+      
+      // Actualizar la lista de nóminas con los filtros actuales
+      const resultado = await nominaChequeService.getNominas(filtros);
+      setNominas(resultado.nominas);
+      setPagination(resultado.pagination);
+    } catch (err) {
+      console.error("❌ Error en convertirNominaAMixta:", err);
+      setError(err instanceof Error ? err.message : "Error al convertir nómina a mixta");
+      throw err;
+    }
+  }, [selectedNomina?.id, filtros]);
 
   // Asignar cheque a nómina
   const asignarCheque = useCallback(async (nominaId: string, request: AsignarChequeRequest) => {
@@ -301,7 +370,10 @@ export const useNominasCheque = () => {
     loading,
     error,
     crearNomina,
+    crearNominaMixta,
     asignarCheque,
+    asignarFacturas,
+    convertirNominaAMixta,
     actualizarTracking,
     crearTracking,
     loadNominas,

@@ -30,13 +30,14 @@ import {
   Autocomplete,
   useTheme,
 } from "@mui/material";
-import { Add as AddIcon } from "@mui/icons-material";
+import { Add as AddIcon, Assignment as AssignmentIcon } from "@mui/icons-material";
 import { useNominasCheque } from "@/hooks/useNominasCheque";
 import { useUsuarios } from "@/hooks/useUsuarios";
 import { NominaCantera, CrearNominaRequest, AsignarChequeRequest, ActualizarTrackingRequest } from "@/types/nominaCheque";
 import { NuevaNominaModal } from "@/components/dashboard/NuevaNominaChequeModal";
 import { AsignarChequeModal } from "@/components/dashboard/AsignarChequeModal";
 import { TrackingEnvioComponent } from "@/components/dashboard/TrackingEnvio";
+import { AsignarFacturasModal } from "@/components/dashboard/AsignarFacturasModal";
 import Footer from "@/components/shared/Footer";
 import { formatearMontoPesos } from "@/utils/formatearMonto";
 import { useRouter } from "next/navigation";
@@ -50,21 +51,22 @@ export default function NominasPage() {
 
   const {
     nominas,
-    selectedNomina,
     loading,
+    error,
     crearNomina,
     asignarCheque,
-    actualizarTracking,
-    crearTracking,
+    selectedNomina,
     loadNomina,
     setSelectedNomina,
-    error,
+    actualizarTracking,
+    crearTracking,
   } = useNominasCheque();
 
   const { data: usuarios, isLoading: isLoadingUsuarios } = useUsuarios();
 
   const [modalNuevaNominaOpen, setModalNuevaNominaOpen] = useState(false);
   const [modalAsignarOpen, setModalAsignarOpen] = useState(false);
+  const [modalAsignarFacturasOpen, setModalAsignarFacturasOpen] = useState(false);
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
   const [loadingModal, setLoadingModal] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -75,6 +77,7 @@ export default function NominasPage() {
   const [filtroLocal, setFiltroLocal] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("");
   const [filtroUsuario, setFiltroUsuario] = useState("");
+  const [filtroTipo, setFiltroTipo] = useState("");
 
   if (authLoading) {
     return (
@@ -166,6 +169,16 @@ export default function NominasPage() {
     }
   };
 
+  const handleAsignarFacturasClick = () => {
+    if (!selectedNomina) {
+      setSnackbarMessage("Debes seleccionar una nómina primero");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+      return;
+    }
+    setModalAsignarFacturasOpen(true);
+  };
+
   const getEstadoColor = (estado: string): "warning" | "success" | "error" | "default" => {
     switch (estado) {
       case "pendiente":
@@ -201,8 +214,9 @@ export default function NominasPage() {
     const cumpleLocal = !filtroLocal || getLocalNombre(nomina.local).toLowerCase().includes(filtroLocal.toLowerCase());
     const cumpleEstado = !filtroEstado || nomina.estado === filtroEstado;
     const cumpleUsuario = !filtroUsuario || nomina.creadoPor.toLowerCase().includes(filtroUsuario.toLowerCase());
+    const cumpleTipo = !filtroTipo || nomina.tipoNomina === filtroTipo;
     
-    return cumpleLocal && cumpleEstado && cumpleUsuario;
+    return cumpleLocal && cumpleEstado && cumpleUsuario && cumpleTipo;
   });
 
   return (
@@ -316,12 +330,25 @@ export default function NominasPage() {
               clearOnBlur
               clearOnEscape
             />
+                           <FormControl fullWidth size="small">
+                 <InputLabel>Tipo de Nómina</InputLabel>
+                 <Select
+                   value={filtroTipo}
+                   label="Tipo de Nómina"
+                   onChange={(e) => setFiltroTipo(e.target.value)}
+                 >
+                   <MenuItem value="">Todos los tipos</MenuItem>
+                   <MenuItem value="cheques">Cheques</MenuItem>
+                   <MenuItem value="mixta">Por Pagar</MenuItem>
+                 </Select>
+               </FormControl>
             <Button
               variant="outlined"
               onClick={() => {
                 setFiltroLocal("");
                 setFiltroEstado("");
                 setFiltroUsuario("");
+                setFiltroTipo("");
               }}
               fullWidth
               sx={{ height: 40 }}
@@ -392,6 +419,7 @@ export default function NominasPage() {
                     <TableCell sx={{ fontWeight: 600 }}>Número</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Fecha</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Local</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Monto</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Estado</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Creado por</TableCell>
@@ -421,6 +449,19 @@ export default function NominasPage() {
                       </TableCell>
                       <TableCell>
                         {getLocalNombre(nomina.local)}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={nomina.tipoNomina === 'mixta' ? 'por pagar' : nomina.tipoNomina}
+                          color={nomina.tipoNomina === 'mixta' ? 'primary' : 
+                                 nomina.tipoNomina === 'facturas' ? 'secondary' : 'default'}
+                          size="small"
+                          sx={{ 
+                            fontWeight: 600,
+                            borderRadius: "8px",
+                            textTransform: "capitalize"
+                          }}
+                        />
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" fontWeight={600}>
@@ -675,106 +716,226 @@ export default function NominasPage() {
                 </Box>
               )}
 
-              {/* Cheques asignados */}
-              <Box sx={{ p: 4 }}>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
-                  <Typography variant="h6" fontWeight={600} sx={{ color: "text.primary" }}>
-                    Cheques Asignados
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    {selectedNomina.cheques?.length || 0} cheques
-                  </Typography>
-                </Box>
-                
-                                 {selectedNomina.cheques && selectedNomina.cheques.length > 0 ? (
+
+
+              {/* Vista unificada de Facturas Asignadas */}
+               <Box sx={{ p: 4 }}>
+                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+                   <Typography variant="h6" fontWeight={600} sx={{ color: "text.primary" }}>
+                     Facturas Asignadas
+                   </Typography>
+                   <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                     {selectedNomina.facturas?.length || 0} facturas
+                   </Typography>
+                 </Box>
+                 
+                 {selectedNomina.facturas && selectedNomina.facturas.length > 0 ? (
                    <Box sx={{ 
                      display: "grid", 
                      gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, 
                      gap: 2 
                    }}>
-                    {selectedNomina.cheques
-                      .sort((a, b) => {
-                        // Ordenar por correlativo numérico si es posible, sino alfabéticamente
-                        const correlativoA = parseInt(a.correlativo) || 0;
-                        const correlativoB = parseInt(b.correlativo) || 0;
-                        return correlativoA - correlativoB;
-                      })
-                      .map((cheque) => (
-                      <Box
-                        key={cheque.id}
-                        sx={{
-                          p: 3,
-                          bgcolor: "background.default",
-                          borderRadius: "12px",
-                          border: `1px solid ${theme.palette.divider}`,
-                          transition: "all 0.2s ease-in-out",
-                          "&:hover": {
-                            borderColor: theme.palette.primary.main,
-                            bgcolor: "background.paper",
-                          },
-                        }}
-                      >
-                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
-                          <Typography variant="h6" fontWeight={600} sx={{ color: "text.primary" }}>
-                            #{cheque.correlativo}
-                          </Typography>
-                          <Typography variant="h6" fontWeight={700} sx={{ color: "text.primary" }}>
-                            {formatearMontoPesos(cheque.monto)}
-                          </Typography>
-                        </Box>
-                        
-                        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                            <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
-                              Monto Asignado
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 500 }}>
-                              {formatearMontoPesos(cheque.montoAsignado)}
-                            </Typography>
-                          </Box>
-                          
-                          {cheque.facturaAsociada && (
-                            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                              <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
-                                Factura
-                              </Typography>
-                              <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 500 }}>
-                                {cheque.facturaAsociada.folio}
-                              </Typography>
-                            </Box>
-                          )}
-                          
-                          {cheque.fechaAsignacion && (
-                            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                              <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
-                                Fecha Asignación
-                              </Typography>
-                              <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 500 }}>
-                                {new Date(cheque.fechaAsignacion).toLocaleDateString()}
-                              </Typography>
-                            </Box>
-                          )}
-                        </Box>
-                      </Box>
-                    ))}
-                  </Box>
-                ) : (
-                  <Box sx={{ 
-                    p: 4, 
-                    textAlign: "center", 
-                    bgcolor: "background.default", 
-                    borderRadius: "12px",
-                    border: `2px dashed ${theme.palette.divider}`
-                  }}>
-                    <Typography variant="body1" sx={{ color: "text.secondary", mb: 1 }}>
-                      No hay cheques asignados
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                      Asigna cheques para comenzar a procesar esta nómina
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
+                     {selectedNomina.facturas
+                       .sort((a, b) => a.folio.localeCompare(b.folio))
+                       .map((factura) => {
+                         // Buscar si esta factura tiene un cheque asociado
+                         const chequeAsociado = selectedNomina.cheques?.find(cheque => 
+                           cheque.facturaAsociada?.folio === factura.folio
+                         );
+                         
+                         return (
+                           <Box
+                             key={factura.id}
+                             sx={{
+                               p: 3,
+                               bgcolor: "background.default",
+                               borderRadius: "12px",
+                               border: `1px solid ${theme.palette.divider}`,
+                               transition: "all 0.3s ease-in-out",
+                               cursor: "pointer",
+                               position: "relative",
+                               overflow: "hidden",
+                               "&:hover": {
+                                 borderColor: theme.palette.primary.main,
+                                 bgcolor: "background.paper",
+                                 transform: "translateY(-2px)",
+                                 boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                               },
+                             }}
+                             onMouseEnter={(e) => {
+                               const target = e.currentTarget;
+                               const content = target.querySelector('.factura-content') as HTMLElement;
+                               const chequeContent = target.querySelector('.cheque-content') as HTMLElement;
+                               if (content && chequeContent) {
+                                 content.style.opacity = '0';
+                                 chequeContent.style.opacity = '1';
+                               }
+                             }}
+                             onMouseLeave={(e) => {
+                               const target = e.currentTarget;
+                               const content = target.querySelector('.factura-content') as HTMLElement;
+                               const chequeContent = target.querySelector('.cheque-content') as HTMLElement;
+                               if (content && chequeContent) {
+                                 content.style.opacity = '1';
+                                 chequeContent.style.opacity = '0';
+                               }
+                             }}
+                           >
+                             {/* Contenido de la factura (visible por defecto) */}
+                             <Box className="factura-content" sx={{ transition: "opacity 0.3s ease-in-out" }}>
+                               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
+                                 <Typography variant="h6" fontWeight={600} sx={{ color: "text.primary" }}>
+                                   #{factura.folio}
+                                 </Typography>
+                                 <Typography variant="h6" fontWeight={700} sx={{ color: "text.primary" }}>
+                                   {formatearMontoPesos(factura.montoAsignado)}
+                                 </Typography>
+                               </Box>
+                               
+                               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                                 <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                                   <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                                     Monto Asignado
+                                   </Typography>
+                                   <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 500 }}>
+                                     {formatearMontoPesos(factura.montoAsignado)}
+                                   </Typography>
+                                 </Box>
+                                 
+                                 <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                                   <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                                     Proveedor
+                                   </Typography>
+                                   <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 500 }}>
+                                     {factura.proveedor}
+                                   </Typography>
+                                 </Box>
+                                 
+                                 {factura.fechaAsignacion && (
+                                   <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                                     <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                                       Fecha Asignación
+                                     </Typography>
+                                     <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 500 }}>
+                                       {new Date(factura.fechaAsignacion).toLocaleDateString()}
+                                     </Typography>
+                                   </Box>
+                                 )}
+                               </Box>
+                             </Box>
+                             
+                             {/* Contenido del cheque (oculto por defecto, visible en hover) */}
+                             <Box 
+                               className="cheque-content" 
+                               sx={{ 
+                                 position: "absolute",
+                                 top: 0,
+                                 left: 0,
+                                 right: 0,
+                                 bottom: 0,
+                                 p: 3,
+                                 bgcolor: "background.paper",
+                                 borderRadius: "12px",
+                                 border: `1px solid ${theme.palette.primary.main}`,
+                                 opacity: 0,
+                                 transition: "opacity 0.3s ease-in-out",
+                                 display: "flex",
+                                 flexDirection: "column",
+                                 justifyContent: "center",
+                               }}
+                             >
+                               {chequeAsociado ? (
+                                 <Box>
+                                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
+                                     <Typography variant="h6" fontWeight={600} sx={{ color: "text.primary" }}>
+                                       #{chequeAsociado.correlativo}
+                                     </Typography>
+                                     <Typography variant="h6" fontWeight={700} sx={{ color: "text.primary" }}>
+                                       {formatearMontoPesos(chequeAsociado.monto)}
+                                     </Typography>
+                                   </Box>
+                                   
+                                   <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                                     <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                                       <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                                         Monto Cheque
+                                       </Typography>
+                                       <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 500 }}>
+                                         {formatearMontoPesos(chequeAsociado.monto)}
+                                       </Typography>
+                                     </Box>
+                                     
+                                     <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                                       <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                                         Monto Asignado
+                                       </Typography>
+                                       <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 500 }}>
+                                         {formatearMontoPesos(chequeAsociado.montoAsignado)}
+                                       </Typography>
+                                     </Box>
+                                     
+                                     {chequeAsociado.fechaAsignacion && (
+                                       <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                                         <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                                           Fecha Asignación
+                                         </Typography>
+                                         <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 500 }}>
+                                           {new Date(chequeAsociado.fechaAsignacion).toLocaleDateString()}
+                                         </Typography>
+                                       </Box>
+                                     )}
+                                   </Box>
+                                 </Box>
+                               ) : (
+                                 <Box sx={{ textAlign: "center" }}>
+                                   <Typography variant="h6" fontWeight={600} sx={{ color: "text.secondary", mb: 2 }}>
+                                     No hay cheque asignado
+                                   </Typography>
+                                   <Button
+                                     variant="outlined"
+                                     size="small"
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       // Abrir el modal de asignar cheque existente
+                                       setModalAsignarOpen(true);
+                                     }}
+                                     sx={{
+                                       borderColor: theme.palette.primary.main,
+                                       color: theme.palette.primary.main,
+                                       textTransform: "none",
+                                       fontWeight: 600,
+                                       "&:hover": {
+                                         bgcolor: theme.palette.primary.main,
+                                         color: theme.palette.primary.contrastText,
+                                       },
+                                     }}
+                                   >
+                                     Asignar Cheque
+                                   </Button>
+                                 </Box>
+                               )}
+                             </Box>
+                           </Box>
+                         );
+                       })}
+                   </Box>
+                 ) : (
+                   <Box sx={{ 
+                     p: 4, 
+                     textAlign: "center", 
+                     bgcolor: "background.default", 
+                     borderRadius: "12px",
+                     border: `2px dashed ${theme.palette.divider}`
+                   }}>
+                     <Typography variant="body1" sx={{ color: "text.secondary", mb: 1 }}>
+                       No hay facturas asignadas
+                     </Typography>
+                     <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                       Puedes asignar facturas usando el botón &quot;Asignar Facturas&quot;.
+                     </Typography>
+                   </Box>
+                 )}
+               </Box>
             </Box>
           ) : null}
         </DialogContent>
@@ -803,6 +964,27 @@ export default function NominasPage() {
           >
             Asignar Cheque
           </Button>
+          <Button
+            variant="outlined"
+            startIcon={<AssignmentIcon />}
+            onClick={handleAsignarFacturasClick}
+            disabled={loadingModal}
+            sx={{
+              borderColor: theme.palette.divider,
+              color: theme.palette.text.primary,
+              textTransform: "none",
+              fontWeight: 600,
+              borderRadius: "8px",
+              px: 3,
+              "&:hover": {
+                borderColor: theme.palette.secondary.main,
+                bgcolor: theme.palette.secondary.light,
+                color: theme.palette.secondary.contrastText,
+              },
+            }}
+          >
+            Asignar Facturas
+          </Button>
           <Button 
             onClick={() => setModalDetalleOpen(false)}
             disabled={loadingModal}
@@ -817,6 +999,19 @@ export default function NominasPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Modal Asignar Facturas */}
+      <AsignarFacturasModal
+        open={modalAsignarFacturasOpen}
+        onClose={() => setModalAsignarFacturasOpen(false)}
+        nominaId={selectedNomina?.id || ''}
+        onSuccess={() => {
+          setSnackbarMessage("Facturas asignadas correctamente");
+          setSnackbarSeverity("success");
+          setSnackbarOpen(true);
+          loadNomina(selectedNomina?.id || '');
+        }}
+      />
 
       {/* Snackbar */}
       <Snackbar
