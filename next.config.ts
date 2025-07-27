@@ -38,6 +38,8 @@ const nextConfig: NextConfig = {
         tls: false,
       };
     }
+
+
     
     // Optimizaciones adicionales para producción
     if (!dev) {

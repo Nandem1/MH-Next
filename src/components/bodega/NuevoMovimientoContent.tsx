@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Box,
   Typography,
@@ -13,16 +13,11 @@ import {
   Alert,
   CircularProgress,
   IconButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  Snackbar,
   useTheme,
 } from "@mui/material";
 import {
@@ -33,6 +28,7 @@ import {
 } from "@mui/icons-material";
 import { useAuth } from "@/hooks/useAuth";
 import { useStock } from "@/hooks/useStock";
+import { useSnackbar } from "@/hooks/useSnackbar";
 import stockService from "@/services/stockService";
 import { 
   StockProducto, 
@@ -60,14 +56,14 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
     loadingEntradaMultiple, 
     loadingSalidaMultiple,
   } = useStock(usuario?.id_local || 1);
+  const { open: snackbarOpen, message, severity, showSnackbar, handleClose: handleSnackbarClose } = useSnackbar();
   const [productos, setProductos] = useState<StockProducto[]>([]);
   const [motivo, setMotivo] = useState<string>("");
   const [observaciones, setObservaciones] = useState<string>("");
-  const [success, setSuccess] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [showScanner, setShowScanner] = useState(false);
-  const [notification, setNotification] = useState<string | null>(null);
-  const [isBuscandoProducto, setIsBuscandoProducto] = useState(false);
+
+  // Referencia al input para mantener el foco
+  const inputRef = useRef<HTMLInputElement>(null);
   // Producto temporal para agregar
   const [tempProducto, setTempProducto] = useState<StockProducto>({
     codigo_producto: "",
@@ -78,57 +74,94 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
 
   const motivos = tipo === "entrada" ? MOTIVOS_ENTRADA : MOTIVOS_SALIDA;
 
-  // Flujo POS optimizado - Sin carga inicial ni búsquedas automáticas
+  // Sistema de procesamiento en segundo plano
+  const [procesandoEscaneos, setProcesandoEscaneos] = useState<Set<string>>(new Set());
+  // Buffer de eventos para capturar escaneos ultra-rápidos (técnica POS profesional)
+  const eventBufferRef = useRef<string[]>([]);
+  const processingRef = useRef(false);
 
-  // Flujo POS optimizado - Buscar producto real y agregar al carrito
-  const agregarProductoDirecto = async (codigo: string) => {
-    // Protección contra múltiples llamadas
-    if (isBuscandoProducto) {
+  // Solo enfocar cuando se hace click en el input (modo POS manual)
+  const handleInputClick = () => {
+    inputRef.current?.focus();
+  };
+
+  // Técnica POS profesional: Buffer de eventos con procesamiento inmediato
+  const procesarBuffer = async () => {
+    if (processingRef.current || eventBufferRef.current.length === 0) {
       return;
     }
     
-    setIsBuscandoProducto(true);
-    setError(null); // Limpiar errores anteriores
+    processingRef.current = true;
     
-    try {
-      // Buscar producto real en el backend con cache optimizado
-      const productoReal = await stockService.getProductoByBarcode(codigo);
+    while (eventBufferRef.current.length > 0) {
+      const codigo = eventBufferRef.current.shift()!;
       
-      // Verificar si ya existe en el carrito
-      const existingIndex = productos.findIndex(p => p.codigo_producto === productoReal.codigo_producto);
-      
-      if (existingIndex >= 0) {
-        // Sumar cantidad usando patrón funcional para evitar problemas con React Strict Mode
-        setProductos(prev => {
-          const updated = [...prev];
-          const cantidadAnterior = updated[existingIndex].cantidad;
-          updated[existingIndex] = {
-            ...updated[existingIndex],
-            cantidad: cantidadAnterior + productoReal.cantidad
-          };
-          return updated;
-        });
-        setNotification(`✅ Cantidad aumentada: ${productoReal.nombre_producto} (${productoReal.cantidad} unidades)`);
-      } else {
-        // Agregar nuevo producto con datos reales
-        setProductos(prev => [...prev, productoReal]);
-        setNotification(`✅ Producto agregado: ${productoReal.nombre_producto} (${productoReal.cantidad} unidades)`);
+      // Si ya está procesando este código, ignorar
+      if (procesandoEscaneos.has(codigo)) {
+        continue;
       }
-    } catch (error) {
-      console.error('Error buscando producto:', error);
-      setError(`❌ Producto no encontrado: ${codigo}`);
-    } finally {
-      setIsBuscandoProducto(false);
+      
+      // Marcar como procesando
+      setProcesandoEscaneos(prev => new Set(prev).add(codigo));
+      
+             try {
+         // Backend ultra-rápido: 0.49ms promedio
+         const productoReal = await stockService.getProductoByBarcode(codigo);
+         
+         // Usar patrón funcional para acceder al estado actual
+         setProductos(prev => {
+           // Verificar si ya existe en el carrito
+           const existingIndex = prev.findIndex(p => p.codigo_producto === productoReal.codigo_producto);
+           
+           if (existingIndex >= 0) {
+             // Sumar cantidad
+             const updated = [...prev];
+             const cantidadAnterior = updated[existingIndex].cantidad;
+             updated[existingIndex] = {
+               ...updated[existingIndex],
+               cantidad: cantidadAnterior + productoReal.cantidad
+             };
+             showSnackbar(`✅ Cantidad aumentada: ${productoReal.nombre_producto} (${productoReal.cantidad} unidades)`, "success");
+             return updated;
+           } else {
+             // Agregar nuevo producto con datos reales
+             showSnackbar(`✅ Producto agregado: ${productoReal.nombre_producto} (${productoReal.cantidad} unidades)`, "success");
+             return [...prev, productoReal];
+           }
+         });
+      } catch (error) {
+        console.error('Error buscando producto:', error);
+        showSnackbar(`❌ Producto no encontrado: ${codigo}`, "error");
+      } finally {
+        // Remover de procesando
+        setProcesandoEscaneos(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(codigo);
+          return newSet;
+        });
+      }
+      
+      // Pausa mínima entre procesamientos
+      await new Promise(resolve => setTimeout(resolve, 10));
     }
     
-    setTimeout(() => setNotification(null), 2000);
+    processingRef.current = false;
   };
 
-
+  // Flujo POS ultra-optimizado - procesamiento en segundo plano
+  const agregarProductoDirecto = async (codigo: string) => {
+    // Agregar al buffer inmediatamente
+    eventBufferRef.current.push(codigo);
+    
+    // Procesar buffer en segundo plano
+    procesarBuffer();
+  };
 
   const handleScanSuccess = (result: string) => {
     setTempProducto({ ...tempProducto, codigo_producto: result });
     setShowScanner(false);
+    // Mantener el foco inmediatamente después del escaneo
+    inputRef.current?.focus();
   };
 
   const handleScanError = (error: string) => {
@@ -140,20 +173,23 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
     if (event.key === 'Enter' && tempProducto.codigo_producto.trim()) {
       event.preventDefault();
       
-      // Agregar producto directamente al carrito
-      agregarProductoDirecto(tempProducto.codigo_producto);
+      const codigo = tempProducto.codigo_producto.trim();
       
-      // Limpiar el campo inmediatamente para el siguiente escaneo
+      // Limpiar el campo INMEDIATAMENTE para capturar el siguiente escaneo
       setTempProducto({
         codigo_producto: "",
         tipo_item: "producto",
         cantidad: 1,
         cantidad_minima: 0,
       });
+      
+      // Mantener el foco inmediatamente
+      inputRef.current?.focus();
+      
+      // Procesar en segundo plano
+      agregarProductoDirecto(codigo);
     }
   };
-
-
 
   const handleRemoveProducto = (codigo: string) => {
     setProductos(productos.filter(p => p.codigo_producto !== codigo));
@@ -174,22 +210,19 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
 
   const handleSubmit = async () => {
     if (!usuario?.id_auth_user || !usuario?.id_local) {
-      setError("Usuario no autenticado o sin local asignado");
+      showSnackbar("Usuario no autenticado o sin local asignado", "error");
       return;
     }
 
     if (productos.length === 0) {
-      setError("Debe agregar al menos un producto");
+      showSnackbar("Debe agregar al menos un producto", "error");
       return;
     }
 
     if (!motivo) {
-      setError("Debe seleccionar un motivo");
+      showSnackbar("Debe seleccionar un motivo", "error");
       return;
     }
-
-    setError(null);
-    setSuccess(null);
 
     try {
       const request = {
@@ -215,14 +248,13 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
       setProductos([]);
       setMotivo("");
       setObservaciones("");
-      setNotification(null);
-      setSuccess("Movimiento registrado correctamente");
+      showSnackbar("Movimiento registrado correctamente", "success");
     } catch (err: unknown) {
       console.error("Error:", err);
       const errorMessage = err && typeof err === 'object' && 'response' in err 
         ? (err.response as { data?: { error?: string } })?.data?.error || "Error al procesar el movimiento"
         : "Error al procesar el movimiento";
-      setError(errorMessage);
+      showSnackbar(errorMessage, "error");
     }
   };
 
@@ -230,239 +262,300 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
     setProductos([]);
     setMotivo("");
     setObservaciones("");
-    setError(null);
-    setSuccess(null);
-    setNotification(null);
+    // Limpiar escaneos en procesamiento
+    setProcesandoEscaneos(new Set());
+    // Limpiar buffer de eventos
+    eventBufferRef.current = [];
+    processingRef.current = false;
   };
 
   const totalProductos = productos.length;
   const totalCantidad = productos.reduce((sum, p) => sum + p.cantidad, 0);
-  
-
-
-
 
   return (
-    <Box>
-      {/* Alertas */}
-      {success && (
-        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess(null)}>
-          {success}
-        </Alert>
-      )}
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
-          {error}
-        </Alert>
-      )}
-      {notification && (
-        <Alert severity="info" sx={{ mb: 3 }} onClose={() => setNotification(null)}>
-          {notification}
-        </Alert>
-      )}
-
-      {/* Formulario Principal */}
-      <Box sx={{ display: "grid", gap: 4, minWidth: 600 }}>
-        {/* Sección de Agregar Producto */}
-        <Box>
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 3, fontSize: "1rem" }}>
-            Agregar Producto
+    <Box sx={{ 
+      display: "grid", 
+      gridTemplateColumns: "1fr 400px", 
+      gap: 3,
+      height: "100%",
+      minHeight: 0
+    }}>
+      {/* COLUMNA IZQUIERDA - Productos */}
+      <Box sx={{ 
+        display: "flex", 
+        flexDirection: "column",
+        minHeight: 0
+      }}>
+        {/* Header de Productos */}
+        <Box sx={{ 
+          display: "flex", 
+          alignItems: "center", 
+          justifyContent: "space-between", 
+          mb: 2,
+          p: 2,
+          bgcolor: "background.paper",
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 1
+        }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1.1rem" }}>
+            Productos ({totalProductos})
           </Typography>
-
-          <Box sx={{ display: "grid", gap: 3 }}>
-            {/* Información del flujo POS */}
-            <Box sx={{ 
-              p: 2, 
-              bgcolor: "info.50", 
-              border: 1, 
-              borderColor: "info.200",
-              borderRadius: 1,
-              fontSize: "0.75rem"
-            }}>
-              <Typography variant="body2" sx={{ color: "info.main", fontWeight: 500, mb: 0.5 }}>
-                💡 Flujo POS
-              </Typography>
-              <Typography variant="body2" sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
-                Escanea códigos de barras rápidamente. Procesamiento instantáneo.
-              </Typography>
-            </Box>
-
-            {/* Código de producto */}
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <TextField
-                fullWidth
-                label="Código de Producto"
-                value={tempProducto.codigo_producto}
-                onChange={(e) => setTempProducto({ ...tempProducto, codigo_producto: e.target.value })}
-                onKeyPress={handleKeyPress}
-                placeholder={isBuscandoProducto ? "Buscando producto..." : "Ingrese código o escanee"}
-                size="small"
-                disabled={isBuscandoProducto}
-                InputProps={{
-                  endAdornment: isBuscandoProducto ? (
-                    <CircularProgress size={16} />
-                  ) : undefined,
-                }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 1,
-                    fontSize: "0.875rem",
-                  },
-                }}
-              />
-              <IconButton 
-                onClick={() => setShowScanner(true)}
-                sx={{ 
-                  border: 1, 
-                  borderColor: "divider",
-                  borderRadius: 1,
-                  width: 40,
-                  height: 40,
-                }}
-              >
-                <QrCodeIcon fontSize="small" />
-              </IconButton>
-            </Box>
-
-
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+              {totalCantidad} unidades
+            </Typography>
           </Box>
         </Box>
 
-        {/* Lista de Productos */}
-        {productos.length > 0 && (
-          <Box>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1rem" }}>
-                Productos ({totalProductos})
-              </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <Typography variant="body2" color="text.secondary">
-                  {totalCantidad} unidades
-                </Typography>
+        {/* Tabla de Productos con Scroll */}
+        <Box sx={{ 
+          flex: 1,
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 1,
+          bgcolor: "background.paper",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 0
+        }}>
+          {productos.length > 0 ? (
+            <>
+              {/* Header de tabla fijo */}
+              <Box sx={{ 
+                p: 2, 
+                borderBottom: 1, 
+                borderColor: "divider",
+                bgcolor: theme.palette.action.hover,
+                flexShrink: 0
+              }}>
+                <Box sx={{ 
+                  display: "grid", 
+                  gridTemplateColumns: "minmax(200px, 1fr) 140px 100px 80px",
+                  gap: 2,
+                  alignItems: "center"
+                }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: "0.875rem" }}>
+                    Producto
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: "0.875rem" }}>
+                    Código
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: "0.875rem", textAlign: "center" }}>
+                    Cant.
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: "0.875rem", textAlign: "center" }}>
+                    Acción
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
 
-            <TableContainer sx={{ 
-              border: 1, 
-              borderColor: "divider", 
-              borderRadius: 1,
-              minWidth: 600,
-            }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow sx={{ bgcolor: theme.palette.action.hover }}>
-                    <TableCell sx={{ 
-                      fontWeight: 600, 
-                      fontSize: "0.75rem", 
-                      py: 1.5, 
-                      width: "45%",
-                      color: theme.palette.text.primary
+              {/* Lista scrolleable */}
+              <Box sx={{ 
+                flex: 1, 
+                overflow: "auto",
+                minHeight: 0
+              }}>
+                {productos.map((producto, index) => (
+                  <Box key={producto.codigo_producto} sx={{ 
+                    p: 2, 
+                    borderBottom: index < productos.length - 1 ? 1 : 0,
+                    borderColor: "divider",
+                    "&:hover": { bgcolor: "action.hover" }
+                  }}>
+                    <Box sx={{ 
+                      display: "grid", 
+                      gridTemplateColumns: "minmax(200px, 1fr) 140px 100px 80px",
+                      gap: 2,
+                      alignItems: "center"
                     }}>
-                      Producto
-                    </TableCell>
-                    <TableCell sx={{ 
-                      fontWeight: 600, 
-                      fontSize: "0.75rem", 
-                      py: 1.5, 
-                      width: "25%",
-                      color: theme.palette.text.primary
-                    }}>
-                      Código
-                    </TableCell>
-                    <TableCell align="right" sx={{ 
-                      fontWeight: 600, 
-                      fontSize: "0.75rem", 
-                      py: 1.5, 
-                      width: "20%",
-                      color: theme.palette.text.primary
-                    }}>
-                      Cantidad
-                    </TableCell>
-                    <TableCell align="center" sx={{ 
-                      fontWeight: 600, 
-                      fontSize: "0.75rem", 
-                      py: 1.5, 
-                      width: "10%",
-                      color: theme.palette.text.primary
-                    }}>
-                      Acción
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {productos.map((producto) => (
-                    <TableRow key={producto.codigo_producto} hover>
-                      <TableCell sx={{ 
-                        fontSize: "0.75rem", 
-                        py: 1.5,
-                        color: theme.palette.text.primary
-                      }}>
-                        <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 500, fontSize: "0.75rem" }}>
-                            {producto.nombre_producto || 'Producto'}
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="body2" sx={{ 
+                          fontWeight: 500, 
+                          fontSize: "0.875rem",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap"
+                        }}>
+                          {producto.nombre_producto || 'Producto'}
+                        </Typography>
+                        {producto.tipo_item === "pack" && (
+                          <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.75rem" }}>
+                            Desde pack
                           </Typography>
-                          {producto.tipo_item === "pack" && (
-                            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.625rem" }}>
-                              Desde pack
-                            </Typography>
-                          )}
-                        </Box>
-                      </TableCell>
-                      <TableCell sx={{ 
-                        fontSize: "0.75rem", 
-                        py: 1.5,
-                        color: theme.palette.text.primary
+                        )}
+                      </Box>
+                      <Typography variant="body2" sx={{ 
+                        fontSize: "0.875rem", 
+                        fontFamily: "monospace",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap"
                       }}>
                         {producto.codigo_producto}
-                      </TableCell>
-                      <TableCell align="right" sx={{ 
-                        fontSize: "0.75rem", 
-                        py: 1.5,
-                        color: theme.palette.text.primary
-                      }}>
-                        <TextField
-                          type="number"
-                          value={producto.cantidad}
-                          onChange={(e) => handleUpdateCantidad(producto.codigo_producto, parseInt(e.target.value) || 0)}
-                          size="small"
-                          sx={{ 
-                            width: 80,
-                            "& .MuiOutlinedInput-root": { 
-                              borderRadius: 1, 
-                              fontSize: "0.75rem",
-                              height: 32
-                            },
-                            "& .MuiOutlinedInput-input": {
-                              padding: "6px 8px",
-                              textAlign: "center"
-                            }
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell align="center" sx={{ py: 1.5 }}>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleRemoveProducto(producto.codigo_producto)}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Box>
-        )}
+                      </Typography>
+                      <TextField
+                        type="number"
+                        value={producto.cantidad}
+                        onChange={(e) => handleUpdateCantidad(producto.codigo_producto, parseInt(e.target.value) || 0)}
+                        size="small"
+                        sx={{ 
+                          "& .MuiOutlinedInput-root": { 
+                            borderRadius: 1, 
+                            fontSize: "0.875rem",
+                            height: 36
+                          },
+                          "& .MuiOutlinedInput-input": {
+                            padding: "8px 12px",
+                            textAlign: "center"
+                          }
+                        }}
+                      />
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleRemoveProducto(producto.codigo_producto)}
+                        sx={{ justifySelf: "center" }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            </>
+          ) : (
+            <Box sx={{ 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center", 
+              height: "200px",
+              color: "text.secondary"
+            }}>
+              <Typography variant="body2">
+                No hay productos agregados
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </Box>
 
-        {/* Configuración del Movimiento */}
-        <Box>
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 3, fontSize: "1rem" }}>
+      {/* COLUMNA DERECHA - Controles */}
+      <Box sx={{ 
+        display: "flex", 
+        flexDirection: "column",
+        gap: 2,
+        height: "100%"
+      }}>
+        {/* Scanner Input */}
+        <Box sx={{ 
+          p: 2, 
+          bgcolor: "background.paper",
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 1
+        }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, fontSize: "1rem" }}>
+            Escanear Producto
+          </Typography>
+
+          {/* Información del flujo POS */}
+          <Box sx={{ 
+            p: 1.5, 
+            bgcolor: "info.50", 
+            border: 1, 
+            borderColor: "info.200",
+            borderRadius: 1,
+            mb: 2
+          }}>
+            <Typography variant="body2" sx={{ color: "info.main", fontWeight: 500, mb: 0.5, fontSize: "0.75rem" }}>
+              ⚡ POS Profesional
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
+              Buffer: {eventBufferRef.current.length} | Procesando: {procesandoEscaneos.size}
+            </Typography>
+          </Box>
+
+          {/* Input de escaneo */}
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <TextField
+              fullWidth
+              label="Código de Producto"
+              value={tempProducto.codigo_producto}
+              onChange={(e) => setTempProducto({ ...tempProducto, codigo_producto: e.target.value })}
+              onKeyPress={handleKeyPress}
+              onClick={handleInputClick}
+              placeholder={
+                eventBufferRef.current.length > 0 || procesandoEscaneos.size > 0
+                  ? `Buffer: ${eventBufferRef.current.length} | Procesando: ${procesandoEscaneos.size}`
+                  : "Escanea código o ingresa manualmente"
+              }
+              size="small"
+              disabled={false}
+              inputRef={inputRef}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              InputProps={{
+                endAdornment: (eventBufferRef.current.length > 0 || procesandoEscaneos.size > 0) ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <CircularProgress size={16} />
+                    <Typography variant="caption" sx={{ color: 'warning.main', fontSize: '0.7rem' }}>
+                      {eventBufferRef.current.length + procesandoEscaneos.size}
+                    </Typography>
+                  </Box>
+                ) : undefined,
+              }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 1,
+                  fontSize: "0.875rem",
+                },
+                "& .MuiInputLabel-root": {
+                  transition: "none !important",
+                },
+                "& .MuiOutlinedInput-notchedOutline": {
+                  transition: "none !important",
+                },
+                "& .MuiOutlinedInput-input": {
+                  transition: "none !important",
+                },
+                "& .MuiInputLabel-shrink": {
+                  transform: "translate(14px, -9px) scale(0.75) !important",
+                  color: "text.secondary",
+                },
+              }}
+            />
+            <IconButton 
+              onClick={() => setShowScanner(true)}
+              sx={{ 
+                border: 1, 
+                borderColor: "divider",
+                borderRadius: 1,
+                width: 40,
+                height: 40,
+              }}
+            >
+              <QrCodeIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        </Box>
+
+        {/* Configuración */}
+        <Box sx={{ 
+          p: 2, 
+          bgcolor: "background.paper",
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 1,
+          flex: 1
+        }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, fontSize: "1rem" }}>
             Configuración
           </Typography>
 
-          <Box sx={{ display: "grid", gap: 3 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <FormControl size="small">
               <InputLabel>Motivo</InputLabel>
               <Select
@@ -482,7 +575,7 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
             <TextField
               label="Observaciones"
               multiline
-              rows={2}
+              rows={3}
               value={observaciones}
               onChange={(e) => setObservaciones(e.target.value)}
               size="small"
@@ -492,38 +585,41 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
         </Box>
 
         {/* Botones de Acción */}
-        <Box sx={{ display: "flex", gap: 2, pt: 2 }}>
-                        <Button
-                variant="contained"
-                startIcon={<SaveIcon />}
-                onClick={handleSubmit}
-                disabled={(loadingEntradaMultiple || loadingSalidaMultiple) || productos.length === 0 || !motivo}
-                sx={{ 
-                  flex: 1,
-                  borderRadius: 1,
-                  textTransform: "none",
-                  fontWeight: 500,
-                  py: 1.5,
-                  fontSize: "0.875rem"
-                }}
-              >
-                {(loadingEntradaMultiple || loadingSalidaMultiple) ? <CircularProgress size={16} /> : `Registrar ${tipo}`}
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<ClearIcon />}
-                onClick={handleClear}
-                disabled={loadingEntradaMultiple || loadingSalidaMultiple}
-                sx={{ 
-                  borderRadius: 1,
-                  textTransform: "none",
-                  fontWeight: 500,
-                  py: 1.5,
-                  fontSize: "0.875rem"
-                }}
-              >
-                Limpiar
-              </Button>
+        <Box sx={{ 
+          display: "flex", 
+          flexDirection: "column",
+          gap: 1
+        }}>
+          <Button
+            variant="contained"
+            startIcon={<SaveIcon />}
+            onClick={handleSubmit}
+            disabled={(loadingEntradaMultiple || loadingSalidaMultiple) || productos.length === 0 || !motivo}
+            sx={{ 
+              borderRadius: 1,
+              textTransform: "none",
+              fontWeight: 500,
+              py: 1.5,
+              fontSize: "0.875rem"
+            }}
+          >
+            {(loadingEntradaMultiple || loadingSalidaMultiple) ? <CircularProgress size={16} /> : `Registrar ${tipo}`}
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<ClearIcon />}
+            onClick={handleClear}
+            disabled={loadingEntradaMultiple || loadingSalidaMultiple}
+            sx={{ 
+              borderRadius: 1,
+              textTransform: "none",
+              fontWeight: 500,
+              py: 1.5,
+              fontSize: "0.875rem"
+            }}
+          >
+            Limpiar
+          </Button>
         </Box>
       </Box>
 
@@ -546,6 +642,23 @@ export function NuevoMovimientoContent({ tipo }: NuevoMovimientoContentProps) {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar para notificaciones */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={severity}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
-} 
+}
