@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   Container,
   Typography,
@@ -71,13 +71,22 @@ export default function NominasPage() {
   const [loadingModal, setLoadingModal] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error" | "info">("success");
 
   // Estados para filtros
   const [filtroLocal, setFiltroLocal] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("");
   const [filtroUsuario, setFiltroUsuario] = useState("");
   const [filtroTipo, setFiltroTipo] = useState("");
+
+  const handleAsignarFacturasSuccess = useCallback(() => {
+    setSnackbarMessage("Facturas asignadas correctamente");
+    setSnackbarSeverity("success");
+    setSnackbarOpen(true);
+    if (selectedNomina?.id) {
+      loadNomina(selectedNomina.id);
+    }
+  }, [selectedNomina?.id, loadNomina]);
 
   if (authLoading) {
     return (
@@ -184,24 +193,30 @@ export default function NominasPage() {
       case "pendiente":
         return "warning";
       case "pagada":
+      case "recibida":
         return "success";
+      case "enviada":
+        return "default";
       case "vencida":
+      case "cancelada":
         return "error";
       default:
         return "default";
     }
   };
 
-  const getTrackingEstadoText = (estado: string) => {
-    switch (estado) {
+  const getTrackingText = (tracking: TrackingEnvio | undefined): string => {
+    if (!tracking) return "Sin tracking";
+    
+    switch (tracking.estado) {
       case "EN_ORIGEN":
-        return "En Origen";
+        return "En origen";
       case "EN_TRANSITO":
-        return "En Tránsito";
+        return "En tránsito";
       case "RECIBIDA":
         return "Recibida";
       default:
-        return estado;
+        return "Sin tracking";
     }
   };
 
@@ -486,7 +501,7 @@ export default function NominasPage() {
                       <TableCell>
                         {nomina.trackingEnvio ? (
                           <Chip
-                            label={getTrackingEstadoText(nomina.trackingEnvio.estado)}
+                            label={getTrackingText(nomina.trackingEnvio)}
                             size="small"
                             sx={{
                               bgcolor: nomina.trackingEnvio.estado === "EN_ORIGEN" ? theme.palette.grey[200] :
@@ -658,76 +673,74 @@ export default function NominasPage() {
                  </Box>
                </Box>
 
-              {/* Tracking Component */}
-              {selectedNomina.trackingEnvio ? (
-                <Box sx={{ p: 4, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                  <TrackingEnvioComponent
-                    tracking={selectedNomina.trackingEnvio}
-                    onUpdateTracking={handleUpdateTracking}
-                  />
-                </Box>
-              ) : (
-                <Box sx={{ p: 4, borderBottom: `1px solid ${theme.palette.divider}` }}>
-                  <Box sx={{ 
-                    p: 4, 
-                    textAlign: "center", 
-                    bgcolor: "background.default", 
-                    borderRadius: "12px",
-                    border: `2px dashed ${theme.palette.divider}`
-                  }}>
-                    <Typography variant="h6" sx={{ color: "text.secondary", mb: 1, fontWeight: 600 }}>
-                      No hay tracking configurado
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
-                      Esta nómina no tiene un seguimiento de envío configurado. 
-                      El tracking se crea automáticamente al crear la nómina.
-                    </Typography>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={async () => {
-                        if (selectedNomina) {
-                          try {
-                            await crearTracking(selectedNomina.id);
-                            setSnackbarMessage("Tracking creado exitosamente");
-                            setSnackbarSeverity("success");
-                            setSnackbarOpen(true);
-                          } catch (err) {
-                            setSnackbarMessage(err instanceof Error ? err.message : "Error al crear tracking");
-                            setSnackbarSeverity("error");
-                            setSnackbarOpen(true);
-                          }
-                        }
-                      }}
-                      sx={{
-                        borderColor: theme.palette.divider,
-                        color: theme.palette.text.secondary,
-                        textTransform: "none",
-                        fontWeight: 500,
-                        "&:hover": {
-                          borderColor: theme.palette.primary.main,
-                          color: theme.palette.primary.main,
-                        },
-                      }}
-                    >
-                      Crear Tracking
-                    </Button>
-                  </Box>
-                </Box>
-              )}
+                 {/* Tracking Component */}
+                 {selectedNomina.trackingEnvio ? (
+                   <Box sx={{ p: 4, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                     <TrackingEnvioComponent
+                       tracking={selectedNomina.trackingEnvio}
+                       onUpdateTracking={handleUpdateTracking}
+                     />
+                   </Box>
+                 ) : (
+                   <Box sx={{ p: 4, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                     <Box sx={{ 
+                       p: 4, 
+                       textAlign: "center", 
+                       bgcolor: "background.default", 
+                       borderRadius: "12px",
+                       border: `2px dashed ${theme.palette.divider}`
+                     }}>
+                       <Typography variant="h6" sx={{ color: "text.secondary", mb: 1, fontWeight: 600 }}>
+                         No hay tracking configurado
+                       </Typography>
+                       <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
+                         Esta nómina no tiene un seguimiento de envío configurado. 
+                         El tracking se crea automáticamente al crear la nómina.
+                       </Typography>
+                       <Button
+                         variant="outlined"
+                         size="small"
+                         onClick={async () => {
+                           if (selectedNomina) {
+                             try {
+                               await crearTracking(selectedNomina.id);
+                               setSnackbarMessage("Tracking creado exitosamente");
+                               setSnackbarSeverity("success");
+                               setSnackbarOpen(true);
+                             } catch (err) {
+                               setSnackbarMessage(err instanceof Error ? err.message : "Error al crear tracking");
+                               setSnackbarSeverity("error");
+                               setSnackbarOpen(true);
+                             }
+                           }
+                         }}
+                         sx={{
+                           borderColor: theme.palette.divider,
+                           color: theme.palette.text.secondary,
+                           textTransform: "none",
+                           fontWeight: 500,
+                           "&:hover": {
+                             borderColor: theme.palette.primary.main,
+                             color: theme.palette.primary.main,
+                           },
+                         }}
+                       >
+                         Crear Tracking
+                       </Button>
+                     </Box>
+                   </Box>
+                 )}
 
-
-
-              {/* Vista unificada de Facturas Asignadas */}
-               <Box sx={{ p: 4 }}>
-                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
-                   <Typography variant="h6" fontWeight={600} sx={{ color: "text.primary" }}>
-                     Facturas Asignadas
-                   </Typography>
-                   <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                     {selectedNomina.facturas?.length || 0} facturas
-                   </Typography>
-                 </Box>
+                 {/* Vista unificada de Facturas Asignadas */}
+                 <Box sx={{ p: 4 }}>
+                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+                     <Typography variant="h6" fontWeight={600} sx={{ color: "text.primary" }}>
+                       Facturas Asignadas
+                     </Typography>
+                     <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                       {selectedNomina.facturas?.length || 0} facturas
+                     </Typography>
+                   </Box>
                  
                  {selectedNomina.facturas && selectedNomina.facturas.length > 0 ? (
                    <Box sx={{ 
@@ -738,10 +751,16 @@ export default function NominasPage() {
                      {selectedNomina.facturas
                        .sort((a, b) => a.folio.localeCompare(b.folio))
                        .map((factura) => {
-                         // Buscar si esta factura tiene un cheque asociado
-                         const chequeAsociado = selectedNomina.cheques?.find(cheque => 
-                           cheque.facturaAsociada?.folio === factura.folio
-                         );
+                         // Buscar si esta factura tiene un cheque asociado usando la nueva estructura
+                         const chequeAsociado = factura.cheque_asignado ? {
+                           id: factura.cheque_asignado.id.toString(),
+                           correlativo: factura.cheque_asignado.correlativo,
+                           monto: factura.cheque_asignado.monto,
+                           montoAsignado: factura.cheque_asignado.monto_asignado,
+                           fechaAsignacion: factura.cheque_asignado.fecha_asignacion_cheque,
+                           idUsuario: factura.cheque_asignado.id.toString(),
+                           nombreUsuario: factura.cheque_asignado.nombre_usuario_cheque
+                         } : null;
                          
                          return (
                            <Box
@@ -821,6 +840,23 @@ export default function NominasPage() {
                                      </Typography>
                                    </Box>
                                  )}
+                                 
+                                 {/* Indicador de estado del cheque */}
+                                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                   <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                                     Estado Cheque
+                                   </Typography>
+                                   <Chip
+                                     label={chequeAsociado ? "Asignado" : "Sin Asignar"}
+                                     color={chequeAsociado ? "success" : "warning"}
+                                     size="small"
+                                     sx={{ 
+                                       fontWeight: 600,
+                                       borderRadius: "8px",
+                                       textTransform: "capitalize"
+                                     }}
+                                   />
+                                 </Box>
                                </Box>
                              </Box>
                              
@@ -848,10 +884,10 @@ export default function NominasPage() {
                                  <Box>
                                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
                                      <Typography variant="h6" fontWeight={600} sx={{ color: "text.primary" }}>
-                                       #{chequeAsociado.correlativo}
+                                       Cheque #{chequeAsociado.correlativo}
                                      </Typography>
                                      <Typography variant="h6" fontWeight={700} sx={{ color: "text.primary" }}>
-                                       {formatearMontoPesos(chequeAsociado.monto)}
+                                       {formatearMontoPesos(chequeAsociado.montoAsignado)}
                                      </Typography>
                                    </Box>
                                    
@@ -884,26 +920,42 @@ export default function NominasPage() {
                                          </Typography>
                                        </Box>
                                      )}
+                                     
+                                     <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                                       <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
+                                         Usuario
+                                       </Typography>
+                                       <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 500 }}>
+                                         {chequeAsociado.nombreUsuario || "N/A"}
+                                       </Typography>
+                                     </Box>
                                    </Box>
                                  </Box>
                                ) : (
                                  <Box sx={{ textAlign: "center" }}>
-                                   <Typography variant="h6" fontWeight={600} sx={{ color: "text.secondary", mb: 2 }}>
-                                     No hay cheque asignado
+                                   <Typography variant="h6" sx={{ color: "text.secondary", mb: 2, fontWeight: 600 }}>
+                                     Sin Cheque Asignado
+                                   </Typography>
+                                   <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
+                                     Esta factura no tiene un cheque asignado
                                    </Typography>
                                    <Button
                                      variant="outlined"
                                      size="small"
+                                     startIcon={<AssignmentIcon />}
                                      onClick={(e) => {
                                        e.stopPropagation();
-                                       // Abrir el modal de asignar cheque existente
-                                       setModalAsignarOpen(true);
+                                       // Aquí iría la lógica para asignar cheque
+                                       setSnackbarMessage("Funcionalidad de asignar cheque en desarrollo");
+                                       setSnackbarSeverity("info");
+                                       setSnackbarOpen(true);
                                      }}
                                      sx={{
                                        borderColor: theme.palette.primary.main,
                                        color: theme.palette.primary.main,
                                        textTransform: "none",
                                        fontWeight: 600,
+                                       borderRadius: "8px",
                                        "&:hover": {
                                          bgcolor: theme.palette.primary.main,
                                          color: theme.palette.primary.contrastText,
@@ -1005,12 +1057,7 @@ export default function NominasPage() {
         open={modalAsignarFacturasOpen}
         onClose={() => setModalAsignarFacturasOpen(false)}
         nominaId={selectedNomina?.id || ''}
-        onSuccess={() => {
-          setSnackbarMessage("Facturas asignadas correctamente");
-          setSnackbarSeverity("success");
-          setSnackbarOpen(true);
-          loadNomina(selectedNomina?.id || '');
-        }}
+        onSuccess={handleAsignarFacturasSuccess}
       />
 
       {/* Snackbar */}

@@ -5,7 +5,7 @@ export interface NominaCantera {
   fechaEmision: string;
   local: string; // Reemplaza fechaVencimiento
   montoTotal: number;
-  estado: "pendiente" | "pagada" | "vencida";
+  estado: "pendiente" | "pagada" | "vencida" | "enviada" | "recibida" | "cancelada";
   idUsuario: string;
   createdAt: string;
   updatedAt: string;
@@ -33,12 +33,13 @@ export interface ChequeAsignado {
   montoAsignado: number;
   createdAt: string;
   idUsuario: string;
+  nombreUsuario?: string; // Nuevo campo para mostrar en hover
+  fechaAsignacion?: string; // Nuevo campo para mostrar en hover
   facturas?: FacturaAsociada[];
   
   // Propiedades adicionales para la tabla
   numeroCorrelativo?: string; // Alias para correlativo
   estado?: string; // Estado del cheque
-  fechaAsignacion?: string;
   fechaPago?: string;
   facturaAsociada?: {
     folio: string;
@@ -72,6 +73,15 @@ export interface FacturaAsignada {
   idUsuario: string;
   nombreUsuario: string;
   notasCredito?: NotaCredito[];
+  // Campo para información del cheque asignado según la documentación
+  cheque_asignado?: {
+    id: number;
+    correlativo: string;
+    monto: number;
+    monto_asignado: number;
+    nombre_usuario_cheque: string;
+    fecha_asignacion_cheque: string;
+  } | null;
 }
 
 export interface NotaCredito {
@@ -164,6 +174,20 @@ export interface NominaCanteraResponse {
   total_facturas?: number; // Nuevo campo
   total_cheques?: number; // Nuevo campo
   balance?: number; // Nuevo campo
+  // Nuevos campos para la lista de nóminas
+  monto_total_cheques?: number;
+  monto_total_facturas?: number;
+  // Campo de tracking para la lista de nóminas
+  tracking_envio?: {
+    estado: string;
+    local_origen: string;
+    local_destino: string;
+    fecha_envio?: string | null;
+    fecha_recepcion?: string | null;
+    observaciones?: string | null;
+    enviado_por?: string | null;
+    recibido_por?: string | null;
+  };
   cheques?: ChequeAsignadoResponse[];
   facturas?: FacturaAsignadaResponse[]; // Nuevo campo para facturas asignadas
   facturas_asignadas?: FacturaAsignadaResponse[]; // Campo para facturas asignadas en nóminas mixtas
@@ -273,6 +297,120 @@ export interface PaginationInfo {
   limit: number;
   total: number;
   hasNext: boolean;
+}
+
+ 
+// Nuevos tipos para la estructura de respuesta actualizada del backend
+export interface NominaDetalleResponse {
+  success: boolean;
+  data: {
+    id: number;
+    numero_nomina: string;
+    fecha_emision: string;
+    estado: string;
+    local_origen: string;
+    creado_por: string;
+    created_at: string;
+    updated_at: string;
+    tipo_nomina: string;
+    nombre_usuario: string;
+    id_usuario: number;
+    
+    // Sección principal: Facturas con información de cheques
+    facturas: FacturaConChequeResponse[];
+    
+    // Sección de cheques: Para compatibilidad y gestión
+    cheques: ChequeDetalleResponse[];
+    
+    // Sección de tracking
+    tracking_envio: TrackingEnvioDetalleResponse;
+    
+    // Resumen completo
+    resumen: ResumenNominaResponse;
+  };
+}
+
+export interface FacturaConChequeResponse {
+  id: number;
+  folio: string;
+  monto: number;
+  estado: number;
+  fecha_factura: string;
+  nombre_proveedor: string;
+  rut_proveedor: string;
+  nombre_local: string;
+  nombre_usuario_factura: string;
+  monto_asignado: number;
+  fecha_asignacion: string;
+  cheque_asignado: ChequeAsignadoDetalleResponse | null;
+  notas_credito: NotaCreditoResponse[];
+}
+
+export interface ChequeAsignadoDetalleResponse {
+  id: number;
+  correlativo: string;
+  monto: number;
+  monto_asignado: number;
+  nombre_usuario_cheque: string;
+  fecha_asignacion_cheque: string;
+}
+
+export interface ChequeDetalleResponse {
+  id: number;
+  correlativo: string;
+  monto: number;
+  created_at: string;
+  asignado_a_nomina: boolean;
+  nombre_usuario_cheque: string;
+  id_usuario_cheque: number;
+  monto_asignado: number;
+  fecha_asignacion: string;
+  facturas: FacturaAsignadaDetalleResponse[];
+}
+
+export interface FacturaAsignadaDetalleResponse {
+  id: number;
+  folio: string;
+  monto: number;
+  estado: number;
+  fecha_factura: string;
+  nombre_proveedor: string;
+  rut_proveedor: string;
+  nombre_local: string;
+  nombre_usuario_factura: string;
+  monto_asignado: number;
+  fecha_asignacion_factura: string;
+  notas_credito: NotaCreditoResponse[];
+}
+
+export interface NotaCreditoResponse {
+  id: number;
+  folio_nc: string;
+  monto: number;
+  fecha_emision: string;
+  motivo: string;
+}
+
+export interface TrackingEnvioDetalleResponse {
+  id: number;
+  estado: string;
+  local_origen: string;
+  local_destino: string;
+}
+
+export interface ResumenNominaResponse {
+  cantidad_cheques: number;
+  cantidad_facturas: number;
+  cantidad_facturas_sin_cheque: number;
+  cantidad_facturas_con_cheque: number;
+  monto_total_asignado: number;
+  monto_total_cheques: number;
+  monto_total_facturas: number;
+  monto_total_notas_credito: number;
+  monto_neto: number;
+  balance_valido: boolean;
+  diferencia: number;
+  porcentaje_asignado: number;
 }
 
  
