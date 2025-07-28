@@ -333,14 +333,14 @@ export interface NominaDetalleResponse {
 export interface FacturaConChequeResponse {
   id: number;
   folio: string;
-  monto: number;
+  monto: number | string; // Puede venir como string desde el API
   estado: number;
   fecha_factura: string;
   nombre_proveedor: string;
   rut_proveedor: string;
   nombre_local: string;
   nombre_usuario_factura: string;
-  monto_asignado: number;
+  monto_asignado: number | string; // Puede venir como string desde el API
   fecha_asignacion: string;
   cheque_asignado: ChequeAsignadoDetalleResponse | null;
   notas_credito: NotaCreditoResponse[];
@@ -349,8 +349,8 @@ export interface FacturaConChequeResponse {
 export interface ChequeAsignadoDetalleResponse {
   id: number;
   correlativo: string;
-  monto: number;
-  monto_asignado: number;
+  monto: number | string; // Puede venir como string desde el API
+  monto_asignado: number | string; // Puede venir como string desde el API
   nombre_usuario_cheque: string;
   fecha_asignacion_cheque: string;
 }
@@ -358,12 +358,12 @@ export interface ChequeAsignadoDetalleResponse {
 export interface ChequeDetalleResponse {
   id: number;
   correlativo: string;
-  monto: number;
+  monto: number | string; // Puede venir como string desde el API
   created_at: string;
   asignado_a_nomina: boolean;
   nombre_usuario_cheque: string;
   id_usuario_cheque: number;
-  monto_asignado: number;
+  monto_asignado: number | string; // Puede venir como string desde el API
   fecha_asignacion: string;
   facturas: FacturaAsignadaDetalleResponse[];
 }
@@ -371,14 +371,14 @@ export interface ChequeDetalleResponse {
 export interface FacturaAsignadaDetalleResponse {
   id: number;
   folio: string;
-  monto: number;
+  monto: number | string; // Puede venir como string desde el API
   estado: number;
   fecha_factura: string;
   nombre_proveedor: string;
   rut_proveedor: string;
   nombre_local: string;
   nombre_usuario_factura: string;
-  monto_asignado: number;
+  monto_asignado: number | string; // Puede venir como string desde el API
   fecha_asignacion_factura: string;
   notas_credito: NotaCreditoResponse[];
 }
@@ -386,7 +386,7 @@ export interface FacturaAsignadaDetalleResponse {
 export interface NotaCreditoResponse {
   id: number;
   folio_nc: string;
-  monto: number;
+  monto: number | string; // Puede venir como string desde el API
   fecha_emision: string;
   motivo: string;
 }
@@ -403,13 +403,13 @@ export interface ResumenNominaResponse {
   cantidad_facturas: number;
   cantidad_facturas_sin_cheque: number;
   cantidad_facturas_con_cheque: number;
-  monto_total_asignado: number;
-  monto_total_cheques: number;
-  monto_total_facturas: number;
-  monto_total_notas_credito: number;
-  monto_neto: number;
+  monto_total_asignado: number | string; // Puede venir como string desde el API
+  monto_total_cheques: number | string; // Puede venir como string desde el API
+  monto_total_facturas: number | string; // Puede venir como string desde el API
+  monto_total_notas_credito: number | string; // Puede venir como string desde el API
+  monto_neto: number | string; // Puede venir como string desde el API
   balance_valido: boolean;
-  diferencia: number;
+  diferencia: number | string; // Puede venir como string desde el API
   porcentaje_asignado: number;
 }
 

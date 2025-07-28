@@ -63,8 +63,32 @@ export function stringMontoAEntero(montoString: string): number {
 } 
 
 // Formatear monto a pesos chilenos sin decimales
-export const formatearMontoPesos = (monto: number | string): string => {
-  const numMonto = typeof monto === 'string' ? parseFloat(monto) || 0 : monto || 0;
+export const formatearMontoPesos = (monto: number | string | null | undefined): string => {
+  // Manejar valores null, undefined o vacíos
+  if (monto === null || monto === undefined || monto === '') {
+    return '$0';
+  }
+  
+  // Convertir string a número
+  let numMonto: number;
+  if (typeof monto === 'string') {
+    // Remover caracteres no numéricos excepto punto y coma
+    const montoLimpio = monto.replace(/[^\d.,]/g, '');
+    numMonto = parseFloat(montoLimpio.replace(',', '.'));
+    
+    // Si no es un número válido, retornar $0
+    if (isNaN(numMonto)) {
+      return '$0';
+    }
+  } else {
+    numMonto = monto;
+  }
+  
+  // Si el número es 0 o negativo, retornar $0
+  if (numMonto <= 0) {
+    return '$0';
+  }
+  
   return new Intl.NumberFormat('es-CL', {
     style: 'currency',
     currency: 'CLP',

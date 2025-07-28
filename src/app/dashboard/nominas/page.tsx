@@ -33,7 +33,7 @@ import {
 import { Add as AddIcon, Assignment as AssignmentIcon } from "@mui/icons-material";
 import { useNominasCheque } from "@/hooks/useNominasCheque";
 import { useUsuarios } from "@/hooks/useUsuarios";
-import { NominaCantera, CrearNominaRequest, AsignarChequeRequest, ActualizarTrackingRequest } from "@/types/nominaCheque";
+import { NominaCantera, CrearNominaRequest, AsignarChequeRequest, ActualizarTrackingRequest, TrackingEnvio } from "@/types/nominaCheque";
 import { NuevaNominaModal } from "@/components/dashboard/NuevaNominaChequeModal";
 import { AsignarChequeModal } from "@/components/dashboard/AsignarChequeModal";
 import { TrackingEnvioComponent } from "@/components/dashboard/TrackingEnvio";
@@ -755,12 +755,23 @@ export default function NominasPage() {
                          const chequeAsociado = factura.cheque_asignado ? {
                            id: factura.cheque_asignado.id.toString(),
                            correlativo: factura.cheque_asignado.correlativo,
-                           monto: factura.cheque_asignado.monto,
-                           montoAsignado: factura.cheque_asignado.monto_asignado,
+                           monto: typeof factura.cheque_asignado.monto === 'string' ? parseFloat(factura.cheque_asignado.monto) : factura.cheque_asignado.monto,
+                           montoAsignado: typeof factura.cheque_asignado.monto === 'string' ? parseFloat(factura.cheque_asignado.monto) : factura.cheque_asignado.monto, // Usar el mismo valor que monto
                            fechaAsignacion: factura.cheque_asignado.fecha_asignacion_cheque,
                            idUsuario: factura.cheque_asignado.id.toString(),
                            nombreUsuario: factura.cheque_asignado.nombre_usuario_cheque
                          } : null;
+                         
+                         // Log para debugging del hover
+                         if (chequeAsociado) {
+                           console.log('🔍 Hover cheque datos:', {
+                             correlativo: chequeAsociado.correlativo,
+                             montoOriginal: factura.cheque_asignado?.monto,
+                             montoConvertido: chequeAsociado.monto,
+                             montoAsignadoOriginal: factura.cheque_asignado?.monto_asignado,
+                             montoAsignadoConvertido: chequeAsociado.montoAsignado
+                           });
+                         }
                          
                          return (
                            <Box
@@ -921,14 +932,7 @@ export default function NominasPage() {
                                        </Box>
                                      )}
                                      
-                                     <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                                       <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", fontWeight: 600 }}>
-                                         Usuario
-                                       </Typography>
-                                       <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 500 }}>
-                                         {chequeAsociado.nombreUsuario || "N/A"}
-                                       </Typography>
-                                     </Box>
+                                     {/* Eliminada la sección de Usuario */}
                                    </Box>
                                  </Box>
                                ) : (

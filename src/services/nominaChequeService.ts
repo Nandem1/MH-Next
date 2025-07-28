@@ -691,55 +691,92 @@ export const nominaChequeService = {
       // Transformar la nueva estructura a la estructura interna
       const nominaData = responseData.data;
       
-      // Crear facturas asignadas desde la nueva estructura
-      const facturasAsignadas = nominaData.facturas.map(factura => ({
-        id: factura.id.toString(),
-        folio: factura.folio,
-        proveedor: factura.nombre_proveedor,
-        monto: factura.monto,
-        montoAsignado: factura.monto_asignado,
-        estado: factura.estado.toString(),
-        fechaIngreso: factura.fecha_factura,
-        fechaAsignacion: factura.fecha_asignacion,
-        idUsuario: nominaData.id_usuario.toString(),
-        nombreUsuario: factura.nombre_usuario_factura || nominaData.nombre_usuario,
-        // Mapear el cheque asignado según la documentación
-        cheque_asignado: factura.cheque_asignado ? {
-          id: factura.cheque_asignado.id,
-          correlativo: factura.cheque_asignado.correlativo,
-          monto: factura.cheque_asignado.monto,
-          monto_asignado: factura.cheque_asignado.monto_asignado,
-          nombre_usuario_cheque: factura.cheque_asignado.nombre_usuario_cheque,
-          fecha_asignacion_cheque: factura.cheque_asignado.fecha_asignacion_cheque
-        } : null,
-        notasCredito: factura.notas_credito.map(nc => ({
-          id: nc.id.toString(),
-          folioNc: nc.folio_nc,
-          monto: nc.monto,
-          fechaEmision: nc.fecha_emision,
-          motivo: nc.motivo
-        }))
-      }));
+      console.log('🔍 Datos de nómina recibidos:', {
+        id: nominaData.id,
+        facturas: nominaData.facturas?.length || 0,
+        cheques: nominaData.cheques?.length || 0,
+        resumen: nominaData.resumen
+      });
 
-      // Crear cheques asignados desde la nueva estructura
-      const chequesAsignados = nominaData.cheques?.map(cheque => ({
-        id: cheque.id.toString(),
-        correlativo: cheque.correlativo,
-        monto: cheque.monto,
-        montoAsignado: cheque.monto_asignado,
-        createdAt: cheque.created_at,
-        idUsuario: cheque.id_usuario_cheque.toString(),
-        nombreUsuario: cheque.nombre_usuario_cheque,
-        fechaAsignacion: cheque.fecha_asignacion,
-        facturas: cheque.facturas?.map(factura => ({
+      // Crear facturas asignadas desde la nueva estructura
+      const facturasAsignadas = nominaData.facturas.map(factura => {
+        // Convertir montos a números si vienen como strings
+        const monto = typeof factura.monto === 'string' ? parseFloat(factura.monto) : factura.monto;
+        const montoAsignado = typeof factura.monto_asignado === 'string' ? parseFloat(factura.monto_asignado) : factura.monto_asignado;
+        
+        console.log('🔍 Procesando factura:', {
+          id: factura.id,
+          folio: factura.folio,
+          monto: factura.monto,
+          montoAsignado: factura.monto_asignado,
+          montoConvertido: monto,
+          montoAsignadoConvertido: montoAsignado
+        });
+
+        return {
           id: factura.id.toString(),
           folio: factura.folio,
           proveedor: factura.nombre_proveedor,
-          monto: factura.monto,
+          monto: monto || 0,
+          montoAsignado: montoAsignado || 0,
           estado: factura.estado.toString(),
-          fechaIngreso: factura.fecha_factura
-        }))
-      }));
+          fechaIngreso: factura.fecha_factura,
+          fechaAsignacion: factura.fecha_asignacion,
+          idUsuario: nominaData.id_usuario.toString(),
+          nombreUsuario: factura.nombre_usuario_factura || nominaData.nombre_usuario,
+          // Mapear el cheque asignado según la documentación
+          cheque_asignado: factura.cheque_asignado ? {
+            id: factura.cheque_asignado.id,
+            correlativo: factura.cheque_asignado.correlativo,
+            monto: typeof factura.cheque_asignado.monto === 'string' ? parseFloat(factura.cheque_asignado.monto) : factura.cheque_asignado.monto,
+            monto_asignado: typeof factura.cheque_asignado.monto_asignado === 'string' ? parseFloat(factura.cheque_asignado.monto_asignado) : factura.cheque_asignado.monto_asignado,
+            nombre_usuario_cheque: factura.cheque_asignado.nombre_usuario_cheque,
+            fecha_asignacion_cheque: factura.cheque_asignado.fecha_asignacion_cheque
+          } : null,
+          notasCredito: factura.notas_credito.map(nc => ({
+            id: nc.id.toString(),
+            folioNc: nc.folio_nc,
+            monto: typeof nc.monto === 'string' ? parseFloat(nc.monto) : nc.monto,
+            fechaEmision: nc.fecha_emision,
+            motivo: nc.motivo
+          }))
+        };
+      });
+
+      // Crear cheques asignados desde la nueva estructura
+      const chequesAsignados = nominaData.cheques?.map(cheque => {
+        // Convertir montos a números si vienen como strings
+        const monto = typeof cheque.monto === 'string' ? parseFloat(cheque.monto) : cheque.monto;
+        const montoAsignado = typeof cheque.monto_asignado === 'string' ? parseFloat(cheque.monto_asignado) : cheque.monto_asignado;
+        
+        console.log('🔍 Procesando cheque:', {
+          id: cheque.id,
+          correlativo: cheque.correlativo,
+          monto: cheque.monto,
+          montoAsignado: cheque.monto_asignado,
+          montoConvertido: monto,
+          montoAsignadoConvertido: montoAsignado
+        });
+
+        return {
+          id: cheque.id.toString(),
+          correlativo: cheque.correlativo,
+          monto: monto || 0,
+          montoAsignado: montoAsignado || 0,
+          createdAt: cheque.created_at,
+          idUsuario: cheque.id_usuario_cheque.toString(),
+          nombreUsuario: cheque.nombre_usuario_cheque,
+          fechaAsignacion: cheque.fecha_asignacion,
+          facturas: cheque.facturas?.map(factura => ({
+            id: factura.id.toString(),
+            folio: factura.folio,
+            proveedor: factura.nombre_proveedor,
+            monto: typeof factura.monto === 'string' ? parseFloat(factura.monto) : factura.monto,
+            estado: factura.estado.toString(),
+            fechaIngreso: factura.fecha_factura
+          }))
+        };
+      });
 
       // Crear tracking desde la nueva estructura
       const trackingEnvio = nominaData.tracking_envio ? {
@@ -760,7 +797,7 @@ export const nominaChequeService = {
         numeroNomina: nominaData.numero_nomina,
         fechaEmision: nominaData.fecha_emision,
         local: nominaData.local_origen,
-        montoTotal: nominaData.resumen.monto_total_asignado,
+        montoTotal: nominaData.resumen.monto_total_asignado || 0,
         estado: nominaData.estado as "pendiente" | "pagada" | "vencida",
         idUsuario: nominaData.id_usuario.toString(),
         createdAt: nominaData.created_at,
@@ -771,9 +808,9 @@ export const nominaChequeService = {
         facturas: facturasAsignadas,
         trackingEnvio: trackingEnvio,
         // Propiedades adicionales calculadas
-        totalCheques: nominaData.resumen.cantidad_cheques,
-        totalFacturas: nominaData.resumen.cantidad_facturas,
-        balance: nominaData.resumen.diferencia,
+        totalCheques: nominaData.resumen.cantidad_cheques || 0,
+        totalFacturas: nominaData.resumen.cantidad_facturas || 0,
+        balance: nominaData.resumen.diferencia || 0,
         fechaCreacion: nominaData.created_at
       };
 
@@ -781,6 +818,7 @@ export const nominaChequeService = {
         id: nominaTransformada.id,
         facturas: nominaTransformada.facturas?.length || 0,
         cheques: nominaTransformada.cheques?.length || 0,
+        montoTotal: nominaTransformada.montoTotal,
         resumen: nominaData.resumen
       });
 
