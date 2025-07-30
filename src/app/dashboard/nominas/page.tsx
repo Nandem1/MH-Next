@@ -228,7 +228,7 @@ export default function NominasPage() {
   const nominasFiltradas = nominas.filter(nomina => {
     const cumpleLocal = !filtroLocal || getLocalNombre(nomina.local).toLowerCase().includes(filtroLocal.toLowerCase());
     const cumpleEstado = !filtroEstado || nomina.estado === filtroEstado;
-    const cumpleUsuario = !filtroUsuario || nomina.creadoPor.toLowerCase().includes(filtroUsuario.toLowerCase());
+            const cumpleUsuario = !filtroUsuario || nomina.nombreUsuario.toLowerCase().includes(filtroUsuario.toLowerCase());
     const cumpleTipo = !filtroTipo || nomina.tipoNomina === filtroTipo;
     
     return cumpleLocal && cumpleEstado && cumpleUsuario && cumpleTipo;
@@ -496,7 +496,7 @@ export default function NominasPage() {
                         />
                       </TableCell>
                       <TableCell>
-                        {nomina.creadoPor}
+                        {nomina.nombreUsuario}
                       </TableCell>
                       <TableCell>
                         {nomina.trackingEnvio ? (
@@ -651,7 +651,7 @@ export default function NominasPage() {
                        Creado por
                      </Typography>
                      <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 500, mt: 0.5 }}>
-                       {selectedNomina.creadoPor}
+                       {selectedNomina.nombreUsuario}
                      </Typography>
                    </Box>
                    <Box>
@@ -762,16 +762,7 @@ export default function NominasPage() {
                            nombreUsuario: factura.cheque_asignado.nombre_usuario_cheque
                          } : null;
                          
-                         // Log para debugging del hover
-                         if (chequeAsociado) {
-                           console.log('🔍 Hover cheque datos:', {
-                             correlativo: chequeAsociado.correlativo,
-                             montoOriginal: factura.cheque_asignado?.monto,
-                             montoConvertido: chequeAsociado.monto,
-                             montoAsignadoOriginal: factura.cheque_asignado?.monto_asignado,
-                             montoAsignadoConvertido: chequeAsociado.montoAsignado
-                           });
-                         }
+
                          
                          return (
                            <Box

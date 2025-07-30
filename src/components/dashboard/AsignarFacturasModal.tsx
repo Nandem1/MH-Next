@@ -30,7 +30,8 @@ import {
 } from '@mui/icons-material';
 import { getFacturasDisponibles } from '@/services/facturaService';
 import { nominaChequeService } from '@/services/nominaChequeService';
-import { Factura, AsignarFacturaRequest } from '@/types/nominaCheque';
+import { AsignarFacturaRequest } from '@/types/nominaCheque';
+import { Factura } from '@/types/factura';
 import { useSnackbar } from '@/hooks/useSnackbar';
 
 interface AsignarFacturasModalProps {
@@ -112,14 +113,14 @@ export function AsignarFacturasModal({
   // Seleccionar factura
   const seleccionarFactura = (factura: Factura, montoAsignado: number) => {
     const nuevaSeleccion: AsignarFacturaRequest = {
-      idFactura: factura.id,
+      idFactura: parseInt(factura.id),
       montoAsignado: montoAsignado
     };
 
     setFacturasSeleccionadas(prev => {
-      const existe = prev.find(f => f.idFactura === factura.id);
+      const existe = prev.find(f => f.idFactura === parseInt(factura.id));
       if (existe) {
-        return prev.map(f => f.idFactura === factura.id ? nuevaSeleccion : f);
+        return prev.map(f => f.idFactura === parseInt(factura.id) ? nuevaSeleccion : f);
       } else {
         return [...prev, nuevaSeleccion];
       }
@@ -128,7 +129,7 @@ export function AsignarFacturasModal({
 
   // Remover factura seleccionada
   const removerFacturaSeleccionada = (idFactura: string) => {
-    setFacturasSeleccionadas(prev => prev.filter(f => f.idFactura !== idFactura));
+    setFacturasSeleccionadas(prev => prev.filter(f => f.idFactura !== parseInt(idFactura)));
   };
 
   // Filtrar facturas por búsqueda
@@ -223,8 +224,8 @@ export function AsignarFacturasModal({
               ) : facturasFiltradas.length > 0 ? (
                 <List>
                   {facturasFiltradas.map((factura) => {
-                    const estaSeleccionada = facturasSeleccionadas.some(f => f.idFactura === factura.id);
-                    const montoAsignado = facturasSeleccionadas.find(f => f.idFactura === factura.id)?.montoAsignado || factura.monto || 0;
+                    const estaSeleccionada = facturasSeleccionadas.some(f => f.idFactura === parseInt(factura.id));
+                    const montoAsignado = facturasSeleccionadas.find(f => f.idFactura === parseInt(factura.id))?.montoAsignado || factura.monto || 0;
                     
                     return (
                       <ListItem 
@@ -313,7 +314,7 @@ export function AsignarFacturasModal({
                 <>
                   <List>
                     {facturasSeleccionadas.map((seleccion) => {
-                      const factura = facturasDisponibles.find(f => f.id === seleccion.idFactura);
+                      const factura = facturasDisponibles.find(f => f.id === seleccion.idFactura.toString());
                       return factura ? (
                         <ListItem key={seleccion.idFactura} divider>
                           <ListItemText
@@ -323,7 +324,7 @@ export function AsignarFacturasModal({
                           <ListItemSecondaryAction>
                             <IconButton 
                               size="small" 
-                              onClick={() => removerFacturaSeleccionada(seleccion.idFactura)}
+                              onClick={() => removerFacturaSeleccionada(seleccion.idFactura.toString())}
                               color="error"
                             >
                               <DeleteIcon />

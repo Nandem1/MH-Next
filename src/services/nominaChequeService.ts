@@ -10,7 +10,8 @@ import {
   PaginationInfo,
   CrearNominaMixtaRequest,
   AsignarFacturaRequest,
-  NominaDetalleResponse
+  NominaDetalleResponse,
+  ChequeAsignado
 } from "@/types/nominaCheque";
 import { getUsuarioAutenticado } from "@/services/authService";
 
@@ -42,7 +43,7 @@ const getAuthHeaders = () => {
 
 // Helper para manejar diferentes estructuras de respuesta
 const parseNominasResponse = (responseData: ApiResponse<NominasResponse>): { data: NominaCanteraResponse[], pagination?: PaginationInfo, filtros?: FiltrosNominas } => {
-  console.log('🔍 Parseando respuesta:', responseData);
+  
   
   // Si responseData.data es directamente un array (estructura antigua)
   if (Array.isArray(responseData.data)) {
@@ -91,29 +92,37 @@ const parseNominasResponse = (responseData: ApiResponse<NominasResponse>): { dat
 
 // Transformar respuesta del API a tipo interno
 const transformNominaResponse = (response: NominaCanteraResponse): NominaCantera => {
-  console.log('🔍 Transformando respuesta de nómina:', {
-    id: response.id,
-    tipoNomina: response.tipo_nomina,
-    cantidadCheques: response.cantidad_cheques,
-    cantidadFacturas: response.cantidad_facturas,
-    montoTotalCheques: response.monto_total_cheques,
-    montoTotalFacturas: response.monto_total_facturas
-  });
+
   
-  // Calcular monto total basado en cheques y facturas
-  const montoTotalCheques = response.monto_total_cheques || 0;
-  const montoTotalFacturas = response.monto_total_facturas || 0;
-  const montoTotal = montoTotalCheques + montoTotalFacturas;
+  // Parsear monto total (puede venir como string desde el backend)
+  const montoTotal = parseFloat(response.monto_total?.toString() || '0');
   
-  // Mapear estado correctamente
-  const estado = response.estado as "pendiente" | "pagada" | "vencida" | "enviada" | "recibida" | "cancelada";
+  // Determinar estado basado en tracking
+  let estado: "pendiente" | "pagada" | "vencida" | "enviada" | "recibida" | "cancelada" = "pendiente";
+  
+  if (response.tracking_envio) {
+    switch (response.tracking_envio.estado) {
+      case "RECIBIDA":
+        estado = "recibida";
+        break;
+      case "EN_TRANSITO":
+        estado = "enviada";
+        break;
+      case "EN_ORIGEN":
+      default:
+        estado = "pendiente";
+        break;
+    }
+  }
+  
+
   
   // Transformar cheques si existen
   const transformedCheques = response.cheques ? response.cheques.map(cheque => ({
     id: cheque.id?.toString() || '0',
     correlativo: cheque.correlativo || '',
-    monto: cheque.monto || 0,
-    montoAsignado: cheque.monto_asignado || 0,
+    monto: parseFloat(cheque.monto?.toString() || '0'),
+    montoAsignado: parseFloat(cheque.monto_asignado?.toString() || '0'),
     createdAt: cheque.fecha_asignacion || '',
     idUsuario: cheque.nombre_usuario_cheque || '',
     nombreUsuario: cheque.nombre_usuario_cheque || '',
@@ -142,7 +151,7 @@ const transformNominaResponse = (response: NominaCanteraResponse): NominaCantera
 
   // Tracking para la lista de nóminas
   const trackingEnvio = response.tracking_envio ? {
-    id: '', // En la lista no hay id de tracking
+    id: '', // En la lista no tenemos id de tracking
     estado: response.tracking_envio.estado as "EN_ORIGEN" | "EN_TRANSITO" | "RECIBIDA",
     localOrigen: response.tracking_envio.local_origen || '',
     localDestino: response.tracking_envio.local_destino || '',
@@ -163,15 +172,15 @@ const transformNominaResponse = (response: NominaCanteraResponse): NominaCantera
     idUsuario: response.id_usuario?.toString() || '0',
     createdAt: response.created_at || '',
     updatedAt: response.updated_at || '',
-    creadoPor: response.creado_por || '',
+    nombreUsuario: response.nombre_usuario || '',
     tipoNomina: response.tipo_nomina as "cheques" | "facturas" | "mixta" || "cheques",
     cheques: transformedCheques,
     facturas: transformedFacturas,
     trackingEnvio: trackingEnvio,
     // Propiedades adicionales calculadas
-    totalCheques: response.cantidad_cheques || 0,
+    totalCheques: parseInt(response.cantidad_cheques?.toString() || '0'),
     totalFacturas: response.cantidad_facturas || 0,
-    balance: montoTotalCheques - montoTotalFacturas,
+    balance: 0, // Se calcula en el backend
     fechaCreacion: response.created_at || ''
   };
 };
@@ -221,18 +230,7 @@ export const nominaChequeService = {
 
       const transformedData = parsedResponse.data.map(transformNominaResponse);
 
-      // Log detallado de cada nómina para debugging
-      transformedData.forEach((nomina) => {
-        console.log('📊 Nómina en lista principal:', {
-          id: nomina.id,
-          numero: nomina.numeroNomina,
-          tipo: nomina.tipoNomina,
-          montoTotal: nomina.montoTotal,
-          cantidadCheques: nomina.cheques?.length || 0,
-          cantidadFacturas: nomina.facturas?.length || 0,
-          tieneFacturasAsignadas: !!nomina.facturas && nomina.facturas.length > 0
-        });
-      });
+
 
       return {
         nominas: transformedData,
@@ -286,17 +284,129 @@ export const nominaChequeService = {
         throw new Error("Error al obtener nómina completa");
       }
 
-      const responseData: ApiResponse<NominaCanteraResponse> = await response.json();
+      const responseData: NominaDetalleResponse = await response.json();
       
       if (!responseData.success) {
         throw new Error("La respuesta del API indica error");
       }
 
-      // Log para debugging
-      console.log('📋 Nomina response data:', responseData.data);
-      console.log('📋 Cheques en response:', responseData.data.cheques);
 
-      return transformNominaResponse(responseData.data);
+
+      // Transformar la respuesta del detalle
+      const nominaData = responseData.data;
+      
+      // Parsear monto total directamente desde la respuesta
+      const montoTotal = nominaData.monto_total || 0;
+      
+      // Determinar estado basado en tracking
+      let estado: "pendiente" | "pagada" | "vencida" | "enviada" | "recibida" | "cancelada" = "pendiente";
+      
+      if (nominaData.tracking_envio) {
+        switch (nominaData.tracking_envio.estado) {
+          case "RECIBIDA":
+            estado = "recibida";
+            break;
+          case "EN_TRANSITO":
+            estado = "enviada";
+            break;
+          case "EN_ORIGEN":
+          default:
+            estado = "pendiente";
+            break;
+        }
+      }
+      
+
+
+      // Extraer cheques únicos de las facturas que tienen cheque
+      const chequesUnicos = new Map<number, ChequeAsignado>();
+      
+      nominaData.facturas?.forEach(factura => {
+        if (factura.cheque) {
+          const chequeId = factura.cheque.id;
+          if (!chequesUnicos.has(chequeId)) {
+            chequesUnicos.set(chequeId, {
+              id: factura.cheque.id.toString(),
+              correlativo: factura.cheque.correlativo,
+              monto: factura.cheque.monto,
+              montoAsignado: factura.cheque.monto_asignado,
+              createdAt: factura.cheque.fecha_asignacion,
+              idUsuario: factura.cheque.nombre_usuario,
+              nombreUsuario: factura.cheque.nombre_usuario,
+              fechaAsignacion: factura.cheque.fecha_asignacion,
+              facturas: undefined,
+              numeroCorrelativo: factura.cheque.correlativo,
+              estado: "ASIGNADO" as const,
+              fechaPago: undefined,
+              facturaAsociada: undefined,
+            });
+          }
+        }
+      });
+
+      const transformedCheques = Array.from(chequesUnicos.values());
+
+      // Transformar facturas con la nueva estructura simplificada
+      const transformedFacturas = nominaData.facturas?.map(factura => ({
+        id: factura.id.toString(),
+        folio: factura.folio,
+        proveedor: factura.nombre_proveedor,
+        monto: factura.monto,
+        montoAsignado: factura.monto_asignado,
+        estado: '1', // Estado por defecto
+        fechaIngreso: factura.fecha_asignacion,
+        fechaAsignacion: factura.fecha_asignacion,
+        idUsuario: nominaData.id_usuario.toString(),
+        nombreUsuario: nominaData.nombre_usuario,
+        notasCredito: undefined,
+        cheque_asignado: factura.cheque ? {
+          id: factura.cheque.id,
+          correlativo: factura.cheque.correlativo,
+          monto: factura.cheque.monto,
+          monto_asignado: factura.cheque.monto_asignado,
+          nombre_usuario_cheque: factura.cheque.nombre_usuario,
+          fecha_asignacion_cheque: factura.cheque.fecha_asignacion
+        } : null
+      })) || [];
+
+      // Tracking para el detalle
+      const trackingEnvio = nominaData.tracking_envio ? {
+        id: '0', // No viene en la nueva estructura
+        estado: nominaData.tracking_envio.estado as "EN_ORIGEN" | "EN_TRANSITO" | "RECIBIDA",
+        localOrigen: nominaData.tracking_envio.local_origen,
+        localDestino: nominaData.tracking_envio.local_destino,
+        fechaEnvio: nominaData.tracking_envio.fecha_envio,
+        fechaRecepcion: nominaData.tracking_envio.fecha_recepcion,
+        observaciones: nominaData.tracking_envio.observaciones,
+        enviadoPor: undefined,
+        recibidoPor: undefined
+      } : undefined;
+
+      const nominaTransformada: NominaCantera = {
+        id: nominaData.id.toString(),
+        numeroNomina: nominaData.numero_nomina,
+        fechaEmision: nominaData.fecha_emision,
+        local: nominaData.local_origen,
+        montoTotal: montoTotal,
+        estado: estado,
+        idUsuario: nominaData.id_usuario.toString(),
+        createdAt: nominaData.created_at,
+        updatedAt: nominaData.updated_at,
+        nombreUsuario: nominaData.nombre_usuario,
+        tipoNomina: nominaData.tipo_nomina as "cheques" | "facturas" | "mixta",
+        cheques: transformedCheques.length > 0 ? transformedCheques : undefined,
+        facturas: transformedFacturas.length > 0 ? transformedFacturas : undefined,
+        trackingEnvio: trackingEnvio,
+        // Propiedades adicionales calculadas
+        totalCheques: nominaData.cantidad_cheques || 0,
+        totalFacturas: nominaData.facturas?.length || 0,
+        balance: 0, // Se calcula en el backend
+        fechaCreacion: nominaData.created_at
+      };
+
+
+
+      return nominaTransformada;
     } catch (error) {
       console.error("Error fetching complete nomina:", error);
       throw error;
@@ -318,14 +428,7 @@ export const nominaChequeService = {
 
       const localOrigen = usuario?.user?.id_local ? localMapping[usuario.user.id_local] : "Local desconocido";
       
-      // Debug: Log de los datos recibidos
-      console.log('🔍 Debug crearNomina:', {
-        request,
-        usuario: usuario?.user,
-        localOrigen,
-        requestNombre: request.nombre,
-        requestFecha: request.fecha
-      });
+
       
       const payload = {
         numero_nomina: request.nombre, // Cambiar nombre por numero_nomina
@@ -335,8 +438,7 @@ export const nominaChequeService = {
         creado_por: usuario?.user?.nombre || "Desconocido",
       };
 
-      // Debug: Log del payload que se envía
-      console.log('📤 Payload enviado:', payload);
+
       
       const response = await fetch(`${API_BASE_URL}/api-beta/nominas`, {
         method: "POST",
@@ -667,167 +769,7 @@ export const nominaChequeService = {
     }
   },
 
-  // Obtener nómina con detalles completos (incluyendo facturas)
-  async getNominaCompletaConFacturas(nominaId: string): Promise<NominaCantera> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api-beta/nominas/${nominaId}`, {
-        method: "GET",
-        headers: getAuthHeaders(),
-        credentials: "include",
-      });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("❌ Error response:", errorText);
-        throw new Error("Error al obtener nómina completa");
-      }
-
-      const responseData: NominaDetalleResponse = await response.json();
-      
-      if (!responseData.success) {
-        throw new Error("La respuesta del API indica error");
-      }
-
-      // Transformar la nueva estructura a la estructura interna
-      const nominaData = responseData.data;
-      
-      console.log('🔍 Datos de nómina recibidos:', {
-        id: nominaData.id,
-        facturas: nominaData.facturas?.length || 0,
-        cheques: nominaData.cheques?.length || 0,
-        resumen: nominaData.resumen
-      });
-
-      // Crear facturas asignadas desde la nueva estructura
-      const facturasAsignadas = nominaData.facturas.map(factura => {
-        // Convertir montos a números si vienen como strings
-        const monto = typeof factura.monto === 'string' ? parseFloat(factura.monto) : factura.monto;
-        const montoAsignado = typeof factura.monto_asignado === 'string' ? parseFloat(factura.monto_asignado) : factura.monto_asignado;
-        
-        console.log('🔍 Procesando factura:', {
-          id: factura.id,
-          folio: factura.folio,
-          monto: factura.monto,
-          montoAsignado: factura.monto_asignado,
-          montoConvertido: monto,
-          montoAsignadoConvertido: montoAsignado
-        });
-
-        return {
-          id: factura.id.toString(),
-          folio: factura.folio,
-          proveedor: factura.nombre_proveedor,
-          monto: monto || 0,
-          montoAsignado: montoAsignado || 0,
-          estado: factura.estado.toString(),
-          fechaIngreso: factura.fecha_factura,
-          fechaAsignacion: factura.fecha_asignacion,
-          idUsuario: nominaData.id_usuario.toString(),
-          nombreUsuario: factura.nombre_usuario_factura || nominaData.nombre_usuario,
-          // Mapear el cheque asignado según la documentación
-          cheque_asignado: factura.cheque_asignado ? {
-            id: factura.cheque_asignado.id,
-            correlativo: factura.cheque_asignado.correlativo,
-            monto: typeof factura.cheque_asignado.monto === 'string' ? parseFloat(factura.cheque_asignado.monto) : factura.cheque_asignado.monto,
-            monto_asignado: typeof factura.cheque_asignado.monto_asignado === 'string' ? parseFloat(factura.cheque_asignado.monto_asignado) : factura.cheque_asignado.monto_asignado,
-            nombre_usuario_cheque: factura.cheque_asignado.nombre_usuario_cheque,
-            fecha_asignacion_cheque: factura.cheque_asignado.fecha_asignacion_cheque
-          } : null,
-          notasCredito: factura.notas_credito.map(nc => ({
-            id: nc.id.toString(),
-            folioNc: nc.folio_nc,
-            monto: typeof nc.monto === 'string' ? parseFloat(nc.monto) : nc.monto,
-            fechaEmision: nc.fecha_emision,
-            motivo: nc.motivo
-          }))
-        };
-      });
-
-      // Crear cheques asignados desde la nueva estructura
-      const chequesAsignados = nominaData.cheques?.map(cheque => {
-        // Convertir montos a números si vienen como strings
-        const monto = typeof cheque.monto === 'string' ? parseFloat(cheque.monto) : cheque.monto;
-        const montoAsignado = typeof cheque.monto_asignado === 'string' ? parseFloat(cheque.monto_asignado) : cheque.monto_asignado;
-        
-        console.log('🔍 Procesando cheque:', {
-          id: cheque.id,
-          correlativo: cheque.correlativo,
-          monto: cheque.monto,
-          montoAsignado: cheque.monto_asignado,
-          montoConvertido: monto,
-          montoAsignadoConvertido: montoAsignado
-        });
-
-        return {
-          id: cheque.id.toString(),
-          correlativo: cheque.correlativo,
-          monto: monto || 0,
-          montoAsignado: montoAsignado || 0,
-          createdAt: cheque.created_at,
-          idUsuario: cheque.id_usuario_cheque.toString(),
-          nombreUsuario: cheque.nombre_usuario_cheque,
-          fechaAsignacion: cheque.fecha_asignacion,
-          facturas: cheque.facturas?.map(factura => ({
-            id: factura.id.toString(),
-            folio: factura.folio,
-            proveedor: factura.nombre_proveedor,
-            monto: typeof factura.monto === 'string' ? parseFloat(factura.monto) : factura.monto,
-            estado: factura.estado.toString(),
-            fechaIngreso: factura.fecha_factura
-          }))
-        };
-      });
-
-      // Crear tracking desde la nueva estructura
-      const trackingEnvio = nominaData.tracking_envio ? {
-        id: nominaData.tracking_envio.id.toString(),
-        estado: nominaData.tracking_envio.estado as "EN_ORIGEN" | "EN_TRANSITO" | "RECIBIDA",
-        localOrigen: nominaData.tracking_envio.local_origen,
-        localDestino: nominaData.tracking_envio.local_destino,
-        fechaEnvio: "",
-        fechaRecepcion: "",
-        observaciones: "",
-        enviadoPor: "",
-        recibidoPor: ""
-      } : undefined;
-
-      // Crear la nómina transformada
-      const nominaTransformada: NominaCantera = {
-        id: nominaData.id.toString(),
-        numeroNomina: nominaData.numero_nomina,
-        fechaEmision: nominaData.fecha_emision,
-        local: nominaData.local_origen,
-        montoTotal: nominaData.resumen.monto_total_asignado || 0,
-        estado: nominaData.estado as "pendiente" | "pagada" | "vencida",
-        idUsuario: nominaData.id_usuario.toString(),
-        createdAt: nominaData.created_at,
-        updatedAt: nominaData.updated_at,
-        creadoPor: nominaData.creado_por,
-        tipoNomina: nominaData.tipo_nomina as "cheques" | "facturas" | "mixta",
-        cheques: chequesAsignados,
-        facturas: facturasAsignadas,
-        trackingEnvio: trackingEnvio,
-        // Propiedades adicionales calculadas
-        totalCheques: nominaData.resumen.cantidad_cheques || 0,
-        totalFacturas: nominaData.resumen.cantidad_facturas || 0,
-        balance: nominaData.resumen.diferencia || 0,
-        fechaCreacion: nominaData.created_at
-      };
-
-      console.log('🔄 Nómina transformada:', {
-        id: nominaTransformada.id,
-        facturas: nominaTransformada.facturas?.length || 0,
-        cheques: nominaTransformada.cheques?.length || 0,
-        montoTotal: nominaTransformada.montoTotal,
-        resumen: nominaData.resumen
-      });
-
-      return nominaTransformada;
-    } catch (error) {
-      console.error("Error fetching complete nomina with invoices:", error);
-      throw error;
-    }
-  },
 
 
 

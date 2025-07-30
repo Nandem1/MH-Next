@@ -88,7 +88,7 @@ export function useGoMetrics() {
         // Endpoint específico del servidor Go (sin duplicar /api/v1/)
         const url = `${apiUrl}/monitoring/metrics`;
         
-        console.log(`[Go Metrics] Fetching from: ${url} (attempt ${retryCount + 1})`);
+    
         
         const startTime = Date.now();
         
@@ -102,14 +102,14 @@ export function useGoMetrics() {
         });
         
         const endTime = Date.now();
-        console.log(`[Go Metrics] Response time: ${endTime - startTime}ms`);
+
         
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         const data = await response.json();
-        console.log('[Go Metrics] Data received successfully:', data);
+
         
         setMetrics(data);
         setIsLoading(false);

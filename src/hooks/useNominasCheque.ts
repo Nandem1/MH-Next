@@ -175,8 +175,8 @@ export const useNominasCheque = () => {
     try {
       setError(null);
       
-      // Siempre usar el endpoint que trae las facturas para ambos tipos de nómina
-      const data = await nominaChequeService.getNominaCompletaConFacturas(id);
+      // Usar el endpoint actualizado que maneja la nueva estructura simplificada
+      const data = await nominaChequeService.getNominaCompleta(id);
       setSelectedNomina(data);
       return data;
     } catch (err) {

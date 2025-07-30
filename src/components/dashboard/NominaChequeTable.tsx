@@ -297,7 +297,7 @@ export function NominaChequeTable({
 
                   <TableCell align="center" sx={{ py: 2 }}>
                     <Typography variant="body2" noWrap sx={{ color: theme.palette.text.primary, fontWeight: 500 }}>
-                      {nomina.creadoPor}
+                      {nomina.nombreUsuario}
                     </Typography>
                   </TableCell>
 

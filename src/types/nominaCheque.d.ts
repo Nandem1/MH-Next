@@ -9,7 +9,7 @@ export interface NominaCantera {
   idUsuario: string;
   createdAt: string;
   updatedAt: string;
-  creadoPor: string; // Nuevo campo
+  nombreUsuario: string; // Campo para mostrar el nombre del usuario
   tipoNomina: "cheques" | "facturas" | "mixta"; // Nuevo campo para nóminas híbridas
   cheques?: ChequeAsignado[];
   facturas?: FacturaAsignada[]; // Nuevo campo para facturas asignadas
@@ -156,6 +156,18 @@ export interface ActualizarTrackingRequest {
 }
 
 // Response types from API
+// Tipo para facturas en el detalle de nómina (actualizado para nueva estructura simplificada)
+export interface FacturaDetalleResponse {
+  id: number;
+  folio: string;
+  monto: number;
+  monto_asignado: number;
+  fecha_asignacion: string;
+  nombre_proveedor: string;
+  id_proveedor: number;
+  cheque: ChequeDetalleResponse | null; // Campo cheque que puede ser null o un objeto
+}
+
 export interface NominaCanteraResponse {
   id: number;
   numero_nomina: string;
@@ -167,8 +179,8 @@ export interface NominaCanteraResponse {
   updated_at: string;
   nombre_usuario: string;
   id_usuario: number;
-  monto_total: number;
-  cantidad_cheques: number;
+  monto_total: number | string;
+  cantidad_cheques: number | string;
   tipo_nomina?: string; // Nuevo campo para nóminas híbridas
   cantidad_facturas?: number; // Nuevo campo
   total_facturas?: number; // Nuevo campo
@@ -179,6 +191,8 @@ export interface NominaCanteraResponse {
   monto_total_facturas?: number;
   // Campo de tracking para la lista de nóminas
   tracking_envio?: {
+    id?: number;
+    id_nomina?: number;
     estado: string;
     local_origen: string;
     local_destino: string;
@@ -187,21 +201,11 @@ export interface NominaCanteraResponse {
     observaciones?: string | null;
     enviado_por?: string | null;
     recibido_por?: string | null;
+    created_at?: string;
   };
   cheques?: ChequeAsignadoResponse[];
-  facturas?: FacturaAsignadaResponse[]; // Nuevo campo para facturas asignadas
+  facturas?: FacturaDetalleResponse[]; // Nuevo campo para facturas asignadas en detalle
   facturas_asignadas?: FacturaAsignadaResponse[]; // Campo para facturas asignadas en nóminas mixtas
-  tracking_envio?: {
-    id: string;
-    estado: string;
-    local_origen: string;
-    local_destino: string;
-    fecha_envio?: string;
-    fecha_recepcion?: string;
-    observaciones?: string;
-    enviado_por?: string;
-    recibido_por?: string;
-  };
 }
 
 // Tipo para cheques asignados (estructura antigua)
@@ -281,26 +285,7 @@ export interface FacturaAsignadaResponse {
   nombre_usuario_factura: string;
 }
 
-// Nuevos tipos para respuestas del backend
-
-
-
-
-export interface ApiResponse<T> {
-  success: boolean;
-  message?: string;
-  data?: T;
-}
-
-export interface PaginationInfo {
-  page: number;
-  limit: number;
-  total: number;
-  hasNext: boolean;
-}
-
- 
-// Nuevos tipos para la estructura de respuesta actualizada del backend
+// Nuevos tipos para la estructura de respuesta actualizada del backend (SIMPLIFICADA)
 export interface NominaDetalleResponse {
   success: boolean;
   data: {
@@ -315,87 +300,33 @@ export interface NominaDetalleResponse {
     tipo_nomina: string;
     nombre_usuario: string;
     id_usuario: number;
+    monto_total: number;
+    cantidad_cheques: number;
     
-    // Sección principal: Facturas con información de cheques
-    facturas: FacturaConChequeResponse[];
+    // Solo facturas con cheque opcional
+    facturas: FacturaDetalleResponse[];
     
-    // Sección de cheques: Para compatibilidad y gestión
-    cheques: ChequeDetalleResponse[];
-    
-    // Sección de tracking
-    tracking_envio: TrackingEnvioDetalleResponse;
-    
-    // Resumen completo
-    resumen: ResumenNominaResponse;
+    // Tracking simplificado
+    tracking_envio?: {
+      estado: string;
+      created_at: string;
+      fecha_envio?: string;
+      local_origen: string;
+      local_destino: string;
+      observaciones?: string;
+      fecha_recepcion?: string;
+    };
   };
 }
 
-export interface FacturaConChequeResponse {
-  id: number;
-  folio: string;
-  monto: number | string; // Puede venir como string desde el API
-  estado: number;
-  fecha_factura: string;
-  nombre_proveedor: string;
-  rut_proveedor: string;
-  nombre_local: string;
-  nombre_usuario_factura: string;
-  monto_asignado: number | string; // Puede venir como string desde el API
-  fecha_asignacion: string;
-  cheque_asignado: ChequeAsignadoDetalleResponse | null;
-  notas_credito: NotaCreditoResponse[];
-}
-
-export interface ChequeAsignadoDetalleResponse {
-  id: number;
-  correlativo: string;
-  monto: number | string; // Puede venir como string desde el API
-  monto_asignado: number | string; // Puede venir como string desde el API
-  nombre_usuario_cheque: string;
-  fecha_asignacion_cheque: string;
-}
-
+// Tipo para cheques en la nueva estructura simplificada
 export interface ChequeDetalleResponse {
   id: number;
+  monto: number;
   correlativo: string;
-  monto: number | string; // Puede venir como string desde el API
-  created_at: string;
-  asignado_a_nomina: boolean;
-  nombre_usuario_cheque: string;
-  id_usuario_cheque: number;
-  monto_asignado: number | string; // Puede venir como string desde el API
+  monto_asignado: number;
+  nombre_usuario: string;
   fecha_asignacion: string;
-  facturas: FacturaAsignadaDetalleResponse[];
-}
-
-export interface FacturaAsignadaDetalleResponse {
-  id: number;
-  folio: string;
-  monto: number | string; // Puede venir como string desde el API
-  estado: number;
-  fecha_factura: string;
-  nombre_proveedor: string;
-  rut_proveedor: string;
-  nombre_local: string;
-  nombre_usuario_factura: string;
-  monto_asignado: number | string; // Puede venir como string desde el API
-  fecha_asignacion_factura: string;
-  notas_credito: NotaCreditoResponse[];
-}
-
-export interface NotaCreditoResponse {
-  id: number;
-  folio_nc: string;
-  monto: number | string; // Puede venir como string desde el API
-  fecha_emision: string;
-  motivo: string;
-}
-
-export interface TrackingEnvioDetalleResponse {
-  id: number;
-  estado: string;
-  local_origen: string;
-  local_destino: string;
 }
 
 export interface ResumenNominaResponse {

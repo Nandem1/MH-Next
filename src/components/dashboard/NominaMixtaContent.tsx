@@ -35,7 +35,8 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { nominaChequeService } from '@/services/nominaChequeService';
-import { NominaCantera, Factura, AsignarFacturaRequest } from '@/types/nominaCheque';
+import { NominaCantera, AsignarFacturaRequest } from '@/types/nominaCheque';
+import { Factura } from '@/types/factura';
 import { useSnackbar } from '@/hooks/useSnackbar';
 import { useNominasCheque } from '@/hooks/useNominasCheque';
 

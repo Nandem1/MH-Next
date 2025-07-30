@@ -42,7 +42,7 @@ export function FacturaPageContent() {
   const facturas = data?.facturas ?? [];
   const totalFacturas = data?.total ?? 0;
 
-  const handleSearch = async (folio: string, local: string, usuario: string, proveedor: string) => {
+  const handleSearch = async (folio: string, local: string) => {
     try {
       setPage(1);
 
@@ -70,7 +70,7 @@ export function FacturaPageContent() {
     }
     // Nota: usuario y proveedor se manejan automáticamente a través de los filtros del hook useFacturas
     // Los parámetros se incluyen para mantener compatibilidad con la interfaz del componente
-    console.log("Filtros activos:", { local, usuario, proveedor });
+
   };
 
   const handleLocalChange = (nuevoLocal: string) => {
