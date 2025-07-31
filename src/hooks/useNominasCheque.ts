@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { nominaChequeService } from "@/services/nominaChequeService";
 import { 
   NominaCantera, 
@@ -18,6 +19,7 @@ const initialFiltros: FiltrosNominas = {
 };
 
 export const useNominasCheque = () => {
+  const queryClient = useQueryClient();
   const [nominas, setNominas] = useState<NominaCantera[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -227,6 +229,16 @@ export const useNominasCheque = () => {
       // El servicio ya retorna la nómina actualizada
       const nominaActualizada = await nominaChequeService.asignarFacturasANomina(nominaId, facturas);
       
+      // Invalidar cache de nóminas (tabla principal)
+      queryClient.invalidateQueries({ queryKey: ["nominas"] });
+      
+      // Invalidar cache del detalle de nómina específica
+      queryClient.invalidateQueries({ queryKey: ["nomina", "detalle", nominaId] });
+      queryClient.invalidateQueries({ queryKey: ["nomina", "completa", nominaId] });
+      
+      // Invalidar cache de todas las consultas de nóminas
+      queryClient.invalidateQueries({ queryKey: ["nomina"] });
+      
       // Actualizar la nómina seleccionada si es la misma
       if (selectedNomina?.id === nominaId) {
         setSelectedNomina(nominaActualizada);
@@ -241,7 +253,7 @@ export const useNominasCheque = () => {
       setError(err instanceof Error ? err.message : "Error al asignar facturas");
       throw err;
     }
-  }, [selectedNomina?.id, filtros]);
+  }, [selectedNomina?.id, filtros, queryClient]);
 
   // Convertir nómina a mixta
   const convertirNominaAMixta = useCallback(async (nominaId: string, facturas: AsignarFacturaRequest[]) => {
@@ -250,6 +262,16 @@ export const useNominasCheque = () => {
       
       // El servicio ya retorna la nómina actualizada
       const nominaActualizada = await nominaChequeService.convertirNominaAMixta(nominaId, facturas);
+      
+      // Invalidar cache de nóminas (tabla principal)
+      queryClient.invalidateQueries({ queryKey: ["nominas"] });
+      
+      // Invalidar cache del detalle de nómina específica
+      queryClient.invalidateQueries({ queryKey: ["nomina", "detalle", nominaId] });
+      queryClient.invalidateQueries({ queryKey: ["nomina", "completa", nominaId] });
+      
+      // Invalidar cache de todas las consultas de nóminas
+      queryClient.invalidateQueries({ queryKey: ["nomina"] });
       
       // Actualizar la nómina seleccionada si es la misma
       if (selectedNomina?.id === nominaId) {
@@ -265,16 +287,27 @@ export const useNominasCheque = () => {
       setError(err instanceof Error ? err.message : "Error al convertir nómina a mixta");
       throw err;
     }
-  }, [selectedNomina?.id, filtros]);
+  }, [selectedNomina?.id, filtros, queryClient]);
 
   // Asignar cheque a nómina
   const asignarCheque = useCallback(async (nominaId: string, request: AsignarChequeRequest) => {
     try {
       setError(null);
       
-  
-      
       await nominaChequeService.asignarCheque(nominaId, request);
+      
+      // Invalidar cache de cheques disponibles
+      queryClient.invalidateQueries({ queryKey: ["cheques", "disponibles"] });
+      
+      // Invalidar cache de nóminas (tabla principal)
+      queryClient.invalidateQueries({ queryKey: ["nominas"] });
+      
+      // Invalidar cache del detalle de nómina específica
+      queryClient.invalidateQueries({ queryKey: ["nomina", "detalle", nominaId] });
+      queryClient.invalidateQueries({ queryKey: ["nomina", "completa", nominaId] });
+      
+      // Invalidar cache de todas las consultas de nóminas
+      queryClient.invalidateQueries({ queryKey: ["nomina"] });
       
       // Recargar la nómina para obtener los datos actualizados
       if (selectedNomina?.id === nominaId) {
@@ -290,7 +323,7 @@ export const useNominasCheque = () => {
       setError(err instanceof Error ? err.message : "Error al asignar cheque");
       throw err;
     }
-  }, [selectedNomina?.id, loadNomina, filtros]);
+  }, [selectedNomina?.id, loadNomina, filtros, queryClient]);
 
   // Actualizar tracking de envío
   const actualizarTracking = useCallback(async (nominaId: string, request: ActualizarTrackingRequest) => {
@@ -298,6 +331,16 @@ export const useNominasCheque = () => {
       setError(null);
       
       await nominaChequeService.actualizarTracking(nominaId, request);
+      
+      // Invalidar cache de nóminas (tabla principal)
+      queryClient.invalidateQueries({ queryKey: ["nominas"] });
+      
+      // Invalidar cache del detalle de nómina específica
+      queryClient.invalidateQueries({ queryKey: ["nomina", "detalle", nominaId] });
+      queryClient.invalidateQueries({ queryKey: ["nomina", "completa", nominaId] });
+      
+      // Invalidar cache de todas las consultas de nóminas
+      queryClient.invalidateQueries({ queryKey: ["nomina"] });
       
       // Actualizar la nómina seleccionada si es la misma
       if (selectedNomina?.id === nominaId) {
@@ -312,7 +355,7 @@ export const useNominasCheque = () => {
       setError(err instanceof Error ? err.message : "Error al actualizar tracking");
       throw err;
     }
-  }, [selectedNomina?.id, loadNomina, filtros]);
+  }, [selectedNomina?.id, loadNomina, filtros, queryClient]);
 
   // Crear tracking manualmente
   const crearTracking = useCallback(async (nominaId: string) => {
@@ -320,6 +363,16 @@ export const useNominasCheque = () => {
       setError(null);
       
       await nominaChequeService.crearTracking(nominaId);
+      
+      // Invalidar cache de nóminas (tabla principal)
+      queryClient.invalidateQueries({ queryKey: ["nominas"] });
+      
+      // Invalidar cache del detalle de nómina específica
+      queryClient.invalidateQueries({ queryKey: ["nomina", "detalle", nominaId] });
+      queryClient.invalidateQueries({ queryKey: ["nomina", "completa", nominaId] });
+      
+      // Invalidar cache de todas las consultas de nóminas
+      queryClient.invalidateQueries({ queryKey: ["nomina"] });
       
       // Actualizar la nómina seleccionada si es la misma
       if (selectedNomina?.id === nominaId) {
@@ -334,7 +387,7 @@ export const useNominasCheque = () => {
       setError(err instanceof Error ? err.message : "Error al crear tracking");
       throw err;
     }
-  }, [selectedNomina?.id, loadNomina, filtros]);
+  }, [selectedNomina?.id, loadNomina, filtros, queryClient]);
 
   // Obtener nóminas por estado de tracking
   const getNominasPorEstadoTracking = useCallback(async (estado: string) => {

@@ -133,7 +133,7 @@ export interface CrearNominaRequest {
 }
 
 export interface AsignarChequeRequest {
-  idCheque: string;
+  idCheque: number;
   asignado_a_nomina?: boolean; // Nuevo campo para sistema binario
   montoAsignado?: number; // Opcional ahora que usamos sistema binario
 }

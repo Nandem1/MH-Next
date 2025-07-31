@@ -300,13 +300,10 @@ export const getChequesDisponibles = async (
   offset: number = 0
 ): Promise<ChequesResponse> => {
   try {
-
-    
     const response = await axios.get<ChequesResponse>(buildApiUrl('/cheques/disponibles'), {
       params: { limit, offset },
       headers: getAuthHeaders()
     });
-    
 
     return response.data;
   } catch (error) {
@@ -322,37 +319,5 @@ export const getChequesDisponibles = async (
       });
     }
     throw new Error("No se pudieron cargar los cheques disponibles");
-  }
-};
-
-// Actualizar estado de asignación de un cheque
-export const updateChequeAsignacion = async (
-  chequeId: number, 
-  asignado: boolean
-): Promise<{ success: boolean; message: string }> => {
-  try {
-
-    
-    const response = await axios.patch(buildApiUrl(`/cheques/${chequeId}/asignacion`), {
-      asignado: asignado
-    }, {
-      headers: getAuthHeaders()
-    });
-    
-
-    return response.data;
-  } catch (error) {
-    console.error("❌ Error actualizando asignación del cheque:", error);
-    if (axios.isAxiosError(error)) {
-      console.error("📊 Detalles del error:", {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        url: error.config?.url,
-        method: error.config?.method,
-        headers: error.config?.headers
-      });
-    }
-    throw new Error("No se pudo actualizar la asignación del cheque");
   }
 }; 

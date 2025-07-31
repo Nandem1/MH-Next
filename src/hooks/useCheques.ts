@@ -12,7 +12,6 @@ import {
   getEstadisticasChequesByProveedor,
   getFacturasByCheque,
   getChequesDisponibles,
-  updateChequeAsignacion
 } from "@/services/chequeService";
 import { getNotasCreditoByFactura } from "@/services/notaCreditoService";
 import { CrearChequeRequest, ActualizarChequeRequest } from "@/types/factura";
@@ -224,21 +223,6 @@ export const useDeleteCheque = () => {
     onSuccess: () => {
       // Invalidar queries de cheques para refrescar la lista
       queryClient.invalidateQueries({ queryKey: ["cheques"] });
-    },
-  });
-};
-
-// Hook para actualizar asignación de cheque (nuevo sistema binario)
-export const useUpdateChequeAsignacion = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ chequeId, asignado }: { chequeId: number; asignado: boolean }) => 
-      updateChequeAsignacion(chequeId, asignado),
-    onSuccess: () => {
-      // Invalidar queries de cheques para refrescar la lista
-      queryClient.invalidateQueries({ queryKey: ["cheques"] });
-      queryClient.invalidateQueries({ queryKey: ["cheques", "disponibles"] });
     },
   });
 }; 

@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -9,15 +10,14 @@ import {
   TextField,
   Typography,
   Box,
-  CircularProgress,
   Autocomplete,
+  CircularProgress,
   useTheme,
   Stack,
 } from "@mui/material";
-import { useState, useEffect } from "react";
-import { useChequesDisponibles, useUpdateChequeAsignacion } from "@/hooks/useCheques";
-import { Cheque } from "@/types/factura";
 import { AsignarChequeRequest } from "@/types/nominaCheque";
+import { Cheque } from "@/types/factura";
+import { useChequesDisponibles } from "@/hooks/useCheques";
 
 interface AsignarChequeModalProps {
   open: boolean;
@@ -33,9 +33,9 @@ export function AsignarChequeModal({
   const theme = useTheme();
   const [chequeSeleccionado, setChequeSeleccionado] = useState<Cheque | null>(null);
   const [error, setError] = useState<string>("");
+  const [isAsignando, setIsAsignando] = useState(false);
 
   const { data: chequesResponse, isLoading } = useChequesDisponibles();
-  const updateAsignacion = useUpdateChequeAsignacion();
 
   // Obtener cheques disponibles (ya filtrados por el backend)
   const chequesDisponibles = chequesResponse?.data || [];
@@ -44,6 +44,7 @@ export function AsignarChequeModal({
     if (open) {
       setChequeSeleccionado(null);
       setError("");
+      setIsAsignando(false);
     }
   }, [open]);
 
@@ -59,15 +60,12 @@ export function AsignarChequeModal({
     }
 
     try {
-      // Marcar el cheque como asignado
-      await updateAsignacion.mutateAsync({
-        chequeId: chequeSeleccionado.id,
-        asignado: true
-      });
-
-      // Llamar a la función del componente padre
-      onAsignar({ 
-        idCheque: chequeSeleccionado.id.toString(),
+      setIsAsignando(true);
+      setError("");
+      
+      // Llamar directamente a la función del componente padre con el POST endpoint
+      await onAsignar({ 
+        idCheque: typeof chequeSeleccionado.id === 'string' ? parseInt(chequeSeleccionado.id) : chequeSeleccionado.id, // Conversión segura a number
         asignado_a_nomina: true,
         montoAsignado: typeof chequeSeleccionado.monto === 'string' ? parseFloat(chequeSeleccionado.monto) || 0 : (chequeSeleccionado.monto || 0)
       });
@@ -75,12 +73,15 @@ export function AsignarChequeModal({
     } catch (error) {
       console.error("Error asignando cheque:", error);
       setError("Error al asignar el cheque. Intente nuevamente.");
+    } finally {
+      setIsAsignando(false);
     }
   };
 
   const handleClose = () => {
     setChequeSeleccionado(null);
     setError("");
+    setIsAsignando(false);
     onClose();
   };
 
@@ -131,6 +132,7 @@ export function AsignarChequeModal({
             value={chequeSeleccionado}
             onChange={handleChequeChange}
             loading={isLoading}
+            disabled={isAsignando}
             fullWidth
             ListboxProps={{
               style: { maxHeight: '200px' }
@@ -141,6 +143,7 @@ export function AsignarChequeModal({
                 label="Seleccionar Cheque"
                 error={!!error && !chequeSeleccionado}
                 helperText={!chequeSeleccionado && error ? error : ""}
+                disabled={isAsignando}
                 InputProps={{
                   ...params.InputProps,
                   endAdornment: (
@@ -214,6 +217,7 @@ export function AsignarChequeModal({
         <Button 
           onClick={handleClose} 
           variant="outlined"
+          disabled={isAsignando}
           sx={{
             borderColor: theme.palette.divider,
             color: theme.palette.text.primary,
@@ -226,6 +230,9 @@ export function AsignarChequeModal({
               bgcolor: theme.palette.primary.light,
               color: theme.palette.primary.contrastText,
             },
+            "&:disabled": {
+              opacity: 0.7,
+            }
           }}
         >
           Cancelar
@@ -234,19 +241,27 @@ export function AsignarChequeModal({
           onClick={handleAsignar} 
           variant="contained" 
           color="primary"
-          disabled={!chequeSeleccionado || updateAsignacion.isPending}
+          disabled={!chequeSeleccionado || isAsignando}
           sx={{
             textTransform: "none",
             fontWeight: 600,
             borderRadius: "8px",
             px: 3,
             boxShadow: "none",
+            minWidth: "120px", // Ancho mínimo para evitar saltos
             "&:hover": {
               boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
             },
+            "&:disabled": {
+              opacity: 0.7,
+            }
           }}
         >
-          {updateAsignacion.isPending ? "Asignando..." : "Asignar"}
+          {isAsignando ? (
+            <CircularProgress size={20} color="inherit" />
+          ) : (
+            "Asignar"
+          )}
         </Button>
       </DialogActions>
     </Dialog>

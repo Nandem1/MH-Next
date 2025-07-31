@@ -470,15 +470,17 @@ export const nominaChequeService = {
   // Asignar cheque a nómina
   async asignarCheque(nominaId: string, request: AsignarChequeRequest): Promise<void> {
     try {
-
-      
+      // El backend ahora maneja las 3 cosas en un solo endpoint POST:
+      // - id_cheque: ID del cheque a asignar (number)
+      // - asignado_a_nomina: true para marcar como asignado
+      // - monto_asignado: monto del cheque
       const response = await fetch(`${API_BASE_URL}/api-beta/nominas/${nominaId}/cheques`, {
         method: "POST",
         headers: getAuthHeaders(),
         credentials: "include",
         body: JSON.stringify({
-          id_cheque: request.idCheque,
-          asignado_a_nomina: true, // Marcar como asignado a nómina
+          id_cheque: request.idCheque, // Enviar como number
+          asignado_a_nomina: request.asignado_a_nomina || true, // Marcar como asignado a nómina
           monto_asignado: request.montoAsignado, // Enviar el monto real del cheque
         }),
       });
@@ -488,7 +490,6 @@ export const nominaChequeService = {
         console.error("Error response:", errorText);
         throw new Error("Error al asignar cheque");
       }
-
 
     } catch (error) {
       console.error("Error assigning cheque:", error);
