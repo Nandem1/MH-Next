@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -26,7 +26,6 @@ import {
   Assignment as AssignmentIcon,
   Delete as DeleteIcon,
   Search as SearchIcon,
-  FilterList as FilterListIcon,
 } from '@mui/icons-material';
 import { getFacturasDisponibles } from '@/services/facturaService';
 import { nominaChequeService } from '@/services/nominaChequeService';
@@ -66,7 +65,7 @@ export function AsignarFacturasModal({
   };
 
   // Cargar facturas disponibles
-  const cargarFacturasDisponibles = async () => {
+  const cargarFacturasDisponibles = useCallback(async () => {
     try {
       setLoading(true);
       const response = await getFacturasDisponibles({
@@ -87,7 +86,7 @@ export function AsignarFacturasModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterProveedor, showSnackbar]);
 
   // Asignar facturas
   const asignarFacturas = async () => {
@@ -151,7 +150,7 @@ export function AsignarFacturasModal({
     if (open) {
       cargarFacturasDisponibles();
     }
-  }, [open, filterProveedor]);
+  }, [open, filterProveedor, cargarFacturasDisponibles]);
 
   useEffect(() => {
     if (!open) {
@@ -178,7 +177,7 @@ export function AsignarFacturasModal({
       <DialogContent>
         <Grid container spacing={3}>
           {/* Panel de Facturas Disponibles */}
-          <Grid item xs={12} md={7}>
+          <Grid size={{ xs: 12, md: 7 }}>
             <Box mb={2}>
               <Typography variant="h6" gutterBottom>
                 Facturas Disponibles
@@ -304,7 +303,7 @@ export function AsignarFacturasModal({
           </Grid>
 
           {/* Panel de Facturas Seleccionadas */}
-          <Grid item xs={12} md={5}>
+          <Grid size={{ xs: 12, md: 5 }}>
             <Typography variant="h6" gutterBottom>
               Facturas a Asignar
             </Typography>

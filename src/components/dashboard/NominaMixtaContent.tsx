@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
   Button,
   Paper,
   Grid,
-  Card,
-  CardContent,
   Chip,
   IconButton,
   Dialog,
@@ -14,20 +12,14 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Alert,
   CircularProgress,
-  Divider,
   List,
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
 } from '@mui/material';
 import {
-  Add as AddIcon,
   Assignment as AssignmentIcon,
   Receipt as ReceiptIcon,
   AccountBalance as AccountBalanceIcon,
@@ -35,7 +27,7 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { nominaChequeService } from '@/services/nominaChequeService';
-import { NominaCantera, AsignarFacturaRequest } from '@/types/nominaCheque';
+import { AsignarFacturaRequest } from '@/types/nominaCheque';
 import { Factura } from '@/types/factura';
 import { useSnackbar } from '@/hooks/useSnackbar';
 import { useNominasCheque } from '@/hooks/useNominasCheque';
@@ -58,7 +50,7 @@ export function NominaMixtaContent({ nominaId }: NominaMixtaContentProps) {
   } = useNominasCheque();
 
   // Cargar nómina
-  const cargarNomina = async () => {
+  const cargarNomina = useCallback(async () => {
     if (!nominaId) return;
     
     try {
@@ -67,18 +59,18 @@ export function NominaMixtaContent({ nominaId }: NominaMixtaContentProps) {
       console.error('Error cargando nómina:', error);
       showSnackbar('Error al cargar la nómina', 'error');
     }
-  };
+  }, [nominaId, loadNomina, showSnackbar]);
 
   // Cargar facturas disponibles
-  const cargarFacturasDisponibles = async () => {
+  const cargarFacturasDisponibles = useCallback(async () => {
     try {
       const response = await nominaChequeService.getFacturasDisponibles();
-      setFacturasDisponibles(response.data);
+      setFacturasDisponibles(response.data as Factura[]);
     } catch (error) {
       console.error('Error cargando facturas disponibles:', error);
       showSnackbar('Error al cargar facturas disponibles', 'error');
     }
-  };
+  }, [showSnackbar]);
 
   // Asignar facturas a la nómina
   const handleAsignarFacturas = async () => {
@@ -99,14 +91,14 @@ export function NominaMixtaContent({ nominaId }: NominaMixtaContentProps) {
   // Seleccionar factura
   const seleccionarFactura = (factura: Factura, montoAsignado: number) => {
     const nuevaSeleccion: AsignarFacturaRequest = {
-      idFactura: factura.id,
+      idFactura: parseInt(factura.id),
       montoAsignado: montoAsignado
     };
 
     setFacturasSeleccionadas(prev => {
-      const existe = prev.find(f => f.idFactura === factura.id);
+      const existe = prev.find(f => f.idFactura === parseInt(factura.id));
       if (existe) {
-        return prev.map(f => f.idFactura === factura.id ? nuevaSeleccion : f);
+        return prev.map(f => f.idFactura === parseInt(factura.id) ? nuevaSeleccion : f);
       } else {
         return [...prev, nuevaSeleccion];
       }
@@ -115,20 +107,20 @@ export function NominaMixtaContent({ nominaId }: NominaMixtaContentProps) {
 
   // Remover factura seleccionada
   const removerFacturaSeleccionada = (idFactura: string) => {
-    setFacturasSeleccionadas(prev => prev.filter(f => f.idFactura !== idFactura));
+    setFacturasSeleccionadas(prev => prev.filter(f => f.idFactura !== parseInt(idFactura)));
   };
 
   useEffect(() => {
     if (nominaId) {
       cargarNomina();
     }
-  }, [nominaId]);
+  }, [nominaId, cargarNomina]);
 
   useEffect(() => {
     if (openAsignarFacturas) {
       cargarFacturasDisponibles();
     }
-  }, [openAsignarFacturas]);
+  }, [openAsignarFacturas, cargarFacturasDisponibles]);
 
   if (loading && !nomina) {
     return (
@@ -151,7 +143,7 @@ export function NominaMixtaContent({ nominaId }: NominaMixtaContentProps) {
       {/* Header de la Nómina */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Typography variant="h5" gutterBottom>
               Nómina: {nomina.numeroNomina}
             </Typography>
@@ -170,7 +162,7 @@ export function NominaMixtaContent({ nominaId }: NominaMixtaContentProps) {
               />
             </Typography>
           </Grid>
-          <Grid item xs={12} md={6} textAlign="right">
+          <Grid size={{ xs: 12, md: 6 }} sx={{ textAlign: 'right' }}>
             <Button
               variant="contained"
               startIcon={<AssignmentIcon />}
@@ -193,7 +185,7 @@ export function NominaMixtaContent({ nominaId }: NominaMixtaContentProps) {
       <Grid container spacing={3}>
         {/* Columna de Cheques - Solo mostrar si hay cheques */}
         {nomina.cheques && nomina.cheques.length > 0 ? (
-          <Grid item xs={12} md={nomina.tipoNomina === 'mixta' ? 6 : 12}>
+          <Grid size={{ xs: 12, md: nomina.tipoNomina === 'mixta' ? 6 : 12 }}>
             <Paper sx={{ p: 2 }}>
               <Box display="flex" alignItems="center" gap={1} mb={2}>
                 <AccountBalanceIcon color="primary" />
@@ -222,7 +214,7 @@ export function NominaMixtaContent({ nominaId }: NominaMixtaContentProps) {
 
         {/* Columna de Facturas - Solo mostrar si hay facturas */}
         {nomina.facturas && nomina.facturas.length > 0 ? (
-          <Grid item xs={12} md={nomina.tipoNomina === 'mixta' ? 6 : 12}>
+          <Grid size={{ xs: 12, md: nomina.tipoNomina === 'mixta' ? 6 : 12 }}>
             <Paper sx={{ p: 2 }}>
               <Box display="flex" alignItems="center" gap={1} mb={2}>
                 <ReceiptIcon color="primary" />
@@ -252,7 +244,7 @@ export function NominaMixtaContent({ nominaId }: NominaMixtaContentProps) {
         {/* Mensaje cuando no hay ni cheques ni facturas */}
         {(!nomina.cheques || nomina.cheques.length === 0) && 
          (!nomina.facturas || nomina.facturas.length === 0) ? (
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Paper sx={{ p: 2 }}>
               <Alert severity="info">
                 Esta nómina no tiene cheques ni facturas asignadas. 
@@ -279,7 +271,7 @@ export function NominaMixtaContent({ nominaId }: NominaMixtaContentProps) {
         <DialogContent>
           <Grid container spacing={2}>
             {/* Lista de Facturas Disponibles */}
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h6" gutterBottom>
                 Facturas Disponibles
               </Typography>
@@ -287,15 +279,15 @@ export function NominaMixtaContent({ nominaId }: NominaMixtaContentProps) {
                 {facturasDisponibles.map((factura) => (
                   <ListItem key={factura.id} divider>
                     <ListItemText
-                      primary={`${factura.folio} - ${factura.proveedor}`}
-                      secondary={`$${factura.monto.toLocaleString()} - ${factura.fechaEmision}`}
+                      primary={`${factura.folio || 'Sin folio'} - ${factura.proveedor || 'Sin proveedor'}`}
+                      secondary={`$${(factura.monto || 0).toLocaleString()} - ${factura.fechaIngreso || 'Sin fecha'}`}
                     />
                     <ListItemSecondaryAction>
                       <TextField
                         type="number"
                         size="small"
                         label="Monto"
-                        defaultValue={factura.monto}
+                        defaultValue={factura.monto || 0}
                         sx={{ width: 120 }}
                         onChange={(e) => {
                           const monto = parseFloat(e.target.value) || 0;
@@ -309,13 +301,13 @@ export function NominaMixtaContent({ nominaId }: NominaMixtaContentProps) {
             </Grid>
 
             {/* Facturas Seleccionadas */}
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h6" gutterBottom>
                 Facturas a Asignar
               </Typography>
               <List sx={{ maxHeight: 400, overflow: 'auto' }}>
                 {facturasSeleccionadas.map((seleccion) => {
-                  const factura = facturasDisponibles.find(f => f.id === seleccion.idFactura);
+                  const factura = facturasDisponibles.find(f => f.id === seleccion.idFactura.toString());
                   return factura ? (
                     <ListItem key={seleccion.idFactura} divider>
                       <ListItemText
@@ -325,7 +317,7 @@ export function NominaMixtaContent({ nominaId }: NominaMixtaContentProps) {
                       <ListItemSecondaryAction>
                         <IconButton 
                           size="small" 
-                          onClick={() => removerFacturaSeleccionada(seleccion.idFactura)}
+                          onClick={() => removerFacturaSeleccionada(seleccion.idFactura.toString())}
                         >
                           <DeleteIcon />
                         </IconButton>

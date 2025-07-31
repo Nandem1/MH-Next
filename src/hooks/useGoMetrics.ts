@@ -88,10 +88,6 @@ export function useGoMetrics() {
         // Endpoint específico del servidor Go (sin duplicar /api/v1/)
         const url = `${apiUrl}/monitoring/metrics`;
         
-    
-        
-        const startTime = Date.now();
-        
         const response = await fetch(url, {
           method: 'GET',
           headers: {
@@ -100,8 +96,6 @@ export function useGoMetrics() {
           // Timeout optimizado para el backend Go
           signal: AbortSignal.timeout(15000), // 15 segundos timeout
         });
-        
-        const endTime = Date.now();
 
         
         if (!response.ok) {
