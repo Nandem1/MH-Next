@@ -31,95 +31,122 @@ import {
 } from "@mui/icons-material";
 import { useAuth } from "@/hooks/useAuth";
 import { useStock } from "@/hooks/useStock";
-import { StockProducto } from "@/types/stock";
 
 export function StockGeneralContent() {
   const theme = useTheme();
   const { usuario } = useAuth();
   const { 
-    stockLocal, 
-    stockBajo, 
-    loadingStock, 
-    loadingStockBajo, 
-    errorStock, 
-    // errorStockBajo,
-    refetchStock,
-    refetchStockBajo,
-    stats
+    stockLocalCompleto, 
+    loadingStockLocalCompleto, 
+    errorStockLocalCompleto, 
+    refetchStockLocalCompleto
   } = useStock(usuario?.id_local || 1);
 
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Filtrar stock basado en búsqueda usando useMemo
-  const filteredStock = useMemo(() => {
-    if (stockLocal && Array.isArray(stockLocal)) {
-      return stockLocal.filter(producto =>
-        producto.codigo_producto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (producto.nombre_producto && producto.nombre_producto.toLowerCase().includes(searchTerm.toLowerCase()))
-      ).map(producto => ({
-        ...producto,
-        cantidad: producto.cantidad_actual || 0,
-        tipo_item: (producto.tipo_item === 'producto' || producto.tipo_item === 'pack') 
-          ? producto.tipo_item as 'producto' | 'pack' 
-          : 'producto' as const
-      }));
-    }
-    return [];
-  }, [stockLocal, searchTerm]);
-
-  const getStockStatus = (producto: StockProducto) => {
-    const ratio = producto.cantidad / (producto.cantidad_minima || 1);
+  // Función para obtener el estado del stock
+  const getStockStatus = (producto: { cantidad_actual: number; cantidad_minima: number }) => {
+    const ratio = producto.cantidad_actual / (producto.cantidad_minima || 1);
     if (ratio <= 0.5) return { status: 'critico', color: 'error', label: 'Crítico' };
     if (ratio <= 1) return { status: 'bajo', color: 'warning', label: 'Bajo' };
     return { status: 'normal', color: 'success', label: 'Normal' };
   };
+
+  // Filtrar y ordenar stock basado en búsqueda usando useMemo
+  const filteredStock = useMemo(() => {
+    if (stockLocalCompleto?.data && Array.isArray(stockLocalCompleto.data)) {
+      const filtered = stockLocalCompleto.data.filter(producto =>
+        producto.codigo_producto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        producto.nombre_producto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        producto.codigo_barra_interno.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
+      // Ordenar por estado: Normal → Bajo → Crítico
+      return filtered.sort((a, b) => {
+        const statusA = getStockStatus(a);
+        const statusB = getStockStatus(b);
+        
+        const priorityOrder = { 'normal': 1, 'bajo': 2, 'critico': 3 };
+        const priorityA = priorityOrder[statusA.status as keyof typeof priorityOrder] || 0;
+        const priorityB = priorityOrder[statusB.status as keyof typeof priorityOrder] || 0;
+        
+        return priorityA - priorityB;
+      });
+    }
+    return [];
+  }, [stockLocalCompleto, searchTerm]);
+
+  // Calcular estadísticas
+  const stats = useMemo(() => {
+    if (!stockLocalCompleto?.data) return {
+      totalProductos: 0,
+      productosStockBajo: 0,
+      valorTotalEstimado: 0,
+      movimientosRecientes: 0
+    };
+
+    const productos = stockLocalCompleto.data;
+    const productosStockBajo = productos.filter(p => 
+      p.cantidad_actual <= p.cantidad_minima
+    ).length;
+
+    const valorTotalEstimado = productos.reduce((total, p) => 
+      total + (p.cantidad_actual * p.precio), 0
+    );
+
+    return {
+      totalProductos: productos.length,
+      productosStockBajo,
+      valorTotalEstimado,
+      movimientosRecientes: 0 // No disponible en esta API
+    };
+  }, [stockLocalCompleto]);
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('es-CL').format(num);
   };
 
   const handleRefresh = () => {
-    refetchStock();
-    refetchStockBajo();
+    refetchStockLocalCompleto();
   };
 
-  if (errorStock) {
+  if (errorStockLocalCompleto) {
     return (
       <Alert severity="error" sx={{ mb: 3 }}>
-        Error al cargar el stock: {errorStock.message}
+        Error al cargar el stock: {errorStockLocalCompleto.message}
       </Alert>
     );
   }
 
   return (
-    <Box sx={{ maxWidth: 1400, mx: "auto", p: { xs: 2, md: 3 } }}>
+    <Box sx={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
       {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 4 }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
         <Box>
           <Typography 
-            variant="h4" 
-            component="h1" 
+            variant="h5" 
+            component="h2" 
             sx={{ 
-              fontWeight: 700,
-              fontSize: { xs: "1.5rem", md: "1.75rem" },
+              fontWeight: 600,
+              fontSize: "1.25rem",
               mb: 0.5,
               color: "text.primary"
             }}
           >
-            Stock General
+            Inventario
           </Typography>
           <Typography 
             variant="body2" 
             color="text.secondary" 
             sx={{ fontSize: "0.875rem" }}
           >
-            Gestión de inventario y control de stock
+            {stats.totalProductos} productos en stock
           </Typography>
         </Box>
         
         <IconButton 
           onClick={handleRefresh}
-          disabled={loadingStock || loadingStockBajo}
+          disabled={loadingStockLocalCompleto}
           sx={{ 
             border: 1, 
             borderColor: "divider",
@@ -132,94 +159,94 @@ export function StockGeneralContent() {
       </Box>
 
       {/* Estadísticas */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 6, sm: 3 }}>
           <Card sx={{ 
             border: 1, 
             borderColor: "divider",
-            borderRadius: 1.5,
+            borderRadius: 1,
             bgcolor: "background.paper"
           }}>
-            <CardContent sx={{ p: 2.5 }}>
+            <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: "primary.main" }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: "primary.main" }}>
                     {formatNumber(stats.totalProductos)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.75rem" }}>
-                    Total Productos
+                    Productos
                   </Typography>
                 </Box>
-                <InventoryIcon sx={{ color: "primary.main", fontSize: 32 }} />
+                <InventoryIcon sx={{ color: "primary.main", fontSize: 24 }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 6, sm: 3 }}>
           <Card sx={{ 
             border: 1, 
             borderColor: "divider",
-            borderRadius: 1.5,
+            borderRadius: 1,
             bgcolor: "background.paper"
           }}>
-            <CardContent sx={{ p: 2.5 }}>
+            <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: "warning.main" }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: "warning.main" }}>
                     {formatNumber(stats.productosStockBajo)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.75rem" }}>
                     Stock Bajo
                   </Typography>
                 </Box>
-                <WarningIcon sx={{ color: "warning.main", fontSize: 32 }} />
+                <WarningIcon sx={{ color: "warning.main", fontSize: 24 }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 6, sm: 3 }}>
           <Card sx={{ 
             border: 1, 
             borderColor: "divider",
-            borderRadius: 1.5,
+            borderRadius: 1,
             bgcolor: "background.paper"
           }}>
-            <CardContent sx={{ p: 2.5 }}>
+            <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: "success.main" }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: "success.main" }}>
                     ${formatNumber(stats.valorTotalEstimado)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.75rem" }}>
-                    Valor Estimado
+                    Valor Total
                   </Typography>
                 </Box>
-                <TrendingUpIcon sx={{ color: "success.main", fontSize: 32 }} />
+                <TrendingUpIcon sx={{ color: "success.main", fontSize: 24 }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 6, sm: 3 }}>
           <Card sx={{ 
             border: 1, 
             borderColor: "divider",
-            borderRadius: 1.5,
+            borderRadius: 1,
             bgcolor: "background.paper"
           }}>
-            <CardContent sx={{ p: 2.5 }}>
+            <CardContent sx={{ p: 2 }}>
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <Box>
-                  <Typography variant="h4" sx={{ fontWeight: 700, color: "info.main" }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: "info.main" }}>
                     {formatNumber(stats.movimientosRecientes)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.75rem" }}>
                     Movimientos
                   </Typography>
                 </Box>
-                <TrendingUpIcon sx={{ color: "info.main", fontSize: 32 }} />
+                <TrendingUpIcon sx={{ color: "info.main", fontSize: 24 }} />
               </Box>
             </CardContent>
           </Card>
@@ -227,7 +254,7 @@ export function StockGeneralContent() {
       </Grid>
 
       {/* Búsqueda */}
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 2 }}>
         <TextField
           fullWidth
           placeholder="Buscar por código o nombre de producto..."
@@ -256,22 +283,25 @@ export function StockGeneralContent() {
         sx={{ 
           border: 1, 
           borderColor: "divider",
-          borderRadius: 1.5,
+          borderRadius: 1,
           overflow: "hidden",
+          flex: 1,
+          display: "flex",
+          flexDirection: "column"
         }}
       >
         <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1rem" }}>
-            Inventario ({filteredStock.length} productos)
+          <Typography variant="body1" sx={{ fontWeight: 600, fontSize: "0.875rem" }}>
+            Productos ({filteredStock.length})
           </Typography>
         </Box>
 
-        {loadingStock ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+        {loadingStockLocalCompleto ? (
+          <Box sx={{ display: "flex", justifyContent: "center", p: 4, flex: 1 }}>
             <CircularProgress />
           </Box>
         ) : (
-          <TableContainer>
+          <TableContainer sx={{ flex: 1 }}>
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ bgcolor: theme.palette.action.hover }}>
@@ -339,9 +369,9 @@ export function StockGeneralContent() {
                           <Typography variant="body2" sx={{ fontWeight: 500, fontSize: "0.75rem" }}>
                             {producto.nombre_producto || 'Producto'}
                           </Typography>
-                          {producto.codigo_barras && (
+                          {producto.codigo_barra_interno && (
                             <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.625rem" }}>
-                              {producto.codigo_barras}
+                              {producto.codigo_barra_interno}
                             </Typography>
                           )}
                         </Box>
@@ -410,78 +440,14 @@ export function StockGeneralContent() {
           </TableContainer>
         )}
 
-        {filteredStock.length === 0 && !loadingStock && (
-          <Box sx={{ p: 4, textAlign: "center" }}>
+        {filteredStock.length === 0 && !loadingStockLocalCompleto && (
+          <Box sx={{ p: 4, textAlign: "center", flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Typography variant="body2" color="text.secondary">
               {searchTerm ? "No se encontraron productos con ese criterio de búsqueda" : "No hay productos en el inventario"}
             </Typography>
           </Box>
         )}
       </Paper>
-
-      {/* Alertas de Stock Bajo */}
-      {stockBajo && stockBajo.length > 0 && (
-        <Box sx={{ mt: 4 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, fontSize: "1rem" }}>
-            ⚠️ Alertas de Stock Bajo ({stockBajo.length})
-          </Typography>
-          
-          <Grid container spacing={2}>
-            {stockBajo.slice(0, 6).map((producto) => {
-              const productoAdaptado = {
-                ...producto,
-                cantidad: producto.cantidad_actual || 0,
-                tipo_item: (producto.tipo_item === 'producto' || producto.tipo_item === 'pack') 
-                  ? producto.tipo_item as 'producto' | 'pack' 
-                  : 'producto' as const
-              };
-              const status = getStockStatus(productoAdaptado);
-              return (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={producto.codigo_producto}>
-                  <Card sx={{ 
-                    border: 1, 
-                    borderColor: status.color === 'error' ? 'error.main' : 'warning.main',
-                    borderRadius: 1.5,
-                    bgcolor: status.color === 'error' ? 'error.50' : 'warning.50'
-                  }}>
-                    <CardContent sx={{ p: 2 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, fontSize: "0.75rem" }}>
-                          {producto.nombre_producto || 'Producto'}
-                        </Typography>
-                        <Chip
-                          label={status.label}
-                          color={status.color as 'success' | 'warning' | 'error'}
-                          size="small"
-                          sx={{ 
-                            fontSize: "0.625rem",
-                            height: 18,
-                            "& .MuiChip-label": {
-                              px: 0.5,
-                              fontWeight: 500
-                            }
-                          }}
-                        />
-                      </Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.625rem" }}>
-                        {producto.codigo_producto}
-                      </Typography>
-                      <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
-                        <Typography variant="body2" sx={{ fontSize: "0.75rem" }}>
-                          Stock: <strong>{producto.cantidad_actual}</strong>
-                        </Typography>
-                        <Typography variant="body2" sx={{ fontSize: "0.75rem" }}>
-                          Mín: <strong>{producto.cantidad_minima}</strong>
-                        </Typography>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              );
-            })}
-          </Grid>
-        </Box>
-      )}
     </Box>
   );
 } 

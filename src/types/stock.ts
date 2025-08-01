@@ -142,6 +142,27 @@ export interface StockLocalResponse {
   timestamp: string;
 }
 
+export interface StockLocalCompletoResponse {
+  success: boolean;
+  data: Array<{
+    id: number;
+    codigo_producto: string;
+    tipo_item: string;
+    cantidad_actual: number;
+    cantidad_minima: number;
+    id_local: number;
+    nombre_producto: string;
+    codigo_barra_interno: string;
+    codigo_barra_externo: string;
+    descripcion: string;
+    precio: number;
+    unidad: string;
+    id_categoria: number;
+    nombre_categoria: string;
+    nombre_local: string;
+  }>;
+}
+
 export interface StockBajoResponse {
   success: boolean;
   data: Array<{
