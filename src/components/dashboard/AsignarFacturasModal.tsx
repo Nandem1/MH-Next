@@ -146,11 +146,19 @@ export function AsignarFacturasModal({
   // Calcular total seleccionado
   const totalSeleccionado = facturasSeleccionadas.reduce((sum, f) => sum + f.montoAsignado, 0);
 
+  // Cargar facturas cuando se abre el modal
   useEffect(() => {
     if (open) {
       cargarFacturasDisponibles();
     }
-  }, [open, filterProveedor, cargarFacturasDisponibles]);
+  }, [open]); // Solo depende de open, no de cargarFacturasDisponibles
+
+  // Cargar facturas cuando cambia el filtro de proveedor
+  useEffect(() => {
+    if (open && filterProveedor !== '') {
+      cargarFacturasDisponibles();
+    }
+  }, [filterProveedor, open]); // Depende de filterProveedor y open
 
   useEffect(() => {
     if (!open) {

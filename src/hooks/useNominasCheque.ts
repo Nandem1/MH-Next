@@ -244,16 +244,14 @@ export const useNominasCheque = () => {
         setSelectedNomina(nominaActualizada);
       }
       
-      // Actualizar la lista de nóminas con los filtros actuales
-      const resultado = await nominaChequeService.getNominas(filtros);
-      setNominas(resultado.nominas);
-      setPagination(resultado.pagination);
+      // No es necesario recargar toda la lista aquí, el cache invalidation se encargará
+      // de actualizar los datos cuando sea necesario
     } catch (err) {
       console.error("❌ Error en asignarFacturas:", err);
       setError(err instanceof Error ? err.message : "Error al asignar facturas");
       throw err;
     }
-  }, [selectedNomina?.id, filtros, queryClient]);
+  }, [selectedNomina?.id, queryClient]);
 
   // Convertir nómina a mixta
   const convertirNominaAMixta = useCallback(async (nominaId: string, facturas: AsignarFacturaRequest[]) => {
@@ -278,16 +276,14 @@ export const useNominasCheque = () => {
         setSelectedNomina(nominaActualizada);
       }
       
-      // Actualizar la lista de nóminas con los filtros actuales
-      const resultado = await nominaChequeService.getNominas(filtros);
-      setNominas(resultado.nominas);
-      setPagination(resultado.pagination);
+      // No es necesario recargar toda la lista aquí, el cache invalidation se encargará
+      // de actualizar los datos cuando sea necesario
     } catch (err) {
       console.error("❌ Error en convertirNominaAMixta:", err);
       setError(err instanceof Error ? err.message : "Error al convertir nómina a mixta");
       throw err;
     }
-  }, [selectedNomina?.id, filtros, queryClient]);
+  }, [selectedNomina?.id, queryClient]);
 
   // Asignar cheque a nómina
   const asignarCheque = useCallback(async (nominaId: string, request: AsignarChequeRequest) => {
@@ -314,16 +310,14 @@ export const useNominasCheque = () => {
         await loadNomina(nominaId);
       }
       
-      // Actualizar la lista de nóminas con los filtros actuales
-      const resultado = await nominaChequeService.getNominas(filtros);
-      setNominas(resultado.nominas);
-      setPagination(resultado.pagination);
+      // No es necesario recargar toda la lista aquí, el cache invalidation se encargará
+      // de actualizar los datos cuando sea necesario
     } catch (err) {
       console.error("❌ Error en asignarCheque:", err);
       setError(err instanceof Error ? err.message : "Error al asignar cheque");
       throw err;
     }
-  }, [selectedNomina?.id, loadNomina, filtros, queryClient]);
+  }, [selectedNomina?.id, loadNomina, queryClient]);
 
   // Actualizar tracking de envío
   const actualizarTracking = useCallback(async (nominaId: string, request: ActualizarTrackingRequest) => {
@@ -347,15 +341,13 @@ export const useNominasCheque = () => {
         await loadNomina(nominaId);
       }
       
-      // Actualizar la lista de nóminas con los filtros actuales
-      const resultado = await nominaChequeService.getNominas(filtros);
-      setNominas(resultado.nominas);
-      setPagination(resultado.pagination);
+      // No es necesario recargar toda la lista aquí, el cache invalidation se encargará
+      // de actualizar los datos cuando sea necesario
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al actualizar tracking");
       throw err;
     }
-  }, [selectedNomina?.id, loadNomina, filtros, queryClient]);
+  }, [selectedNomina?.id, loadNomina, queryClient]);
 
   // Crear tracking manualmente
   const crearTracking = useCallback(async (nominaId: string) => {
@@ -379,15 +371,13 @@ export const useNominasCheque = () => {
         await loadNomina(nominaId);
       }
       
-      // Actualizar la lista de nóminas con los filtros actuales
-      const resultado = await nominaChequeService.getNominas(filtros);
-      setNominas(resultado.nominas);
-      setPagination(resultado.pagination);
+      // No es necesario recargar toda la lista aquí, el cache invalidation se encargará
+      // de actualizar los datos cuando sea necesario
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al crear tracking");
       throw err;
     }
-  }, [selectedNomina?.id, loadNomina, filtros, queryClient]);
+  }, [selectedNomina?.id, loadNomina, queryClient]);
 
   // Obtener nóminas por estado de tracking
   const getNominasPorEstadoTracking = useCallback(async (estado: string) => {
