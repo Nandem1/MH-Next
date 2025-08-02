@@ -15,16 +15,9 @@ import {
   Chip,
   Alert,
   CircularProgress,
-  IconButton,
-  Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  Autocomplete,
 } from '@mui/material';
 import {
-  Assignment as AssignmentIcon,
-  Delete as DeleteIcon,
   Search as SearchIcon,
 } from '@mui/icons-material';
 import { getFacturasDisponibles } from '@/services/facturaService';
@@ -32,6 +25,8 @@ import { nominaChequeService } from '@/services/nominaChequeService';
 import { AsignarFacturaRequest } from '@/types/nominaCheque';
 import { Factura } from '@/types/factura';
 import { useSnackbar } from '@/hooks/useSnackbar';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useProveedores } from '@/hooks/useProveedores';
 
 interface AsignarFacturasModalProps {
   open: boolean;
@@ -49,10 +44,16 @@ export function AsignarFacturasModal({
   const [facturasDisponibles, setFacturasDisponibles] = useState<Factura[]>([]);
   const [facturasSeleccionadas, setFacturasSeleccionadas] = useState<AsignarFacturaRequest[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false); // Estado separado para loading de búsqueda
   const [searchTerm, setSearchTerm] = useState('');
   const [filterProveedor, setFilterProveedor] = useState('');
-  const [proveedores, setProveedores] = useState<string[]>([]);
   const { showSnackbar } = useSnackbar();
+  
+  // Cargar proveedores usando el hook como en la tabla de facturas
+  const { data: proveedores, isLoading: isLoadingProveedores } = useProveedores();
+  
+  // Usar debounce para la búsqueda por folio - aumentado a 1.5 segundos para mejor rendimiento
+  const debouncedSearchTerm = useDebounce(searchTerm, 1500);
 
   // Función para formatear montos como moneda chilena
   const formatearMoneda = (monto: number): string => {
@@ -64,29 +65,43 @@ export function AsignarFacturasModal({
     }).format(monto);
   };
 
-  // Cargar facturas disponibles
-  const cargarFacturasDisponibles = useCallback(async () => {
+  // Función estable para cargar facturas - optimizada para mejor rendimiento
+  const cargarFacturasDisponibles = useCallback(async (filtros?: { proveedor?: string; folio?: string }) => {
     try {
-      setLoading(true);
-      const response = await getFacturasDisponibles({
-        page: 1,
-        limit: 100,
-        proveedor: filterProveedor || undefined
-        // ❌ Eliminado: estado: 'pendiente' - ya no se usa para disponibilidad
-      });
+      // Usar loading general para carga inicial y filtros de proveedor
+      if (!filtros?.folio) {
+        setLoading(true);
+      } else {
+        // Usar searchLoading solo para búsquedas por folio
+        setSearchLoading(true);
+      }
       
-      setFacturasDisponibles(response.data);
+      // Optimización: Solo hacer la llamada si hay filtros válidos o es la carga inicial
+      const tieneFiltros = filtros?.proveedor || filtros?.folio;
+      const esCargaInicial = !filtros?.proveedor && !filtros?.folio;
       
-      // Extraer proveedores únicos
-      const proveedoresUnicos = [...new Set(response.data.map(f => f.proveedor || '').filter(p => p !== ''))];
-      setProveedores(proveedoresUnicos);
+      if (tieneFiltros || esCargaInicial) {
+        const response = await getFacturasDisponibles({
+          page: 1,
+          limit: 20,
+          proveedor: filtros?.proveedor || undefined,
+          folio: filtros?.folio || undefined
+        });
+        
+        setFacturasDisponibles(response.data);
+      }
     } catch (error) {
       console.error('Error cargando facturas disponibles:', error);
       showSnackbar('Error al cargar facturas disponibles', 'error');
     } finally {
-      setLoading(false);
+      // Limpiar el loading correspondiente
+      if (!filtros?.folio) {
+        setLoading(false);
+      } else {
+        setSearchLoading(false);
+      }
     }
-  }, [filterProveedor, showSnackbar]);
+  }, [showSnackbar]);
 
   // Asignar facturas
   const asignarFacturas = async () => {
@@ -131,40 +146,52 @@ export function AsignarFacturasModal({
     setFacturasSeleccionadas(prev => prev.filter(f => f.idFactura !== parseInt(idFactura)));
   };
 
-  // Filtrar facturas por búsqueda
-  const facturasFiltradas = facturasDisponibles.filter(factura => {
-    // Verificar que folio y proveedor existan antes de usar toLowerCase()
-    const folio = factura.folio || '';
-    const proveedor = factura.proveedor || '';
-    
-    const matchesSearch = folio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         proveedor.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = !filterProveedor || proveedor === filterProveedor;
-    return matchesSearch && matchesFilter;
-  });
+  // Ya no necesitamos filtrar localmente porque el backend maneja la búsqueda
+  // Memoizar las facturas filtradas para evitar re-renders innecesarios
+  const facturasFiltradas = React.useMemo(() => facturasDisponibles, [facturasDisponibles]);
 
-  // Calcular total seleccionado
-  const totalSeleccionado = facturasSeleccionadas.reduce((sum, f) => sum + f.montoAsignado, 0);
+  // Calcular total seleccionado - memoizado para mejor rendimiento
+  const totalSeleccionado = React.useMemo(() => 
+    facturasSeleccionadas.reduce((sum, f) => sum + f.montoAsignado, 0), 
+    [facturasSeleccionadas]
+  );
 
-  // Cargar facturas cuando se abre el modal
+  // Cargar facturas cuando se abre el modal - optimizado
   useEffect(() => {
     if (open) {
-      cargarFacturasDisponibles();
+      cargarFacturasDisponibles({});
     }
-  }, [open]); // Solo depende de open, no de cargarFacturasDisponibles
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]); // Solo depende de open
 
-  // Cargar facturas cuando cambia el filtro de proveedor
+  // Cargar facturas cuando cambia el filtro de proveedor - optimizado
   useEffect(() => {
-    if (open && filterProveedor !== '') {
-      cargarFacturasDisponibles();
+    if (open && filterProveedor && filterProveedor.trim() !== '') {
+      cargarFacturasDisponibles({ proveedor: filterProveedor.trim() });
+    } else if (open && filterProveedor === '') {
+      // Si se limpia el filtro, recargar sin filtros
+      cargarFacturasDisponibles({});
     }
-  }, [filterProveedor, open]); // Depende de filterProveedor y open
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterProveedor, open]); // Solo depende de filterProveedor y open
+
+  // Cargar facturas cuando cambia la búsqueda por folio - optimizado
+  useEffect(() => {
+    if (open && debouncedSearchTerm && debouncedSearchTerm.trim() !== '') {
+      cargarFacturasDisponibles({ folio: debouncedSearchTerm.trim() });
+    } else if (open && debouncedSearchTerm === '') {
+      // Si se limpia la búsqueda, recargar sin filtros
+      cargarFacturasDisponibles({});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchTerm, open]); // Solo depende de debouncedSearchTerm y open
 
   useEffect(() => {
     if (!open) {
       setFacturasSeleccionadas([]);
       setSearchTerm('');
       setFilterProveedor('');
+      setSearchLoading(false);
     }
   }, [open]);
 
@@ -174,62 +201,129 @@ export function AsignarFacturasModal({
       onClose={onClose}
       maxWidth="lg"
       fullWidth
+      PaperProps={{
+        sx: {
+          minHeight: '600px',
+          maxHeight: '90vh',
+          borderRadius: '12px',
+          bgcolor: 'background.paper',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        }
+      }}
     >
-      <DialogTitle>
-        <Box display="flex" alignItems="center" gap={1}>
-          <AssignmentIcon />
+      <DialogTitle sx={{ 
+        pb: 2, 
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+        bgcolor: 'background.default'
+      }}>
+        <Typography variant="h5" fontWeight={700} sx={{ color: 'text.primary' }}>
           Asignar Facturas a Nómina
-        </Box>
+        </Typography>
       </DialogTitle>
       
-      <DialogContent>
-        <Grid container spacing={3}>
-          {/* Panel de Facturas Disponibles */}
-          <Grid size={{ xs: 12, md: 7 }}>
-            <Box mb={2}>
-              <Typography variant="h6" gutterBottom>
+      <DialogContent sx={{ minHeight: '500px', display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 3, flex: 1 }}>
+          <Typography variant="body2" color="text.secondary">
+            Selecciona las facturas disponibles para asignar a la nómina
+          </Typography>
+
+          {/* Filtros */}
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+            <TextField
+              size="small"
+              placeholder="Buscar por folio..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: <SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} />,
+                endAdornment: searchLoading && (
+                  <CircularProgress size={16} />
+                ),
+              }}
+              sx={{ 
+                flex: 1,
+                minWidth: 200,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '8px',
+                }
+              }}
+              helperText={
+                searchTerm.trim() !== '' && debouncedSearchTerm !== searchTerm 
+                  ? "Escribiendo... (espera 1.5 segundos)" 
+                  : searchLoading 
+                  ? "Buscando..." 
+                  : ""
+              }
+            />
+            
+            <Autocomplete
+              disablePortal
+              options={proveedores || []}
+              getOptionLabel={(option) => option.nombre}
+              value={proveedores?.find(p => p.nombre === filterProveedor) || null}
+              onChange={(_, newValue) => setFilterProveedor(newValue?.nombre || '')}
+              loading={isLoadingProveedores}
+              size="small"
+              sx={{ 
+                minWidth: 200,
+                maxWidth: 300,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '8px',
+                }
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Proveedor"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {isLoadingProveedores ? <CircularProgress color="inherit" size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              noOptionsText="No se encontraron proveedores"
+              loadingText="Cargando proveedores..."
+              clearOnBlur
+              clearOnEscape
+            />
+          </Box>
+
+          {/* Lista de Facturas */}
+          <Box sx={{ 
+            flex: 1, 
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            bgcolor: 'background.default'
+          }}>
+            <Box sx={{ 
+              p: 2, 
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper'
+            }}>
+              <Typography variant="subtitle1" fontWeight={600}>
                 Facturas Disponibles
               </Typography>
-              
-              {/* Filtros */}
-              <Box display="flex" gap={2} mb={2}>
-                <TextField
-                  size="small"
-                  placeholder="Buscar facturas..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  InputProps={{
-                    startAdornment: <SearchIcon fontSize="small" />,
-                  }}
-                  sx={{ flex: 1 }}
-                />
-                
-                <FormControl size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel>Proveedor</InputLabel>
-                  <Select
-                    value={filterProveedor}
-                    label="Proveedor"
-                    onChange={(e) => setFilterProveedor(e.target.value)}
-                  >
-                    <MenuItem value="">Todos</MenuItem>
-                    {proveedores.map((proveedor) => (
-                      <MenuItem key={proveedor} value={proveedor}>
-                        {proveedor}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
+              <Typography variant="body2" color="text.secondary">
+                {facturasFiltradas.length} factura(s) encontrada(s)
+              </Typography>
             </Box>
-
-            {/* Lista de Facturas */}
-            <Box sx={{ maxHeight: 500, overflow: 'auto', border: 1, borderColor: 'divider', borderRadius: 1 }}>
+            
+            <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
               {loading ? (
-                <Box display="flex" justifyContent="center" p={3}>
+                <Box display="flex" justifyContent="center" p={4}>
                   <CircularProgress />
                 </Box>
               ) : facturasFiltradas.length > 0 ? (
-                <List>
+                <List sx={{ p: 0 }}>
                   {facturasFiltradas.map((factura) => {
                     const estaSeleccionada = facturasSeleccionadas.some(f => f.idFactura === parseInt(factura.id));
                     const montoAsignado = facturasSeleccionadas.find(f => f.idFactura === parseInt(factura.id))?.montoAsignado || factura.monto || 0;
@@ -237,8 +331,9 @@ export function AsignarFacturasModal({
                     return (
                       <ListItem 
                         key={factura.id} 
-                        divider
                         sx={{ 
+                          borderBottom: '1px solid',
+                          borderColor: 'divider',
                           bgcolor: estaSeleccionada ? 'action.selected' : 'transparent',
                           '&:hover': { bgcolor: 'action.hover' }
                         }}
@@ -246,22 +341,27 @@ export function AsignarFacturasModal({
                         <ListItemText
                           primary={
                             <Box display="flex" alignItems="center" gap={1}>
-                              <Typography variant="body1" fontWeight={500}>
+                              <Typography variant="body1" fontWeight={600}>
                                 {factura.folio || 'Sin folio'}
                               </Typography>
                               {estaSeleccionada && (
-                                <Chip label="Seleccionada" size="small" color="primary" />
+                                <Chip 
+                                  label="Seleccionada" 
+                                  size="small" 
+                                  color="primary" 
+                                  sx={{ borderRadius: '6px' }}
+                                />
                               )}
                             </Box>
                           }
                           secondary={
-                            <Box>
-                              <Typography variant="body2" color="text.secondary">
+                            <Box component="div">
+                              <Box component="div" sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                                 {factura.proveedor || 'Sin proveedor'}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
+                              </Box>
+                              <Box component="div" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
                                 Fecha: {factura.fechaIngreso} | Monto: {formatearMoneda(factura.monto || 0)}
-                              </Typography>
+                              </Box>
                             </Box>
                           }
                         />
@@ -272,14 +372,16 @@ export function AsignarFacturasModal({
                               label="Monto"
                               value={formatearMoneda(montoAsignado)}
                               onChange={(e) => {
-                                // Remover caracteres no numéricos excepto puntos y comas
                                 const valorLimpio = e.target.value.replace(/[^\d.,]/g, '');
-                                // Convertir a número, removiendo separadores de miles
                                 const monto = parseInt(valorLimpio.replace(/[.,]/g, '')) || 0;
                                 seleccionarFactura(factura, monto);
                               }}
-                              sx={{ width: 140 }}
-                              InputProps={{}}
+                              sx={{ 
+                                width: 140,
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: '6px'
+                                }
+                              }}
                             />
                             <Button
                               size="small"
@@ -290,6 +392,11 @@ export function AsignarFacturasModal({
                                 } else {
                                   seleccionarFactura(factura, factura.monto || 0);
                                 }
+                              }}
+                              sx={{ 
+                                borderRadius: '6px',
+                                textTransform: 'none',
+                                fontWeight: 500
                               }}
                             >
                               {estaSeleccionada ? 'Remover' : 'Seleccionar'}
@@ -302,78 +409,108 @@ export function AsignarFacturasModal({
                 </List>
               ) : (
                 <Box p={3} textAlign="center">
-                  <Alert severity="info">
-                    No hay facturas disponibles con los filtros aplicados
+                  <Alert severity="info" sx={{ borderRadius: '8px' }}>
+                    {searchLoading 
+                      ? `Buscando facturas con folio "${searchTerm}"...`
+                      : debouncedSearchTerm 
+                      ? `No se encontraron facturas con el folio "${debouncedSearchTerm}"`
+                      : searchTerm.trim() !== '' && debouncedSearchTerm !== searchTerm
+                      ? `Escribiendo... (espera 1.5 segundos)`
+                      : 'No hay facturas disponibles con los filtros aplicados'
+                    }
                   </Alert>
                 </Box>
               )}
             </Box>
-          </Grid>
+          </Box>
 
-          {/* Panel de Facturas Seleccionadas */}
-          <Grid size={{ xs: 12, md: 5 }}>
-            <Typography variant="h6" gutterBottom>
-              Facturas a Asignar
-            </Typography>
-            
-            <Box sx={{ maxHeight: 500, overflow: 'auto', border: 1, borderColor: 'divider', borderRadius: 1 }}>
-              {facturasSeleccionadas.length > 0 ? (
-                <>
-                  <List>
-                    {facturasSeleccionadas.map((seleccion) => {
-                      const factura = facturasDisponibles.find(f => f.id === seleccion.idFactura.toString());
-                      return factura ? (
-                        <ListItem key={seleccion.idFactura} divider>
-                          <ListItemText
-                            primary={factura.folio || 'Sin folio'}
-                            secondary={`${factura.proveedor || 'Sin proveedor'} | ${formatearMoneda(seleccion.montoAsignado)}`}
-                          />
-                          <ListItemSecondaryAction>
-                            <IconButton 
-                              size="small" 
-                              onClick={() => removerFacturaSeleccionada(seleccion.idFactura.toString())}
-                              color="error"
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          </ListItemSecondaryAction>
-                        </ListItem>
-                      ) : null;
-                    })}
-                  </List>
-                  
-                  <Box p={2} bgcolor="background.paper" borderTop={1} borderColor="divider">
-                    <Typography variant="h6" color="primary">
-                      Total: {formatearMoneda(totalSeleccionado)}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {facturasSeleccionadas.length} factura(s) seleccionada(s)
-                    </Typography>
-                  </Box>
-                </>
-              ) : (
-                <Box p={3} textAlign="center">
-                  <Alert severity="info">
-                    Selecciona facturas de la lista para asignarlas
-                  </Alert>
-                </Box>
-              )}
+          {/* Resumen de Selección */}
+          {facturasSeleccionadas.length > 0 && (
+            <Box sx={{ 
+              bgcolor: 'background.default', 
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: '12px', 
+              p: 3 
+            }}>
+              <Typography variant="h6" fontWeight={600} sx={{ color: 'text.primary', mb: 2 }}>
+                Resumen de Selección
+              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  Facturas seleccionadas:
+                </Typography>
+                <Typography variant="body2" fontWeight={600} sx={{ color: 'text.primary' }}>
+                  {facturasSeleccionadas.length}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  Total a asignar:
+                </Typography>
+                <Typography variant="h6" color="primary" fontWeight={600}>
+                  {formatearMoneda(totalSeleccionado)}
+                </Typography>
+              </Box>
             </Box>
-          </Grid>
-        </Grid>
+          )}
+        </Box>
       </DialogContent>
       
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
+      <DialogActions sx={{ 
+        p: 3, 
+        borderTop: '1px solid',
+        borderColor: 'divider',
+        bgcolor: 'background.default'
+      }}>
+        <Button 
+          onClick={onClose} 
+          variant="outlined"
+          disabled={loading}
+          sx={{
+            borderColor: 'divider',
+            color: 'text.primary',
+            textTransform: 'none',
+            fontWeight: 600,
+            borderRadius: '8px',
+            px: 3,
+            '&:hover': {
+              borderColor: 'primary.main',
+              bgcolor: 'primary.light',
+              color: 'primary.contrastText',
+            },
+            '&:disabled': {
+              opacity: 0.7,
+            }
+          }}
+        >
           Cancelar
         </Button>
         <Button 
           onClick={asignarFacturas}
-          variant="contained"
+          variant="contained" 
+          color="primary"
           disabled={facturasSeleccionadas.length === 0 || loading}
-          startIcon={loading ? <CircularProgress size={16} /> : <AssignmentIcon />}
+          sx={{
+            textTransform: 'none',
+            fontWeight: 600,
+            borderRadius: '8px',
+            px: 3,
+            boxShadow: 'none',
+            minWidth: '120px',
+            '&:hover': {
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            },
+            '&:disabled': {
+              opacity: 0.7,
+            }
+          }}
         >
-          {loading ? 'Asignando...' : `Asignar ${facturasSeleccionadas.length} Factura(s)`}
+          {loading ? (
+            <CircularProgress size={20} color="inherit" />
+          ) : (
+            `Asignar ${facturasSeleccionadas.length} Factura(s)`
+          )}
         </Button>
       </DialogActions>
     </Dialog>

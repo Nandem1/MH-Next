@@ -1,5 +1,5 @@
 // src/utils/adaptFactura.ts
-import { Factura, FacturaResponse } from "@/types/factura";
+import { Factura, FacturaResponse, FacturaDisponibleResponse } from "@/types/factura";
 import { montoAEntero } from "@/utils/formatearMonto";
 
 const transformDriveUrl = (url: string) => {
@@ -46,5 +46,28 @@ export function adaptFactura(factura: FacturaResponse): Factura {
     id_proveedor: factura.id_proveedor, // ID del proveedor para endpoints
     // Nuevo campo para disponibilidad en nóminas
     asignado_a_nomina: factura.asignado_a_nomina || false,
+  };
+}
+
+// Nueva función específica para adaptar facturas del endpoint de disponibles
+export function adaptFacturaDisponible(factura: FacturaDisponibleResponse): Factura {
+  return {
+    id: factura.id.toString(),
+    folio: factura.folio,
+    proveedor: factura.nombre_proveedor, // Usar nombre_proveedor del endpoint específico
+    local: "Local desconocido", // No viene en la respuesta
+    estado: "BODEGA",
+    fechaIngreso: factura.fecha_factura, // Usar fecha_factura del endpoint específico
+    image_url: "", // No viene en la respuesta
+    image_url_cloudinary: "", // No viene en la respuesta
+    nombre_usuario: "Usuario desconocido", // No viene en la respuesta
+    rut_proveedor: factura.rut_proveedor,
+    monto: montoAEntero(factura.monto), // Ya viene como number
+    // Valores por defecto para campos que no vienen en la respuesta
+    metodo_pago: "POR_PAGAR",
+    monto_pagado: undefined,
+    cheque_correlativo: undefined,
+    id_proveedor: undefined,
+    asignado_a_nomina: false, // Por definición, las facturas disponibles no están asignadas
   };
 }

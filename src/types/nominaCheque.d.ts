@@ -65,6 +65,7 @@ export interface FacturaAsignada {
   id: string;
   folio: string;
   proveedor: string;
+  id_proveedor?: number; // ID del proveedor para filtrar cheques
   monto: number;
   montoAsignado: number; // Monto asignado a la nómina
   estado: string;
@@ -342,6 +343,42 @@ export interface ResumenNominaResponse {
   balance_valido: boolean;
   diferencia: number | string; // Puede venir como string desde el API
   porcentaje_asignado: number;
+}
+
+// Nuevos tipos para el endpoint específico de asignar cheque a factura
+export interface AsignarChequeAFacturaRequest {
+  correlativo: string;
+  monto: number;
+}
+
+export interface AsignarChequeAFacturaResponse {
+  success: boolean;
+  message: string;
+  data: {
+    cheque: {
+      id: number;
+      correlativo: string;
+      monto: number;
+      asignado_a_nomina: boolean;
+      nombre_usuario: string;
+      monto_asignado: number;
+      cantidad_facturas: number;
+    };
+    factura: {
+      id: number;
+      folio: string;
+      monto: number;
+      nombre_proveedor: string;
+    };
+    nomina: {
+      id: number;
+      tipo_nomina_actualizado: string;
+    };
+    asignacion: {
+      monto_asignado: number;
+      correlativo: string;
+    };
+  };
 }
 
  

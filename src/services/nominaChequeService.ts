@@ -11,7 +11,9 @@ import {
   CrearNominaMixtaRequest,
   AsignarFacturaRequest,
   NominaDetalleResponse,
-  ChequeAsignado
+  ChequeAsignado,
+  AsignarChequeAFacturaRequest,
+  AsignarChequeAFacturaResponse
 } from "@/types/nominaCheque";
 import { getUsuarioAutenticado } from "@/services/authService";
 
@@ -351,6 +353,7 @@ export const nominaChequeService = {
         id: factura.id.toString(),
         folio: factura.folio,
         proveedor: factura.nombre_proveedor,
+        id_proveedor: factura.id_proveedor, // Incluir ID del proveedor para filtrar cheques
         monto: factura.monto,
         montoAsignado: factura.monto_asignado,
         estado: '1', // Estado por defecto
@@ -493,6 +496,32 @@ export const nominaChequeService = {
 
     } catch (error) {
       console.error("Error assigning cheque:", error);
+      throw error;
+    }
+  },
+
+  // Asignar cheque a factura individual
+  async asignarChequeAFactura(nominaId: string, facturaId: number, request: AsignarChequeAFacturaRequest): Promise<AsignarChequeAFacturaResponse> {
+    try {
+      // Usar el nuevo endpoint específico para asignar cheque a factura dentro de una nómina
+      const response = await fetch(`${API_BASE_URL}/api-beta/nominas/${nominaId}/facturas/${facturaId}/cheque`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error response:", errorText);
+        throw new Error("Error al asignar cheque a factura");
+      }
+
+      const responseData: AsignarChequeAFacturaResponse = await response.json();
+      return responseData;
+
+    } catch (error) {
+      console.error("Error assigning cheque to factura:", error);
       throw error;
     }
   },

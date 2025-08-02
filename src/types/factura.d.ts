@@ -20,6 +20,17 @@ export interface FacturaResponse {
   asignado_a_nomina?: boolean; // Indica si la factura está asignada a una nómina
 }
 
+// Nueva interfaz específica para el endpoint de facturas disponibles
+export interface FacturaDisponibleResponse {
+  id: number;
+  folio: string;
+  monto: number;
+  fecha_factura: string;
+  estado: number;
+  nombre_proveedor: string;
+  rut_proveedor: string;
+}
+
 export interface Factura {
   id: string;
   folio: string;

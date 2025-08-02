@@ -5,7 +5,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, B
 
 
 import { useState } from "react";
-import { CrearChequeRequest } from "@/types/nominaCheque";
+import { CrearChequeRequest } from "@/types/factura";
 
 interface NuevoChequeModalProps {
   open: boolean;
@@ -43,8 +43,8 @@ export function NuevoChequeModal({
     try {
       setError(null);
       await onSubmit({
-        numeroCorrelativo: numeroCorrelativo.trim(),
-        nominaId: nominaId || undefined,
+        correlativo: numeroCorrelativo.trim(),
+        monto: 0, // El monto se asignará cuando se asigne a una factura
       });
       
       // Limpiar formulario

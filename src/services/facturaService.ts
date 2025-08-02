@@ -1,7 +1,7 @@
 // src/services/facturaService.ts
 import axios from "axios";
-import { Factura, FacturaResponse, ActualizarMetodoPagoRequest } from "@/types/factura";
-import { adaptFactura } from "@/utils/adaptFactura";
+import { Factura, FacturaResponse, FacturaDisponibleResponse, ActualizarMetodoPagoRequest } from "@/types/factura";
+import { adaptFactura, adaptFacturaDisponible } from "@/utils/adaptFactura";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -81,6 +81,7 @@ export const getFacturasDisponibles = async (filtros: {
   page?: number;
   limit?: number;
   proveedor?: string;
+  folio?: string;
 } = {}): Promise<{
   data: Factura[];
   pagination: {
@@ -96,14 +97,26 @@ export const getFacturasDisponibles = async (filtros: {
     if (filtros.page) params.append('page', filtros.page.toString());
     if (filtros.limit) params.append('limit', filtros.limit.toString());
     if (filtros.proveedor) params.append('proveedor', filtros.proveedor);
-    // ❌ Eliminado: filtros.estado - ya no se usa para disponibilidad
+    if (filtros.folio) params.append('folio', filtros.folio);
 
     const queryString = params.toString();
     const url = `${API_URL}/api-beta/facturas/disponibles${queryString ? `?${queryString}` : ''}`;
 
     const response = await axios.get(url);
 
-    return response.data;
+    // Verificar si la respuesta tiene la estructura esperada
+    if (!response.data || !response.data.data) {
+      console.error('Unexpected response structure:', response.data);
+      throw new Error('Estructura de respuesta inesperada del servidor');
+    }
+
+    // Aplicar adaptFacturaDisponible a cada factura para el endpoint específico
+    const facturasAdaptadas = response.data.data.map((f: FacturaDisponibleResponse) => adaptFacturaDisponible(f));
+
+    return {
+      data: facturasAdaptadas,
+      pagination: response.data.pagination
+    };
   } catch (error) {
     console.error("Error obteniendo facturas disponibles:", error);
     throw new Error("No se pudieron cargar las facturas disponibles");

@@ -33,9 +33,11 @@ import {
 import { Add as AddIcon, Assignment as AssignmentIcon } from "@mui/icons-material";
 import { useNominasCheque } from "@/hooks/useNominasCheque";
 import { useUsuarios } from "@/hooks/useUsuarios";
-import { NominaCantera, CrearNominaRequest, AsignarChequeRequest, ActualizarTrackingRequest, TrackingEnvio } from "@/types/nominaCheque";
+import { NominaCantera, CrearNominaRequest, AsignarChequeRequest, ActualizarTrackingRequest, TrackingEnvio, FacturaAsignada, AsignarChequeAFacturaRequest } from "@/types/nominaCheque";
+import { CrearChequeRequest } from "@/types/factura";
 import { NuevaNominaModal } from "@/components/dashboard/NuevaNominaChequeModal";
 import { AsignarChequeModal } from "@/components/dashboard/AsignarChequeModal";
+import { AsignarChequeAFacturaModal } from "@/components/dashboard/AsignarChequeAFacturaModal";
 import { TrackingEnvioComponent } from "@/components/dashboard/TrackingEnvio";
 import { AsignarFacturasModal } from "@/components/dashboard/AsignarFacturasModal";
 import Footer from "@/components/shared/Footer";
@@ -55,6 +57,8 @@ export default function NominasPage() {
     error,
     crearNomina,
     asignarCheque,
+    asignarChequeAFactura,
+    crearYAsignarChequeAFactura,
     selectedNomina,
     loadNomina,
     setSelectedNomina,
@@ -68,6 +72,8 @@ export default function NominasPage() {
   const [modalAsignarOpen, setModalAsignarOpen] = useState(false);
   const [modalAsignarFacturasOpen, setModalAsignarFacturasOpen] = useState(false);
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
+  const [modalAsignarChequeAFacturaOpen, setModalAsignarChequeAFacturaOpen] = useState(false);
+  const [facturaSeleccionada, setFacturaSeleccionada] = useState<FacturaAsignada | null>(null);
   const [loadingModal, setLoadingModal] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -87,6 +93,53 @@ export default function NominasPage() {
       loadNomina(selectedNomina.id);
     }
   }, [selectedNomina?.id, loadNomina]);
+
+  const handleAsignarChequeAFactura = useCallback(async (nominaId: string, facturaId: number, request: AsignarChequeAFacturaRequest) => {
+    try {
+      await asignarChequeAFactura(nominaId, facturaId, request);
+      setSnackbarMessage("Cheque asignado a factura correctamente");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+      setModalAsignarChequeAFacturaOpen(false);
+      setFacturaSeleccionada(null);
+      
+      // Recargar la nómina para actualizar la UI
+      if (selectedNomina?.id) {
+        await loadNomina(selectedNomina.id);
+      }
+    } catch (err) {
+      console.error("Error asignando cheque a factura:", err);
+      setSnackbarMessage("Error al asignar cheque a factura");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
+  }, [asignarChequeAFactura, selectedNomina?.id, loadNomina]);
+
+  const handleCrearYAsignarChequeAFactura = useCallback(async (nominaId: string, facturaId: number, request: CrearChequeRequest) => {
+    try {
+      await crearYAsignarChequeAFactura(nominaId, facturaId, request);
+      setSnackbarMessage("Cheque creado y asignado a factura correctamente");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+      setModalAsignarChequeAFacturaOpen(false);
+      setFacturaSeleccionada(null);
+      
+      // Recargar la nómina para actualizar la UI
+      if (selectedNomina?.id) {
+        await loadNomina(selectedNomina.id);
+      }
+    } catch (err) {
+      console.error("Error creando y asignando cheque a factura:", err);
+      setSnackbarMessage("Error al crear y asignar cheque a factura");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
+  }, [crearYAsignarChequeAFactura, selectedNomina?.id, loadNomina]);
+
+  const handleAsignarChequeAFacturaClick = useCallback((factura: FacturaAsignada) => {
+    setFacturaSeleccionada(factura);
+    setModalAsignarChequeAFacturaOpen(true);
+  }, []);
 
   if (authLoading) {
     return (
@@ -940,10 +993,7 @@ export default function NominasPage() {
                                      startIcon={<AssignmentIcon />}
                                      onClick={(e) => {
                                        e.stopPropagation();
-                                       // Aquí iría la lógica para asignar cheque
-                                       setSnackbarMessage("Funcionalidad de asignar cheque en desarrollo");
-                                       setSnackbarSeverity("info");
-                                       setSnackbarOpen(true);
+                                       handleAsignarChequeAFacturaClick(factura);
                                      }}
                                      sx={{
                                        borderColor: theme.palette.primary.main,
@@ -1053,6 +1103,19 @@ export default function NominasPage() {
         onClose={() => setModalAsignarFacturasOpen(false)}
         nominaId={selectedNomina?.id || ''}
         onSuccess={handleAsignarFacturasSuccess}
+      />
+
+      {/* Modal Asignar Cheque a Factura */}
+      <AsignarChequeAFacturaModal
+        open={modalAsignarChequeAFacturaOpen}
+        onClose={() => {
+          setModalAsignarChequeAFacturaOpen(false);
+          setFacturaSeleccionada(null);
+        }}
+        onAsignar={handleAsignarChequeAFactura}
+        onCrearYAsignar={handleCrearYAsignarChequeAFactura}
+        factura={facturaSeleccionada}
+        nominaId={selectedNomina?.id || ''}
       />
 
       {/* Snackbar */}

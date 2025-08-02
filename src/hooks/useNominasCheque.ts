@@ -9,8 +9,10 @@ import {
   FiltrosNominas,
   PaginationInfo,
   CrearNominaMixtaRequest,
-  AsignarFacturaRequest
+  AsignarFacturaRequest,
+  AsignarChequeAFacturaRequest
 } from "@/types/nominaCheque";
+import { CrearChequeRequest } from "@/types/factura";
 
 // Estado inicial para filtros
 const initialFiltros: FiltrosNominas = {
@@ -229,6 +231,10 @@ export const useNominasCheque = () => {
       // El servicio ya retorna la nómina actualizada
       const nominaActualizada = await nominaChequeService.asignarFacturasANomina(nominaId, facturas);
       
+      // ✅ Invalidar cache de facturas (para actualizar asignado_a_nomina)
+      queryClient.invalidateQueries({ queryKey: ["facturas"] });
+      queryClient.invalidateQueries({ queryKey: ["facturas", "disponibles"] });
+      
       // Invalidar cache de nóminas (tabla principal)
       queryClient.invalidateQueries({ queryKey: ["nominas"] });
       
@@ -260,6 +266,10 @@ export const useNominasCheque = () => {
       
       // El servicio ya retorna la nómina actualizada
       const nominaActualizada = await nominaChequeService.convertirNominaAMixta(nominaId, facturas);
+      
+      // ✅ Invalidar cache de facturas (para actualizar asignado_a_nomina)
+      queryClient.invalidateQueries({ queryKey: ["facturas"] });
+      queryClient.invalidateQueries({ queryKey: ["facturas", "disponibles"] });
       
       // Invalidar cache de nóminas (tabla principal)
       queryClient.invalidateQueries({ queryKey: ["nominas"] });
@@ -315,6 +325,98 @@ export const useNominasCheque = () => {
     } catch (err) {
       console.error("❌ Error en asignarCheque:", err);
       setError(err instanceof Error ? err.message : "Error al asignar cheque");
+      throw err;
+    }
+  }, [selectedNomina?.id, loadNomina, queryClient]);
+
+  // Asignar cheque a factura individual
+  const asignarChequeAFactura = useCallback(async (nominaId: string, facturaId: number, request: AsignarChequeAFacturaRequest) => {
+    try {
+      setError(null);
+      
+      await nominaChequeService.asignarChequeAFactura(nominaId, facturaId, request);
+      
+      // Invalidar cache de cheques disponibles
+      queryClient.invalidateQueries({ queryKey: ["cheques", "disponibles"] });
+      
+      // Invalidar cache de facturas
+      queryClient.invalidateQueries({ queryKey: ["facturas"] });
+      queryClient.invalidateQueries({ queryKey: ["facturas", "disponibles"] });
+      
+      // Invalidar cache de nóminas (tabla principal)
+      queryClient.invalidateQueries({ queryKey: ["nominas"] });
+      
+      // Invalidar cache de todas las consultas de nóminas
+      queryClient.invalidateQueries({ queryKey: ["nomina"] });
+      
+      // Invalidar cache específico de la factura individual
+      queryClient.invalidateQueries({ queryKey: ["factura", facturaId] });
+      queryClient.invalidateQueries({ queryKey: ["facturas", "detalle", facturaId] });
+      
+      // Invalidar cache de la nómina específica si existe
+      if (selectedNomina?.id) {
+        queryClient.invalidateQueries({ queryKey: ["nomina", "detalle", selectedNomina.id] });
+        queryClient.invalidateQueries({ queryKey: ["nomina", "completa", selectedNomina.id] });
+        queryClient.invalidateQueries({ queryKey: ["nomina", selectedNomina.id] });
+      }
+      
+      // Recargar la nómina seleccionada si existe
+      if (selectedNomina?.id) {
+        // Pequeño delay para asegurar que el backend procese la actualización
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await loadNomina(selectedNomina.id);
+      }
+      
+    } catch (err) {
+      console.error("❌ Error en asignarChequeAFactura:", err);
+      setError(err instanceof Error ? err.message : "Error al asignar cheque a factura");
+      throw err;
+    }
+  }, [selectedNomina?.id, loadNomina, queryClient]);
+
+  // Crear y asignar cheque a factura individual
+  const crearYAsignarChequeAFactura = useCallback(async (nominaId: string, facturaId: number, request: CrearChequeRequest) => {
+    try {
+      setError(null);
+      
+      // Usar directamente el nuevo endpoint que maneja creación y asignación
+      const asignacionRequest: AsignarChequeAFacturaRequest = {
+        correlativo: request.correlativo,
+        monto: request.monto
+      };
+      
+      await nominaChequeService.asignarChequeAFactura(nominaId, facturaId, asignacionRequest);
+      
+      // Invalidar todas las queries relacionadas
+      queryClient.invalidateQueries({ queryKey: ["cheques", "disponibles"] });
+      queryClient.invalidateQueries({ queryKey: ["cheques"] });
+      queryClient.invalidateQueries({ queryKey: ["facturas"] });
+      queryClient.invalidateQueries({ queryKey: ["facturas", "disponibles"] });
+      queryClient.invalidateQueries({ queryKey: ["nominas"] });
+      queryClient.invalidateQueries({ queryKey: ["nomina"] });
+      
+      // Invalidar cache específico de la factura individual
+      queryClient.invalidateQueries({ queryKey: ["factura", facturaId] });
+      queryClient.invalidateQueries({ queryKey: ["facturas", "detalle", facturaId] });
+      
+      // Invalidar cache de la nómina específica si existe
+      if (selectedNomina?.id) {
+        queryClient.invalidateQueries({ queryKey: ["nomina", "detalle", selectedNomina.id] });
+        queryClient.invalidateQueries({ queryKey: ["nomina", "completa", selectedNomina.id] });
+        queryClient.invalidateQueries({ queryKey: ["nomina", selectedNomina.id] });
+      }
+      
+      // Invalidar todas las queries que contengan "nomina" para asegurar actualización
+      queryClient.invalidateQueries({ queryKey: ["nomina"] });
+      
+      if (selectedNomina?.id) {
+        // Pequeño delay para asegurar que el backend procese la actualización
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await loadNomina(selectedNomina.id);
+      }
+    } catch (err) {
+      console.error("❌ Error en crearYAsignarChequeAFactura:", err);
+      setError(err instanceof Error ? err.message : "Error al crear y asignar cheque a factura");
       throw err;
     }
   }, [selectedNomina?.id, loadNomina, queryClient]);
@@ -415,6 +517,8 @@ export const useNominasCheque = () => {
     crearNomina,
     crearNominaMixta,
     asignarCheque,
+    asignarChequeAFactura,
+    crearYAsignarChequeAFactura,
     asignarFacturas,
     convertirNominaAMixta,
     actualizarTracking,
