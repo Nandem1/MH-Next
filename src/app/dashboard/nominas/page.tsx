@@ -141,6 +141,18 @@ export default function NominasPage() {
     setModalAsignarChequeAFacturaOpen(true);
   }, []);
 
+  const handleCloseDetalleModal = useCallback(() => {
+    setModalDetalleOpen(false);
+    // Recargar la página para mostrar datos actualizados
+    if (selectedNomina?.id) {
+      // Pequeño delay para asegurar que los cambios se hayan procesado
+      setTimeout(() => {
+        // Recargar la página de manera elegante
+        router.refresh();
+      }, 100);
+    }
+  }, [selectedNomina?.id, router]);
+
   if (authLoading) {
     return (
       <Box
@@ -623,7 +635,7 @@ export default function NominasPage() {
       {/* Detail Modal */}
       <Dialog
         open={modalDetalleOpen}
-        onClose={() => setModalDetalleOpen(false)}
+        onClose={handleCloseDetalleModal}
         maxWidth="lg"
         fullWidth
         PaperProps={{
@@ -1083,7 +1095,7 @@ export default function NominasPage() {
             Asignar Facturas
           </Button>
           <Button 
-            onClick={() => setModalDetalleOpen(false)}
+            onClick={handleCloseDetalleModal}
             disabled={loadingModal}
             sx={{
               textTransform: "none",

@@ -59,19 +59,31 @@ export function AsignarChequeModal({
       return;
     }
 
+    console.log("🔄 [DEBUG] Iniciando asignación de cheque en modal:", {
+      chequeSeleccionado,
+      id: chequeSeleccionado.id,
+      monto: chequeSeleccionado.monto
+    });
+
     try {
       setIsAsignando(true);
       setError("");
       
-      // Llamar directamente a la función del componente padre con el POST endpoint
-      await onAsignar({ 
+      const request = {
         idCheque: typeof chequeSeleccionado.id === 'string' ? parseInt(chequeSeleccionado.id) : chequeSeleccionado.id, // Conversión segura a number
         asignado_a_nomina: true,
         montoAsignado: typeof chequeSeleccionado.monto === 'string' ? parseFloat(chequeSeleccionado.monto) || 0 : (chequeSeleccionado.monto || 0)
-      });
+      };
+
+      console.log("🔄 [DEBUG] Request a enviar:", request);
+      
+      // Llamar directamente a la función del componente padre con el POST endpoint
+      await onAsignar(request);
+      
+      console.log("✅ [DEBUG] Asignación completada en modal");
       onClose();
     } catch (error) {
-      console.error("Error asignando cheque:", error);
+      console.error("❌ [DEBUG] Error asignando cheque en modal:", error);
       setError("Error al asignar el cheque. Intente nuevamente.");
     } finally {
       setIsAsignando(false);

@@ -1,14 +1,15 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Typography, Box, Autocomplete, CircularProgress, useTheme, Stack, FormControl, InputLabel, Select, MenuItem, Alert, Chip,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Typography, Box, Autocomplete, CircularProgress, Stack, FormControl, InputLabel, Select, MenuItem, Alert,
 } from "@mui/material";
-import { AsignarChequeRequest, AsignarChequeAFacturaRequest } from "@/types/nominaCheque";
+import { AsignarChequeAFacturaRequest } from "@/types/nominaCheque";
 import { CrearChequeRequest } from "@/types/factura";
 import { Cheque } from "@/types/factura";
 import { useChequesByProveedor } from "@/hooks/useCheques";
+import { useNotasCreditoByFactura } from "@/hooks/useNotasCredito";
 import { FacturaAsignada } from "@/types/nominaCheque";
-import { montoAEntero } from "@/utils/formatearMonto";
+import { stringMontoAEntero } from "@/utils/formatearMonto";
 
 interface AsignarChequeAFacturaModalProps {
   open: boolean;
@@ -22,10 +23,10 @@ interface AsignarChequeAFacturaModalProps {
 export function AsignarChequeAFacturaModal({
   open, onClose, onAsignar, onCrearYAsignar, factura, nominaId,
 }: AsignarChequeAFacturaModalProps) {
-  const theme = useTheme();
   const [chequeSeleccionado, setChequeSeleccionado] = useState<Cheque | null>(null);
   const [usarChequeExistente, setUsarChequeExistente] = useState(true);
   const [correlativoCheque, setCorrelativoCheque] = useState("");
+  const [montoManual, setMontoManual] = useState("");
   const [error, setError] = useState<string>("");
   const [isAsignando, setIsAsignando] = useState(false);
 
@@ -38,6 +39,10 @@ export function AsignarChequeAFacturaModal({
     0
   );
 
+  // Obtener notas de crédito de la factura actual
+  const facturaId = factura?.id ? parseInt(factura.id) : 0;
+  const { data: notasCreditoData } = useNotasCreditoByFactura(facturaId);
+
   // Obtener cheques disponibles
   const chequesDisponibles = chequesResponse?.data?.cheques || [];
 
@@ -45,11 +50,38 @@ export function AsignarChequeAFacturaModal({
     if (open) {
       setChequeSeleccionado(null);
       setCorrelativoCheque("");
+      setMontoManual("");
       setUsarChequeExistente(true);
       setError("");
       setIsAsignando(false);
     }
   }, [open]);
+
+  // Calcular monto neto considerando notas de crédito
+  const calcularMontoNeto = () => {
+    const montoFactura = factura?.montoAsignado || factura?.monto || 0;
+    const montoManualNumero = montoManual ? stringMontoAEntero(montoManual) : 0;
+    
+    // Obtener notas de crédito de la factura
+    const notasCreditoFactura = notasCreditoData?.data?.notas_credito || [];
+    const totalNotasCredito = notasCreditoFactura.reduce((sum: number, nc: { monto: number }) => sum + Math.round(nc.monto || 0), 0);
+    
+    // Calcular monto neto
+    const montoBase = montoManualNumero > 0 ? montoManualNumero : montoFactura;
+    const montoNeto = Math.max(0, montoBase - totalNotasCredito); // No permitir montos negativos
+    
+    return {
+      montoFactura,
+      montoManual: montoManualNumero,
+      totalNotasCredito,
+      montoNeto,
+      notasCredito: notasCreditoFactura.map((nc: { monto: number; id?: number; folio_nc?: string }) => ({
+        ...nc,
+        facturaId: facturaId,
+        facturaFolio: factura?.folio || ''
+      }))
+    };
+  };
 
   const handleChequeChange = (event: React.SyntheticEvent, newValue: Cheque | null) => {
     setChequeSeleccionado(newValue);
@@ -73,10 +105,23 @@ export function AsignarChequeAFacturaModal({
         setIsAsignando(true);
         setError("");
         
+        // Calcular monto neto considerando notas de crédito
+        const montoNeto = calcularMontoNeto();
+        
+        // Usar el monto neto en lugar del monto completo del cheque
+        const montoAAsignar = montoNeto.montoNeto;
+        
         const asignacionRequest: AsignarChequeAFacturaRequest = {
           correlativo: chequeSeleccionado.correlativo,
-          monto: typeof chequeSeleccionado.monto === 'string' ? parseFloat(chequeSeleccionado.monto) || 0 : (chequeSeleccionado.monto || 0)
+          monto: montoAAsignar // Usar monto neto en lugar del monto completo del cheque
         };
+        
+        console.log("🔄 [DEBUG] Asignando cheque con monto neto:", {
+          montoOriginal: chequeSeleccionado.monto,
+          montoNeto: montoAAsignar,
+          totalNotasCredito: montoNeto.totalNotasCredito,
+          notasCredito: montoNeto.notasCredito.length
+        });
         
         await onAsignar(nominaId, parseInt(factura.id), asignacionRequest);
         onClose();
@@ -102,11 +147,12 @@ export function AsignarChequeAFacturaModal({
         setIsAsignando(true);
         setError("");
         
-        const montoFactura = factura.montoAsignado || factura.monto || 0;
+        // Calcular monto neto considerando notas de crédito
+        const montoNeto = calcularMontoNeto();
         
         await onCrearYAsignar(nominaId, parseInt(factura.id), {
           correlativo: correlativoCheque.trim(),
-          monto: montoFactura,
+          monto: montoNeto.montoNeto, // Usar monto neto
         });
         onClose();
       } catch (error) {
@@ -121,30 +167,15 @@ export function AsignarChequeAFacturaModal({
   const handleClose = () => {
     setChequeSeleccionado(null);
     setCorrelativoCheque("");
+    setMontoManual("");
     setUsarChequeExistente(true);
     setError("");
     setIsAsignando(false);
     onClose();
   };
 
-  const formatMonto = (monto: number | string | undefined | null): string => {
-    if (monto === undefined || monto === null) return '0';
-    const numMonto = typeof monto === 'string' ? parseFloat(monto) || 0 : (monto || 0);
-    return numMonto.toLocaleString();
-  };
-
-  const getMontoDisponible = (cheque: Cheque) => {
-    const montoAsignado = montoAEntero(cheque.monto_asignado);
-    const montoTotal = montoAEntero(cheque.monto);
-    const montoDisponible = montoTotal - montoAsignado;
-    
-    return {
-      montoTotal,
-      montoAsignado,
-      montoDisponible,
-      porcentajeUsado: montoAsignado > 0 ? Math.round((montoAsignado / montoTotal) * 100) : 0
-    };
-  };
+  // Calcular monto neto para mostrar información
+  const montoNeto = calcularMontoNeto();
 
   return (
     <Dialog
@@ -154,355 +185,145 @@ export function AsignarChequeAFacturaModal({
       fullWidth
       PaperProps={{
         sx: {
-          minHeight: '500px',
-          maxHeight: '80vh',
-          borderRadius: '12px',
-          bgcolor: theme.palette.background.paper,
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-        }
+          borderRadius: 2,
+          maxHeight: "80vh",
+        },
       }}
     >
-      <DialogTitle sx={{
-        pb: 2,
-        borderBottom: `1px solid ${theme.palette.divider}`,
-        bgcolor: theme.palette.background.default
-      }}>
-        <Typography variant="h5" fontWeight={700} sx={{ color: theme.palette.text.primary }}>
+      <DialogTitle sx={{ pb: 1 }}>
+        <Typography variant="h6" component="div">
           Asignar Cheque a Factura
         </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Selecciona un cheque existente o crea uno nuevo
+        </Typography>
       </DialogTitle>
-      
-      <DialogContent sx={{ minHeight: '400px', display: 'flex', flexDirection: 'column' }}>
-        <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 3, flex: 1 }}>
-          <Typography variant="body2" color="text.secondary">
-            Selecciona un cheque existente o crea uno nuevo para asignar a la factura
-          </Typography>
 
+      <DialogContent sx={{ pb: 2 }}>
+        <Stack spacing={2}>
+          {/* Información de la factura - más compacta */}
           {factura && (
-            <Box sx={{
-              bgcolor: "background.default",
-              border: `1px solid ${theme.palette.divider}`,
-              borderRadius: "12px",
-              p: 3
-            }}>
-              <Typography variant="h6" fontWeight={600} sx={{ color: "text.primary", mb: 2 }}>
-                Información de la Factura
+            <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                {factura.folio} - {factura.proveedor}
               </Typography>
-              <Stack spacing={2}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    Folio:
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ color: "text.primary" }}>
-                    {factura.folio}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    Proveedor:
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ color: "text.primary" }}>
-                    {factura.proveedor}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    Monto Factura:
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ color: "text.primary" }}>
-                    ${formatMonto(factura.monto)}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    Monto Asignado:
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ color: "text.primary" }}>
-                    ${formatMonto(factura.montoAsignado)}
-                  </Typography>
-                </Box>
-              </Stack>
+              <Typography variant="body2" color="text.secondary">
+                Monto: ${factura.montoAsignado?.toLocaleString('es-CL') || factura.monto?.toLocaleString('es-CL') || '0'}
+              </Typography>
+              
+              {/* Mostrar información de notas de crédito solo si existen */}
+              {montoNeto.totalNotasCredito > 0 && (
+                <Typography variant="body2" color="info.main" sx={{ mt: 0.5 }}>
+                  Notas de crédito: ${montoNeto.totalNotasCredito.toLocaleString('es-CL')} 
+                  → Neto: ${montoNeto.montoNeto.toLocaleString('es-CL')}
+                </Typography>
+              )}
             </Box>
           )}
 
-          {error && (
-            <Alert 
-              severity="error" 
-              sx={{ 
-                borderRadius: "8px",
-                border: `1px solid ${theme.palette.error.light}`,
-                bgcolor: theme.palette.mode === 'light' ? "#fef2f2" : "#2d1b1b",
-                color: "error.main",
-              }}
-            >
-              {error}
-            </Alert>
-          )}
+          {/* Campo para monto manual - más compacto */}
+          <TextField
+            label="Monto Manual (opcional)"
+            value={montoManual}
+            onChange={(e) => setMontoManual(e.target.value)}
+            placeholder="Dejar vacío para usar monto asignado"
+            fullWidth
+            size="small"
+            helperText="Si especifica un monto, se usará en lugar del monto asignado"
+          />
 
-          {/* Selector de tipo de cheque */}
-          <FormControl fullWidth disabled={isAsignando}>
+          {/* Tipo de cheque */}
+          <FormControl fullWidth size="small">
             <InputLabel>Tipo de Cheque</InputLabel>
             <Select
               value={usarChequeExistente ? "existente" : "nuevo"}
+              onChange={(e) => setUsarChequeExistente(e.target.value === "existente")}
               label="Tipo de Cheque"
-              onChange={(e) => {
-                setUsarChequeExistente(e.target.value === "existente");
-                setChequeSeleccionado(null);
-                setCorrelativoCheque("");
-                setError("");
-              }}
-              sx={{
-                borderRadius: "8px",
-                "& .MuiOutlinedInput-notchedOutline": {
-                  borderColor: theme.palette.divider,
-                },
-                "&:hover .MuiOutlinedInput-notchedOutline": {
-                  borderColor: theme.palette.text.primary,
-                },
-                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                  borderColor: theme.palette.primary.main,
-                },
-              }}
             >
               <MenuItem value="existente">Usar Cheque Existente</MenuItem>
               <MenuItem value="nuevo">Crear Nuevo Cheque</MenuItem>
             </Select>
           </FormControl>
 
-          {/* Selector de cheque existente */}
-          {usarChequeExistente && (
-            <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Cheques disponibles:
-              </Typography>
-              
-              {chequesDisponibles.length === 0 ? (
-                <Alert 
-                  severity="info" 
-                  sx={{ 
-                    borderRadius: "8px",
-                    border: `1px solid ${theme.palette.info.light}`,
-                    bgcolor: theme.palette.mode === 'light' ? "#f0f9ff" : "#1e3a5f",
+          {usarChequeExistente ? (
+            // Seleccionar cheque existente
+            <Autocomplete
+              options={chequesDisponibles}
+              getOptionLabel={(option) => `${option.correlativo} - $${option.monto?.toLocaleString('es-CL') || '0'}`}
+              value={chequeSeleccionado}
+              onChange={handleChequeChange}
+              loading={isLoading}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Seleccionar Cheque"
+                  placeholder="Buscar cheque..."
+                  size="small"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {isLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
                   }}
-                >
-                  No hay cheques disponibles. Puede crear un nuevo cheque.
-                </Alert>
-              ) : (
-                <Autocomplete
-                  options={chequesDisponibles}
-                  getOptionLabel={(option) => {
-                    const info = getMontoDisponible(option);
-                    return `${option.correlativo || 'Sin número'} - $${info.montoTotal.toLocaleString('es-CL')}`;
-                  }}
-                  value={chequeSeleccionado}
-                  onChange={handleChequeChange}
-                  loading={isLoading}
-                  disabled={isAsignando}
-                  fullWidth
-                  ListboxProps={{
-                    style: { maxHeight: '200px' }
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Seleccionar Cheque"
-                      error={!!error && !chequeSeleccionado}
-                      helperText={!chequeSeleccionado && error ? error : ""}
-                      disabled={isAsignando}
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                          <>
-                            {isLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                            {params.InputProps.endAdornment}
-                          </>
-                        ),
-                      }}
-                    />
-                  )}
-                  renderOption={({ key, ...props }, option) => (
-                    <Box component="li" key={key} {...props}>
-                      <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
-                        <Typography variant="body2" fontWeight={500}>
-                          {option.correlativo || 'Sin número'}
-                        </Typography>
-                        <Box sx={{ display: "flex", gap: 1, mt: 0.5 }}>
-                          <Chip 
-                            label={`Total: $${getMontoDisponible(option).montoTotal.toLocaleString('es-CL')}`} 
-                            size="small" 
-                            color="primary" 
-                            variant="outlined"
-                          />
-                          {option.cantidad_facturas && (
-                            <Chip 
-                              label={`${option.cantidad_facturas} facturas`} 
-                              size="small" 
-                              color="info" 
-                              variant="outlined"
-                            />
-                          )}
-                        </Box>
-                      </Box>
-                    </Box>
-                  )}
-                  noOptionsText="No se encontraron cheques disponibles"
-                  loadingText="Cargando cheques..."
-                  clearOnBlur
-                  clearOnEscape
                 />
               )}
-            </Box>
-          )}
-
-          {/* Campo de correlativo para nuevo cheque */}
-          {!usarChequeExistente && (
+              renderOption={(props, option) => (
+                <Box component="li" {...props}>
+                  <Box>
+                    <Typography variant="body2">
+                      <strong>{option.correlativo}</strong>
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      ${option.monto?.toLocaleString('es-CL') || '0'} - {option.nombre_usuario || 'Sin usuario'}
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+            />
+          ) : (
+            // Crear nuevo cheque
             <TextField
-              fullWidth
               label="Correlativo del Cheque"
               value={correlativoCheque}
               onChange={(e) => setCorrelativoCheque(e.target.value)}
-              placeholder="Ej: CH-001-2024"
-              disabled={isAsignando}
+              placeholder="Ej: CHQ-001"
+              fullWidth
+              size="small"
               required
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "8px",
-                  color: theme.palette.text.primary,
-                  "& fieldset": {
-                    borderColor: theme.palette.divider,
-                  },
-                  "&:hover fieldset": {
-                    borderColor: theme.palette.text.primary,
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: theme.palette.primary.main,
-                  },
-                },
-                "& .MuiInputLabel-root": {
-                  color: theme.palette.text.secondary,
-                  "&.Mui-focused": {
-                    color: theme.palette.primary.main,
-                  },
-                },
-                input: {
-                  color: theme.palette.text.primary,
-                },
-              }}
-              helperText={
-                <span style={{ color: theme.palette.text.secondary }}>
-                  Número de correlativo del nuevo cheque
-                </span>
-              }
             />
           )}
 
-          {/* Información del cheque seleccionado */}
-          {chequeSeleccionado && (
-            <Box sx={{
-              bgcolor: "background.default",
-              border: `1px solid ${theme.palette.divider}`,
-              borderRadius: "12px",
-              p: 3
-            }}>
-              <Typography variant="h6" fontWeight={600} sx={{ color: "text.primary", mb: 2 }}>
-                Información del Cheque
+          {/* Mostrar información del monto que se va a asignar - más compacta */}
+          {montoNeto.montoNeto > 0 && (
+            <Alert severity="success" sx={{ py: 1 }}>
+              <Typography variant="body2">
+                <strong>Monto a asignar:</strong> ${montoNeto.montoNeto.toLocaleString('es-CL')}
               </Typography>
-              <Stack spacing={2}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    Número:
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ color: "text.primary" }}>
-                    {chequeSeleccionado.correlativo || 'Sin número'}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    Monto Total:
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ color: "text.primary" }}>
-                    ${formatMonto(chequeSeleccionado.monto)}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    Monto Asignado:
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ color: "text.primary" }}>
-                    ${formatMonto(chequeSeleccionado.monto_asignado)}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    Estado:
-                  </Typography>
-                  <Typography variant="body2" color="success.main" fontWeight={600}>
-                    {chequeSeleccionado.asignado_a_nomina ? 'Asignado a nómina' : 'Disponible'}
-                  </Typography>
-                </Box>
-              </Stack>
-            </Box>
+            </Alert>
           )}
-        </Box>
+
+          {error && (
+            <Alert severity="error" sx={{ py: 1 }}>
+              {error}
+            </Alert>
+          )}
+        </Stack>
       </DialogContent>
-      
-      <DialogActions sx={{
-        p: 3,
-        borderTop: `1px solid ${theme.palette.divider}`,
-        bgcolor: theme.palette.background.default
-      }}>
-        <Button
-          onClick={handleClose}
-          variant="outlined"
-          disabled={isAsignando}
-          sx={{
-            borderColor: theme.palette.divider,
-            color: theme.palette.text.primary,
-            textTransform: "none",
-            fontWeight: 600,
-            borderRadius: "8px",
-            px: 3,
-            "&:hover": {
-              borderColor: theme.palette.primary.main,
-              bgcolor: theme.palette.primary.light,
-              color: theme.palette.primary.contrastText,
-            },
-            "&:disabled": {
-              opacity: 0.7,
-            }
-          }}
-        >
+
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={handleClose} disabled={isAsignando}>
           Cancelar
         </Button>
         <Button
           onClick={handleAsignar}
           variant="contained"
-          color="primary"
-          disabled={
-            isAsignando || 
-            (usarChequeExistente && !chequeSeleccionado) ||
-            (!usarChequeExistente && !correlativoCheque.trim())
-          }
-          sx={{
-            textTransform: "none",
-            fontWeight: 600,
-            borderRadius: "8px",
-            px: 3,
-            boxShadow: "none",
-            minWidth: "120px",
-            "&:hover": {
-              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-            },
-            "&:disabled": {
-              opacity: 0.7,
-            }
-          }}
+          disabled={isAsignando || (usarChequeExistente && !chequeSeleccionado) || (!usarChequeExistente && !correlativoCheque.trim())}
+          startIcon={isAsignando ? <CircularProgress size={16} /> : null}
         >
-          {isAsignando ? (
-            <CircularProgress size={20} color="inherit" />
-          ) : (
-            usarChequeExistente ? "Asignar" : "Crear y Asignar"
-          )}
+          {isAsignando ? "Asignando..." : "Asignar Cheque"}
         </Button>
       </DialogActions>
     </Dialog>
