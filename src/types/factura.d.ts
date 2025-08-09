@@ -8,6 +8,7 @@ export interface FacturaResponse {
   image_url_cloudinary: string;
   fecha_registro: string;
   nombre_local: string;
+  id_local?: number; // Opcional: algunos endpoints pueden devolver solo id_local
   nombre_usuario: string;
   rut_proveedor?: string;
   monto?: number | string; // Campo real del monto desde el backend (puede venir como string)

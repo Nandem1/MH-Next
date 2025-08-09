@@ -208,27 +208,21 @@ export function EditarMetodoPagoModal({
         };
       }
 
-      // Optimistic update: actualizar inmediatamente la UI
-      
-      // Optimistic update para la factura
-      queryClient.setQueryData(["facturas"], (oldData: { facturas?: Array<{ id: string; metodo_pago?: string; monto_pagado?: number; cheque?: { correlativo: string; monto: number } | undefined }> }) => {
+      // Optimistic update: actualizar inmediatamente la UI (todas las queries de facturas)
+      queryClient.setQueriesData({ queryKey: ["facturas"] }, (oldData: { facturas: Factura[]; total: number } | undefined) => {
         if (!oldData?.facturas) return oldData;
-        
         return {
           ...oldData,
-          facturas: oldData.facturas.map((f: { id: string; metodo_pago?: string; monto_pagado?: number; cheque?: { correlativo: string; monto: number } | undefined }) => 
-            f.id === factura.id 
-              ? { 
-                  ...f, 
+          facturas: oldData.facturas.map((f: Factura) =>
+            f.id === (factura?.id || "")
+              ? {
+                  ...f,
                   metodo_pago: metodoPago,
                   monto_pagado: montoAEnviar,
-                  cheque: metodoPago === "CHEQUE" ? {
-                    correlativo: data.cheque?.correlativo || "",
-                    monto: data.cheque?.monto || 0
-                  } : undefined
+                  cheque_correlativo: metodoPago === "CHEQUE" ? (data.cheque?.correlativo || "") : undefined,
                 }
               : f
-          )
+          ),
         };
       });
       
@@ -626,37 +620,41 @@ export function EditarMetodoPagoModal({
                             }}
                           />
                         )}
-                        renderOption={(props, option) => (
-                          <Box component="li" {...props}>
-                            <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
-                              <Typography variant="body2" fontWeight={500}>
-                                {option.correlativo}
-                              </Typography>
-                              <Box sx={{ display: "flex", gap: 1, mt: 0.5 }}>
-                                <Chip 
-                                  label={`Total: $${getMontoDisponible(option).montoTotal.toLocaleString('es-CL')}`} 
-                                  size="small" 
-                                  color="primary" 
-                                  variant="outlined"
-                                />
-                                {option.cantidad_facturas && (
+                        renderOption={(props, option) => {
+                          // Evitar pasar key dentro de props spread (React 19 restricción)
+                          const { key, ...optionProps } = props as { key?: string } & Record<string, unknown>;
+                          return (
+                            <Box component="li" key={key} {...optionProps}>
+                              <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                                <Typography variant="body2" fontWeight={500}>
+                                  {option.correlativo}
+                                </Typography>
+                                <Box sx={{ display: "flex", gap: 1, mt: 0.5 }}>
                                   <Chip 
-                                    label={`${option.cantidad_facturas} facturas`} 
+                                    label={`Total: $${getMontoDisponible(option).montoTotal.toLocaleString('es-CL')}`} 
                                     size="small" 
-                                    color="info" 
+                                    color="primary" 
                                     variant="outlined"
                                   />
-                                )}
-                                <Chip 
-                                  label={`Proveedor: ${factura?.proveedor || "N/A"}`} 
-                                  size="small" 
-                                  color="secondary" 
-                                  variant="outlined"
-                                />
+                                  {option.cantidad_facturas && (
+                                    <Chip 
+                                      label={`${option.cantidad_facturas} facturas`} 
+                                      size="small" 
+                                      color="info" 
+                                      variant="outlined"
+                                    />
+                                  )}
+                                  <Chip 
+                                    label={`Proveedor: ${factura?.proveedor || "N/A"}`} 
+                                    size="small" 
+                                    color="secondary" 
+                                    variant="outlined"
+                                  />
+                                </Box>
                               </Box>
                             </Box>
-                          </Box>
-                        )}
+                          );
+                        }}
                       />
                     )}
                   </Box>

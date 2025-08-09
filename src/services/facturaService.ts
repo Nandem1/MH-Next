@@ -17,7 +17,8 @@ export const getFacturas = async (
   limit: number = 10,
   local?: string,
   usuario?: string,
-  proveedor?: string
+  proveedor?: string,
+  folio?: string
 ): Promise<{ facturas: Factura[]; total: number }> => {
   try {
     const localMapping: Record<string, number> = {
@@ -27,6 +28,38 @@ export const getFacturas = async (
     };
 
     const id_local = local ? localMapping[local] : undefined;
+
+    // Si hay folio, usamos endpoint específico (mismo formato que lista)
+    if (folio) {
+      const byFolio = await axios.get(`${API_URL}/api-beta/facturas/${folio}`);
+      const data: unknown = byFolio.data;
+      // Soportar ambas formas: wrapper { facturas, total_registros } o item/array directo
+      type FolioWrapper = { facturas?: FacturaResponse[]; total_registros?: number } | FacturaResponse | FacturaResponse[] | null | undefined;
+      const safeData = data as FolioWrapper;
+      const rawFacturas: FacturaResponse[] = Array.isArray((safeData as { facturas?: FacturaResponse[] })?.facturas)
+        ? ((safeData as { facturas: FacturaResponse[] }).facturas)
+        : Array.isArray(safeData)
+          ? (safeData as FacturaResponse[])
+          : safeData && (safeData as FacturaResponse)
+            ? [safeData as FacturaResponse]
+            : [];
+      const total_registros: number = typeof (safeData as { total_registros?: number })?.total_registros === 'number'
+        ? (safeData as { total_registros: number }).total_registros
+        : rawFacturas.length;
+
+      const adaptadas: Factura[] = rawFacturas
+        .filter(Boolean)
+        .map((f: FacturaResponse) => adaptFactura(f));
+
+      // Aplicar filtros opcionales en cliente (si existen)
+      const filtradas = adaptadas.filter((f) => {
+        const matchLocal = local ? f.local.includes(local) : true;
+        const matchUsuario = usuario ? f.nombre_usuario?.toString() === usuario : true;
+        const matchProveedor = proveedor ? f.id_proveedor?.toString() === proveedor : true;
+        return matchLocal && matchUsuario && matchProveedor;
+      });
+      return { facturas: filtradas, total: total_registros };
+    }
 
     const response = await axios.get<FacturaAPIResponse>(`${API_URL}/api-beta/facturas`, {
       params: {

@@ -90,6 +90,7 @@ export function FacturaTable({
   const [openEditarMontoModal, setOpenEditarMontoModal] = useState(false);
   const [openEditarMetodoPagoModal, setOpenEditarMetodoPagoModal] = useState(false);
   const [facturaParaEditar, setFacturaParaEditar] = useState<Factura | null>(null);
+  // Control local solo para UI (modales y snackbar)
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
@@ -135,7 +136,6 @@ export function FacturaTable({
     try {
       // Cerrar el modal inmediatamente (optimistic update ya actualizó la UI)
       handleCloseEditarMontoModal();
-      
       // Ejecutar la mutación en background (sin await)
       actualizarMontoMutation.mutate({ 
         id: facturaParaEditar.id, 
@@ -177,7 +177,7 @@ export function FacturaTable({
   // Verificar si se está actualizando alguna factura
   const isUpdating = actualizarMontoMutation.isPending;
 
-  // Manejar estados de la mutación
+  // Manejar estados de la mutación: mostrar toast una sola vez y resetear estado interno de la mutación
   useEffect(() => {
     if (actualizarMontoMutation.isSuccess) {
       setSnackbar({
@@ -185,6 +185,7 @@ export function FacturaTable({
         message: 'Monto actualizado correctamente',
         severity: 'success'
       });
+      actualizarMontoMutation.reset();
     }
     if (actualizarMontoMutation.isError) {
       setSnackbar({
@@ -192,8 +193,9 @@ export function FacturaTable({
         message: 'Error al actualizar monto',
         severity: 'error'
       });
+      actualizarMontoMutation.reset();
     }
-  }, [actualizarMontoMutation.isSuccess, actualizarMontoMutation.isError]);
+  }, [actualizarMontoMutation]);
 
   // Manejar estados de la mutación de método de pago
   useEffect(() => {
@@ -203,6 +205,7 @@ export function FacturaTable({
         message: 'Método de pago actualizado correctamente',
         severity: 'success'
       });
+      actualizarMetodoPagoMutation.reset();
     }
     if (actualizarMetodoPagoMutation.isError) {
       setSnackbar({
@@ -210,8 +213,9 @@ export function FacturaTable({
         message: 'Error al actualizar método de pago',
         severity: 'error'
       });
+      actualizarMetodoPagoMutation.reset();
     }
-  }, [actualizarMetodoPagoMutation.isSuccess, actualizarMetodoPagoMutation.isError]);
+  }, [actualizarMetodoPagoMutation]);
 
   const handlePrint = (factura: Factura) => {
     if (!factura) return;

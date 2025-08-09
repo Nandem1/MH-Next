@@ -13,14 +13,25 @@ export const useFacturas = (
   limit: number,
   local?: string,
   usuario?: string,
-  proveedor?: string
+  proveedor?: string,
+  folio?: string
 ) => {
-  return useQuery({
-    queryKey: ["facturas", page, limit, local ?? "", usuario ?? "", proveedor ?? ""],
-    queryFn: () => getFacturas(page, limit, local, usuario, proveedor),
+  const queryClient = useQueryClient();
+  const result = useQuery<{ facturas: Factura[]; total: number }>({
+    queryKey: ["facturas", page, limit, local ?? "", usuario ?? "", proveedor ?? "", folio ?? ""],
+    queryFn: () => getFacturas(page, limit, local, usuario, proveedor, folio),
     // Usar configuración global del QueryClient
     // staleTime, retry, refetchOnWindowFocus, etc. se manejan globalmente
   });
+
+  // Normalizar por id cuando lleguen datos
+  if (result.data?.facturas) {
+    result.data.facturas.forEach((f: Factura) => {
+      queryClient.setQueryData(["factura", f.id], f);
+    });
+  }
+
+  return result;
 };
 
 // Hook para actualizar montos de facturas con optimistic update
@@ -38,21 +49,22 @@ export const useActualizarMontoFactura = () => {
       const previousFacturas = queryClient.getQueriesData({ queryKey: ["facturas"] });
 
       // Optimistic update: marcar la factura como "updating" en lugar de cambiar el monto
-      queryClient.setQueriesData({ queryKey: ["facturas"] }, (old: FacturasQueryResult | undefined) => {
-        if (!old) return old;
-        
-        // Si es un array de facturas, marcar la factura específica como updating
-        if (old.facturas && Array.isArray(old.facturas)) {
-          return {
-            ...old,
-            facturas: old.facturas.map((factura: Factura) => 
-              factura.id === id ? { ...factura, isUpdating: true, pendingMonto: monto } : factura
-            )
-          };
-        }
-        
-        return old;
+      previousFacturas.forEach(([queryKey, old]) => {
+        const current = old as FacturasQueryResult | undefined;
+        if (!current?.facturas) return;
+        queryClient.setQueryData(queryKey, {
+          ...current,
+          facturas: current.facturas.map((factura: Factura) =>
+            factura.id === id ? { ...factura, isUpdating: true, pendingMonto: monto } : factura
+          ),
+        });
       });
+
+      // Optimistic también para la entidad individual
+      const currentEntity = queryClient.getQueryData<Factura>(["factura", id]);
+      if (currentEntity) {
+        queryClient.setQueryData(["factura", id], { ...currentEntity, isUpdating: true, pendingMonto: monto });
+      }
 
       // Retornar el contexto para poder revertir si es necesario
       return { previousFacturas };
@@ -69,20 +81,24 @@ export const useActualizarMontoFactura = () => {
     onSuccess: (_, variables) => {
       // Actualizar el monto real y quitar el estado de updating
       const { id, monto } = variables;
-      queryClient.setQueriesData({ queryKey: ["facturas"] }, (old: FacturasQueryResult | undefined) => {
-        if (!old) return old;
-        
-        if (old.facturas && Array.isArray(old.facturas)) {
-          return {
-            ...old,
-            facturas: old.facturas.map((factura: Factura) => 
-              factura.id === id ? { ...factura, monto, isUpdating: false, pendingMonto: undefined } : factura
-            )
-          };
-        }
-        
-        return old;
+      const all = queryClient.getQueriesData({ queryKey: ["facturas"] });
+      all.forEach(([queryKey, old]) => {
+        const current = old as FacturasQueryResult | undefined;
+        if (!current?.facturas) return;
+        queryClient.setQueryData(queryKey, {
+          ...current,
+          facturas: current.facturas.map((factura: Factura) =>
+            factura.id === id ? { ...factura, monto, isUpdating: false, pendingMonto: undefined } : factura
+          ),
+        });
       });
+      // Actualizar entidad individual
+      const currentEntity = queryClient.getQueryData<Factura>(["factura", id]);
+      if (currentEntity) {
+        queryClient.setQueryData(["factura", id], { ...currentEntity, monto, isUpdating: false, pendingMonto: undefined });
+      }
+      // Evitar refetch que borre el cambio optimista
+      // queryClient.invalidateQueries({ queryKey: ["facturas"] });
     },
   });
 };
@@ -102,24 +118,24 @@ export const useActualizarMetodoPagoFactura = () => {
       const previousFacturas = queryClient.getQueriesData({ queryKey: ["facturas"] });
 
       // Optimistic update: marcar la factura como "updating"
-      queryClient.setQueriesData({ queryKey: ["facturas"] }, (old: FacturasQueryResult | undefined) => {
-        if (!old) return old;
-        
-        if (old.facturas && Array.isArray(old.facturas)) {
-          return {
-            ...old,
-            facturas: old.facturas.map((factura: Factura) => 
-              factura.id === data.id ? { 
-                ...factura, 
-                isUpdating: true, 
-                pendingMetodoPago: data.metodo_pago 
-              } : factura
-            )
-          };
-        }
-        
-        return old;
+      previousFacturas.forEach(([queryKey, old]) => {
+        const current = old as FacturasQueryResult | undefined;
+        if (!current?.facturas) return;
+        queryClient.setQueryData(queryKey, {
+          ...current,
+          facturas: current.facturas.map((factura: Factura) =>
+            factura.id === data.id
+              ? { ...factura, isUpdating: true, pendingMetodoPago: data.metodo_pago }
+              : factura
+          ),
+        });
       });
+
+      // Optimistic también para la entidad individual
+      const currentEntity = queryClient.getQueryData<Factura>(["factura", data.id]);
+      if (currentEntity) {
+        queryClient.setQueryData(["factura", data.id], { ...currentEntity, isUpdating: true, pendingMetodoPago: data.metodo_pago });
+      }
 
       // Retornar el contexto para poder revertir si es necesario
       return { previousFacturas };
@@ -136,27 +152,40 @@ export const useActualizarMetodoPagoFactura = () => {
     onSuccess: (_, variables) => {
       // Actualizar el método de pago real y quitar el estado de updating
       const { id, metodo_pago, monto_pagado, cheque } = variables;
-      queryClient.setQueriesData({ queryKey: ["facturas"] }, (old: FacturasQueryResult | undefined) => {
-        if (!old) return old;
-        
-        if (old.facturas && Array.isArray(old.facturas)) {
-          return {
-            ...old,
-            facturas: old.facturas.map((factura: Factura) => 
-              factura.id === id ? { 
-                ...factura, 
-                metodo_pago, 
-                monto_pagado,
-                cheque_correlativo: cheque?.correlativo,
-                isUpdating: false, 
-                pendingMetodoPago: undefined 
-              } : factura
-            )
-          };
-        }
-        
-        return old;
+      const all = queryClient.getQueriesData({ queryKey: ["facturas"] });
+      all.forEach(([queryKey, old]) => {
+        const current = old as FacturasQueryResult | undefined;
+        if (!current?.facturas) return;
+        queryClient.setQueryData(queryKey, {
+          ...current,
+          facturas: current.facturas.map((factura: Factura) =>
+            factura.id === id
+              ? {
+                  ...factura,
+                  metodo_pago,
+                  monto_pagado,
+                  cheque_correlativo: cheque?.correlativo,
+                  isUpdating: false,
+                  pendingMetodoPago: undefined,
+                }
+              : factura
+          ),
+        });
       });
+      // Actualizar entidad individual
+      const currentEntity = queryClient.getQueryData<Factura>(["factura", id]);
+      if (currentEntity) {
+        queryClient.setQueryData(["factura", id], {
+          ...currentEntity,
+          metodo_pago,
+          monto_pagado,
+          cheque_correlativo: cheque?.correlativo,
+          isUpdating: false,
+          pendingMetodoPago: undefined,
+        });
+      }
+      // Evitar refetch que borre el cambio optimista
+      // queryClient.invalidateQueries({ queryKey: ["facturas"] });
     },
   });
 };

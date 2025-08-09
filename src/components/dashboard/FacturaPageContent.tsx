@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
 import { useMobileOptimization } from "@/hooks/useMobileOptimization";
-import { Factura } from "@/types/factura";
 import { FacturaSearchBar } from "./FacturaSearchBar";
 import { FacturaTable } from "./FacturaTable";
 import { useFacturas } from "@/hooks/useFacturas";
@@ -12,9 +11,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Pagination from "@mui/material/Pagination";
-import { adaptFactura } from "@/utils/adaptFactura";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+// Nota: búsqueda por folio se maneja vía React Query (useFacturas)
 
 export function FacturaPageContent() {
   // Hook para forzar un re-render después del primer mount y corregir glitch visual
@@ -25,74 +22,50 @@ export function FacturaPageContent() {
 
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const [facturaFiltrada, setFacturaFiltrada] = useState<Factura[] | null>(
-    null
-  );
+  // Folio activo para consulta vía React Query
+  const [folioActivo, setFolioActivo] = useState<string>("");
   const [localActivo, setLocalActivo] = useState<string>("");
   const [usuarioActivo, setUsuarioActivo] = useState<string>("");
   const [proveedorActivo, setProveedorActivo] = useState<string>("");
 
-  const { data, isLoading, isFetching, error } = useFacturas(
+  const { data, isLoading, error } = useFacturas(
     page,
     limit,
     localActivo,
     usuarioActivo,
-    proveedorActivo
+    proveedorActivo,
+    folioActivo
   );
   const facturas = data?.facturas ?? [];
   const totalFacturas = data?.total ?? 0;
 
-  const handleSearch = async (folio: string, local: string) => {
-    try {
-      setPage(1);
-
-      if (folio) {
-        const response = await fetch(`${API_URL}/api-beta/facturas/${folio}`);
-        if (!response.ok) throw new Error("Factura no encontrada");
-
-        const data = await response.json();
-        const rawData = Array.isArray(data) ? data[0] : data;
-        const adaptedData = adaptFactura(rawData);
-
-        let result = adaptedData ? [adaptedData] : [];
-
-        if (local) {
-          result = result.filter((factura) => factura.local.includes(local));
-        }
-
-        setFacturaFiltrada(result);
-      } else {
-        setFacturaFiltrada(null);
-      }
-    } catch (err) {
-      console.error("Error buscando factura:", err);
-      setFacturaFiltrada([]);
-    }
-    // Nota: usuario y proveedor se manejan automáticamente a través de los filtros del hook useFacturas
-    // Los parámetros se incluyen para mantener compatibilidad con la interfaz del componente
-
+  const handleSearch = async (
+    folio: string,
+  ) => {
+    setPage(1);
+    setFolioActivo(folio.trim());
   };
 
   const handleLocalChange = (nuevoLocal: string) => {
-    setFacturaFiltrada(null);
+    setFolioActivo("");
     setLocalActivo(nuevoLocal);
     setPage(1);
   };
 
   const handleUsuarioChange = (nuevoUsuario: string) => {
-    setFacturaFiltrada(null);
+    setFolioActivo("");
     setUsuarioActivo(nuevoUsuario);
     setPage(1);
   };
 
   const handleProveedorChange = (nuevoProveedor: string) => {
-    setFacturaFiltrada(null);
+    setFolioActivo("");
     setProveedorActivo(nuevoProveedor);
     setPage(1);
   };
 
   const handleClearSearch = () => {
-    setFacturaFiltrada(null);
+    setFolioActivo("");
     setLocalActivo("");
     setUsuarioActivo("");
     setProveedorActivo("");
@@ -103,8 +76,7 @@ export function FacturaPageContent() {
     setPage(newPage);
   };
 
-  const facturasParaMostrar =
-    facturaFiltrada !== null ? facturaFiltrada : facturas;
+  const facturasParaMostrar = facturas;
 
   // Extraer URLs de imágenes para preloading
   const imageUrls = facturas.slice(0, 5).map(factura => factura.image_url_cloudinary);
@@ -133,7 +105,7 @@ export function FacturaPageContent() {
         proveedorActual={proveedorActivo}
       />
 
-      {isLoading || isFetching ? (
+      {isLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
           <CircularProgress />
         </Box>
@@ -148,7 +120,7 @@ export function FacturaPageContent() {
             isLoading={false}
             error={false}
           />
-          {facturaFiltrada === null && (
+          {!folioActivo && (
             <Box sx={{ display: "flex", justifyContent: "center" }}>
               <Pagination
                 count={Math.ceil(totalFacturas / limit)}

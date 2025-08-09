@@ -7,11 +7,11 @@ export function usePrefetch() {
   // Prefetch de facturas cuando el usuario está en el dashboard
   const prefetchFacturas = useCallback(() => {
     queryClient.prefetchQuery({
-      queryKey: ['facturas', 1, 10, '', '', ''],
+      queryKey: ['facturas', 1, 10, '', '', '', ''],
       queryFn: async () => {
         // Importar dinámicamente para no aumentar el bundle inicial
         const { getFacturas } = await import('@/services/facturaService');
-        return getFacturas(1, 10, '', '', '');
+        return getFacturas(1, 10, '', '', '', '');
       },
       staleTime: 5 * 60 * 1000, // 5 minutos
     });

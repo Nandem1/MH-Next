@@ -27,11 +27,18 @@ const transformDriveUrl = (url: string) => {
 // };
 
 export function adaptFactura(factura: FacturaResponse): Factura {
+  // Fallback de nombre de local cuando solo viene id_local
+  const localMapping: Record<number, string> = {
+    1: "LA CANTERA 3055",
+    2: "LIBERTADOR 1476",
+    3: "BALMACEDA 599",
+  };
+
   return {
     id: factura.id.toString(), // Usar ID real de la base de datos
     folio: factura.folio,
     proveedor: factura.proveedor,
-    local: factura.nombre_local || "Local desconocido",
+    local: factura.nombre_local || (factura.id_local ? (localMapping[factura.id_local] || "Local desconocido") : "Local desconocido"),
     estado: "BODEGA",
     fechaIngreso: factura.fecha_registro,
     image_url: transformDriveUrl(factura.image_url || ""),

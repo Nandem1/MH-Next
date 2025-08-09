@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Box,
   TextField,
@@ -58,6 +58,23 @@ export function FacturaSearchBar({
   
   const { data: usuarios, isLoading: isLoadingUsuarios } = useUsuarios();
   const { data: proveedores, isLoading: isLoadingProveedores } = useProveedores();
+
+  // Deduplicar por nombre para evitar claves repetidas en Autocomplete (ej: "SIN NOMBRE")
+  const proveedoresUnicos = useMemo(() => {
+    const map = new Map<string, { id: number; nombre: string }>();
+    (proveedores || []).forEach((p: { id: number; nombre: string }) => {
+      if (!map.has(p.nombre)) map.set(p.nombre, p);
+    });
+    return Array.from(map.values());
+  }, [proveedores]);
+
+  const usuariosUnicos = useMemo(() => {
+    const map = new Map<string, { id: number; nombre: string }>();
+    (usuarios || []).forEach((u: { id: number; nombre: string }) => {
+      if (!map.has(u.nombre)) map.set(u.nombre, u);
+    });
+    return Array.from(map.values());
+  }, [usuarios]);
 
   const handleLocalChange = (event: React.SyntheticEvent, newValue: { id: string; nombre: string } | null) => {
     const selectedLocal = newValue ? newValue.id : "";
@@ -163,8 +180,9 @@ export function FacturaSearchBar({
 
         <Autocomplete
           disablePortal
-          options={proveedores || []}
+          options={proveedoresUnicos}
           getOptionLabel={(option) => option.nombre}
+          isOptionEqualToValue={(option, value) => option.id === value.id}
           value={selectedProveedor}
           onChange={handleProveedorChange}
           loading={isLoadingProveedores}
@@ -217,6 +235,7 @@ export function FacturaSearchBar({
           disablePortal
           options={locales}
           getOptionLabel={(option) => option.nombre}
+          isOptionEqualToValue={(option, value) => option.id === value.id}
           value={selectedLocal}
           onChange={handleLocalChange}
           fullWidth={isSmall}
@@ -256,8 +275,9 @@ export function FacturaSearchBar({
 
         <Autocomplete
           disablePortal
-          options={usuarios || []}
+          options={usuariosUnicos}
           getOptionLabel={(option) => option.nombre}
+          isOptionEqualToValue={(option, value) => option.id === value.id}
           value={selectedUsuario}
           onChange={handleUsuarioChange}
           loading={isLoadingUsuarios}
