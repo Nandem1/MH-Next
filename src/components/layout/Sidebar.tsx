@@ -25,6 +25,7 @@ import { useRouter, usePathname } from "next/navigation";
 
 import { drawerWidth } from "@/constants/layout";
 import { useAuth } from "@/hooks/useAuth";
+import { canAccessRestrictedRoutes } from "@/utils/permissions";
 import { useState } from "react";
 
 interface SidebarProps {
@@ -60,6 +61,9 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
         return "Local desconocido";
     }
   };
+
+  // Acceso a rutas restringidas centralizado en utils/permissions
+  const canAccessRestricted = canAccessRestrictedRoutes(usuario || undefined);
 
   const drawerContent = (
     <Box display="flex" flexDirection="column" height="100%">
@@ -257,74 +261,84 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
           </Collapse>
 
           {/* Auditoría de Cartelería */}
-          <ListItem disablePadding>
-            <ListItemButton
-              selected={pathname === "/dashboard/auditoria-carteleria"}
-              onClick={() => goTo("/dashboard/auditoria-carteleria")}
-              sx={navButtonStyle()}
-            >
-              <ListItemIcon sx={{ minWidth: 40 }}>
-                <AssessmentIcon />
-              </ListItemIcon>
-              <ListItemText primary="Auditoría de Cartelería" />
-            </ListItemButton>
-          </ListItem>
+          {canAccessRestricted && (
+            <ListItem disablePadding>
+              <ListItemButton
+                selected={pathname === "/dashboard/auditoria-carteleria"}
+                onClick={() => goTo("/dashboard/auditoria-carteleria")}
+                sx={navButtonStyle()}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <AssessmentIcon />
+                </ListItemIcon>
+                <ListItemText primary="Auditoría de Cartelería" />
+              </ListItemButton>
+            </ListItem>
+          )}
 
           {/* Vencimientos */}
-          <ListItem disablePadding>
-            <ListItemButton
-              selected={pathname === "/dashboard/vencimientos"}
-              onClick={() => goTo("/dashboard/vencimientos")}
-              sx={navButtonStyle()}
-            >
-              <ListItemIcon sx={{ minWidth: 40 }}>
-                <QrCodeScannerIcon />
-              </ListItemIcon>
-              <ListItemText primary="Vencimientos" />
-            </ListItemButton>
-          </ListItem>
+          {canAccessRestricted && (
+            <ListItem disablePadding>
+              <ListItemButton
+                selected={pathname === "/dashboard/vencimientos"}
+                onClick={() => goTo("/dashboard/vencimientos")}
+                sx={navButtonStyle()}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <QrCodeScannerIcon />
+                </ListItemIcon>
+                <ListItemText primary="Vencimientos" />
+              </ListItemButton>
+            </ListItem>
+          )}
 
           {/* Control de Vencimientos */}
-          <ListItem disablePadding>
-            <ListItemButton
-              selected={pathname === "/dashboard/control-vencimientos"}
-              onClick={() => goTo("/dashboard/control-vencimientos")}
-              sx={navButtonStyle()}
-            >
-              <ListItemIcon sx={{ minWidth: 40 }}>
-                <AssessmentIcon />
-              </ListItemIcon>
-              <ListItemText primary="Control de Vencimientos" />
-            </ListItemButton>
-          </ListItem>
+          {canAccessRestricted && (
+            <ListItem disablePadding>
+              <ListItemButton
+                selected={pathname === "/dashboard/control-vencimientos"}
+                onClick={() => goTo("/dashboard/control-vencimientos")}
+                sx={navButtonStyle()}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <AssessmentIcon />
+                </ListItemIcon>
+                <ListItemText primary="Control de Vencimientos" />
+              </ListItemButton>
+            </ListItem>
+          )}
 
           {/* ZebrAI */}
-          <ListItem disablePadding>
-            <ListItemButton
-              selected={pathname === "/dashboard/zebrai"}
-              onClick={() => goTo("/dashboard/zebrai")}
-              sx={navButtonStyle()}
-            >
-              <ListItemIcon sx={{ minWidth: 40 }}>
-                <ReceiptIcon />
-              </ListItemIcon>
-              <ListItemText primary="ZebrAI" />
-            </ListItemButton>
-          </ListItem>
+          {canAccessRestricted && (
+            <ListItem disablePadding>
+              <ListItemButton
+                selected={pathname === "/dashboard/zebrai"}
+                onClick={() => goTo("/dashboard/zebrai")}
+                sx={navButtonStyle()}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <ReceiptIcon />
+                </ListItemIcon>
+                <ListItemText primary="ZebrAI" />
+              </ListItemButton>
+            </ListItem>
+          )}
 
           {/* Lector DTE */}
-          <ListItem disablePadding>
-            <ListItemButton
-              selected={pathname === "/dashboard/lector-dte"}
-              onClick={() => goTo("/dashboard/lector-dte")}
-              sx={navButtonStyle()}
-            >
-              <ListItemIcon sx={{ minWidth: 40 }}>
-                <ReceiptIcon />
-              </ListItemIcon>
-              <ListItemText primary="Lector DTE" />
-            </ListItemButton>
-          </ListItem>
+          {canAccessRestricted && (
+            <ListItem disablePadding>
+              <ListItemButton
+                selected={pathname === "/dashboard/lector-dte"}
+                onClick={() => goTo("/dashboard/lector-dte")}
+                sx={navButtonStyle()}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <ReceiptIcon />
+                </ListItemIcon>
+                <ListItemText primary="Lector DTE" />
+              </ListItemButton>
+            </ListItem>
+          )}
 
           {/* Usuarios */}
           <ListItem disablePadding>
