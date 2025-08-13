@@ -25,7 +25,7 @@ import { useRouter, usePathname } from "next/navigation";
 
 import { drawerWidth } from "@/constants/layout";
 import { useAuth } from "@/hooks/useAuth";
-import { canAccessRestrictedRoutes } from "@/utils/permissions";
+import { canAccessRoute } from "@/utils/permissions";
 import { useState } from "react";
 
 interface SidebarProps {
@@ -62,8 +62,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
     }
   };
 
-  // Acceso a rutas restringidas centralizado en utils/permissions
-  const canAccessRestricted = canAccessRestrictedRoutes(usuario || undefined);
+  // Acceso a rutas condicionado por reglas por ruta
 
   const drawerContent = (
     <Box display="flex" flexDirection="column" height="100%">
@@ -261,7 +260,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
           </Collapse>
 
           {/* Auditoría de Cartelería */}
-          {canAccessRestricted && (
+          {canAccessRoute("/dashboard/auditoria-carteleria", usuario || undefined) && (
             <ListItem disablePadding>
               <ListItemButton
                 selected={pathname === "/dashboard/auditoria-carteleria"}
@@ -277,7 +276,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
           )}
 
           {/* Vencimientos */}
-          {canAccessRestricted && (
+          {canAccessRoute("/dashboard/vencimientos", usuario || undefined) && (
             <ListItem disablePadding>
               <ListItemButton
                 selected={pathname === "/dashboard/vencimientos"}
@@ -293,7 +292,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
           )}
 
           {/* Control de Vencimientos */}
-          {canAccessRestricted && (
+          {canAccessRoute("/dashboard/control-vencimientos", usuario || undefined) && (
             <ListItem disablePadding>
               <ListItemButton
                 selected={pathname === "/dashboard/control-vencimientos"}
@@ -309,7 +308,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
           )}
 
           {/* ZebrAI */}
-          {canAccessRestricted && (
+          {canAccessRoute("/dashboard/zebrai", usuario || undefined) && (
             <ListItem disablePadding>
               <ListItemButton
                 selected={pathname === "/dashboard/zebrai"}
@@ -325,7 +324,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
           )}
 
           {/* Lector DTE */}
-          {canAccessRestricted && (
+          {canAccessRoute("/dashboard/lector-dte", usuario || undefined) && (
             <ListItem disablePadding>
               <ListItemButton
                 selected={pathname === "/dashboard/lector-dte"}
