@@ -380,18 +380,22 @@ export const useNominasCheque = () => {
       
       await nominaChequeService.actualizarTracking(nominaId, request);
       
+      // Invalidar potenciales caches relacionados
+      queryClient.invalidateQueries({ queryKey: ["nominas_list"] });
+      queryClient.invalidateQueries({ queryKey: ["nomina:", nominaId] });
+      
       // Actualizar la nómina seleccionada si es la misma
       if (selectedNomina?.id === nominaId) {
         await loadNomina(nominaId);
       }
       
-      // No es necesario recargar toda la lista aquí, el cache invalidation se encargará
-      // de actualizar los datos cuando sea necesario
+      // Refrescar la lista con los filtros actuales
+      await loadNominas();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al actualizar tracking");
       throw err;
     }
-  }, [selectedNomina?.id, loadNomina]);
+  }, [selectedNomina?.id, loadNomina, loadNominas, queryClient]);
 
   // Crear tracking manualmente
   const crearTracking = useCallback(async (nominaId: string) => {
@@ -400,18 +404,22 @@ export const useNominasCheque = () => {
       
       await nominaChequeService.crearTracking(nominaId);
       
+      // Invalidar potenciales caches relacionados
+      queryClient.invalidateQueries({ queryKey: ["nominas_list"] });
+      queryClient.invalidateQueries({ queryKey: ["nomina:", nominaId] });
+      
       // Actualizar la nómina seleccionada si es la misma
       if (selectedNomina?.id === nominaId) {
         await loadNomina(nominaId);
       }
       
-      // No es necesario recargar toda la lista aquí, el cache invalidation se encargará
-      // de actualizar los datos cuando sea necesario
+      // Refrescar la lista con los filtros actuales
+      await loadNominas();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al crear tracking");
       throw err;
     }
-  }, [selectedNomina?.id, loadNomina]);
+  }, [selectedNomina?.id, loadNomina, loadNominas, queryClient]);
 
   // Obtener nóminas por estado de tracking
   const getNominasPorEstadoTracking = useCallback(async (estado: string) => {
