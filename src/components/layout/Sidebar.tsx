@@ -63,6 +63,11 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
   };
 
   // Acceso a rutas condicionado por reglas por ruta
+  const canSeeBodega = [
+    "/dashboard/bodega/inicio",
+    "/dashboard/bodega/nuevo-movimiento",
+    "/dashboard/bodega/stock-general",
+  ].some((path) => canAccessRoute(path, usuario || undefined));
 
   const drawerContent = (
     <Box display="flex" flexDirection="column" height="100%">
@@ -213,51 +218,61 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
           </Collapse>
 
           {/* BODEGA (submenu) */}
-          <ListItem disablePadding>
-            <ListItemButton onClick={handleBodegaClick}>
-              <ListItemIcon sx={{ minWidth: 40 }}>
-                <InventoryIcon />
-              </ListItemIcon>
-              <ListItemText primary="Bodega" />
-              {openBodega ? <ExpandLess /> : <ExpandMore />}
-            </ListItemButton>
-          </ListItem>
-          <Collapse in={openBodega} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              <ListItemButton
-                sx={{ pl: 4 }}
-                selected={pathname === "/dashboard/bodega/inicio"}
-                onClick={() => goTo("/dashboard/bodega/inicio")}
-              >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <HomeIcon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText primary="Inicio" />
-              </ListItemButton>
+          {canSeeBodega && (
+            <>
+              <ListItem disablePadding>
+                <ListItemButton onClick={handleBodegaClick}>
+                  <ListItemIcon sx={{ minWidth: 40 }}>
+                    <InventoryIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Bodega" />
+                  {openBodega ? <ExpandLess /> : <ExpandMore />}
+                </ListItemButton>
+              </ListItem>
+              <Collapse in={openBodega} timeout="auto" unmountOnExit>
+                <List component="div" disablePadding>
+                  {canAccessRoute("/dashboard/bodega/inicio", usuario || undefined) && (
+                    <ListItemButton
+                      sx={{ pl: 4 }}
+                      selected={pathname === "/dashboard/bodega/inicio"}
+                      onClick={() => goTo("/dashboard/bodega/inicio")}
+                    >
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        <HomeIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText primary="Inicio" />
+                    </ListItemButton>
+                  )}
 
-              <ListItemButton
-                sx={{ pl: 4 }}
-                selected={pathname === "/dashboard/bodega/nuevo-movimiento"}
-                onClick={() => goTo("/dashboard/bodega/nuevo-movimiento")}
-              >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <AddIcon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText primary="Nuevo Movimiento" />
-              </ListItemButton>
+                  {canAccessRoute("/dashboard/bodega/nuevo-movimiento", usuario || undefined) && (
+                    <ListItemButton
+                      sx={{ pl: 4 }}
+                      selected={pathname === "/dashboard/bodega/nuevo-movimiento"}
+                      onClick={() => goTo("/dashboard/bodega/nuevo-movimiento")}
+                    >
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        <AddIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText primary="Nuevo Movimiento" />
+                    </ListItemButton>
+                  )}
 
-              <ListItemButton
-                sx={{ pl: 4 }}
-                selected={pathname === "/dashboard/bodega/stock-general"}
-                onClick={() => goTo("/dashboard/bodega/stock-general")}
-              >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <StorageIcon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText primary="Stock General" />
-              </ListItemButton>
-            </List>
-          </Collapse>
+                  {canAccessRoute("/dashboard/bodega/stock-general", usuario || undefined) && (
+                    <ListItemButton
+                      sx={{ pl: 4 }}
+                      selected={pathname === "/dashboard/bodega/stock-general"}
+                      onClick={() => goTo("/dashboard/bodega/stock-general")}
+                    >
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        <StorageIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText primary="Stock General" />
+                    </ListItemButton>
+                  )}
+                </List>
+              </Collapse>
+            </>
+          )}
 
           {/* Auditoría de Cartelería */}
           {canAccessRoute("/dashboard/auditoria-carteleria", usuario || undefined) && (

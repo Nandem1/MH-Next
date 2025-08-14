@@ -46,6 +46,9 @@ export const ROUTE_RULES: Record<string, RouteRule> = {
 	"/dashboard/control-vencimientos": { allowedRoles: [ROLES.SUPERVISOR], allowedLocales: [LOCALES.LOCAL_1] },
 	"/dashboard/zebrai": { allowedRoles: [ROLES.SUPERVISOR], allowedLocales: [LOCALES.LOCAL_1] },
 	"/dashboard/lector-dte": { allowedRoles: [ROLES.SUPERVISOR], allowedLocales: [LOCALES.LOCAL_1] },
+  "/dashboard/bodega/inicio": { allowedRoles: [ROLES.SUPERVISOR], allowedLocales: [LOCALES.LOCAL_1] },
+  "/dashboard/bodega/nuevo-movimiento": { allowedRoles: [ROLES.SUPERVISOR], allowedLocales: [LOCALES.LOCAL_1] },
+  "/dashboard/bodega/stock-general": { allowedRoles: [ROLES.SUPERVISOR], allowedLocales: [LOCALES.LOCAL_1] },
 };
 
 export const canAccessRoute = (path: string, user?: AuthLikeUser): boolean => {
