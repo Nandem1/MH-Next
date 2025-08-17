@@ -9,7 +9,8 @@ import {
   TextField, 
   Stack, 
   Typography,
-  useTheme 
+  useTheme,
+  InputAdornment 
 } from "@mui/material";
 import { useState } from "react";
 import { CrearNominaRequest } from "@/types/nominaCheque";
@@ -32,6 +33,14 @@ export function NuevaNominaModal({
   const { usuario } = useAuthStatus();
   const [numeroNomina, setNumeroNomina] = useState("");
 
+  // Prefijo por local
+  const prefixByLocal: Record<number, string> = {
+    1: "NOM-LC1-",
+    2: "NOM-LCO-",
+    3: "NOM-BA1-",
+  };
+  const prefijo = usuario?.local_id ? (prefixByLocal[usuario.local_id] || "NOM-") : "NOM-";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -44,8 +53,9 @@ export function NuevaNominaModal({
       return;
     }
 
+    const numeroSolo = numeroNomina.replace(/\D/g, "");
     const request: CrearNominaRequest = {
-      nombre: numeroNomina.trim(),
+      nombre: `${prefijo}${numeroSolo}`.trim(),
       fecha: new Date().toISOString().split('T')[0], // Formato YYYY-MM-DD
     };
 
@@ -93,11 +103,17 @@ export function NuevaNominaModal({
             <TextField
               label="Número de Nómina"
               value={numeroNomina}
-              onChange={(e) => setNumeroNomina(e.target.value)}
+              onChange={(e) => setNumeroNomina(e.target.value.replace(/\D/g, ""))}
               fullWidth
               required
               disabled={loading}
-              placeholder="Ej: NOM-2025-001"
+              placeholder="Sólo número (ej: 00123)"
+              inputProps={{ inputMode: "numeric", pattern: "\\d*" }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">{prefijo}</InputAdornment>
+                ),
+              }}
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "8px",
@@ -122,6 +138,7 @@ export function NuevaNominaModal({
             />
             
             <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>
+              • Se guardará como: {prefijo}{numeroNomina || "..."}
               • La fecha de emisión se establecerá automáticamente como hoy
               • El monto total se calculará automáticamente al asignar cheques
               • El tracking se iniciará en estado &quot;En Origen&quot;

@@ -45,9 +45,8 @@ interface FiltrosNominasProps {
 
 const estadosNominas = [
   { value: "pendiente", label: "Pendiente" },
-  { value: "activo", label: "Activo" },
-  { value: "completado", label: "Completado" },
-  { value: "cancelado", label: "Cancelado" },
+  { value: "enviada", label: "En Tránsito" },
+  { value: "recibida", label: "Recibida" },
 ];
 
 const estadosTracking = [

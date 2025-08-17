@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Container,
   Typography,
@@ -49,7 +49,7 @@ import { locales } from "@/hooks/useAuthStatus";
 export default function NominasPage() {
   const theme = useTheme();
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
+  const { isAuthenticated, isLoading: authLoading, usuario } = useAuthStatus();
 
   const {
     nominas,
@@ -84,6 +84,13 @@ export default function NominasPage() {
   const [filtroEstado, setFiltroEstado] = useState("");
   const [filtroUsuario, setFiltroUsuario] = useState("");
   const [filtroTipo, setFiltroTipo] = useState("");
+
+  // Activar filtro de local por defecto según el usuario autenticado
+  useEffect(() => {
+    if (usuario?.local_nombre) {
+      setFiltroLocal(usuario.local_nombre);
+    }
+  }, [usuario?.local_nombre]);
 
   const handleAsignarFacturasSuccess = useCallback(() => {
     setSnackbarMessage("Facturas asignadas correctamente");
@@ -373,9 +380,8 @@ export default function NominasPage() {
               >
                 <MenuItem value="">Todos</MenuItem>
                 <MenuItem value="pendiente">Pendiente</MenuItem>
-                <MenuItem value="activo">Activo</MenuItem>
-                <MenuItem value="completado">Completado</MenuItem>
-                <MenuItem value="cancelado">Cancelado</MenuItem>
+                <MenuItem value="enviada">En tránsito</MenuItem>
+                <MenuItem value="recibida">Recibida</MenuItem>
               </Select>
             </FormControl>
             <Autocomplete
