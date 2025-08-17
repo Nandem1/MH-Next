@@ -75,7 +75,7 @@ export default function HeroSection() {
             Tu Supermercado de confianza
           </Typography>
           <Typography
-            variant="h5"
+            variant="h3"
             sx={{
               color: 'text.secondary',
               mb: 4,
@@ -131,7 +131,7 @@ export default function HeroSection() {
                 >
                   <CardContent sx={{ p: 4 }}>
                     <Typography
-                      variant="h5"
+                      variant="h3"
                       component="h3"
                       sx={{
                         fontWeight: 600,

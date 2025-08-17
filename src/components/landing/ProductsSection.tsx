@@ -210,7 +210,7 @@ export default function ProductsSection() {
             Nuestras ofertas mensuales
           </Typography>
           <Typography
-            variant="h6"
+            variant="h3"
             sx={{
               color: 'text.secondary',
               maxWidth: '600px',
@@ -319,7 +319,7 @@ export default function ProductsSection() {
 
                       <CardContent sx={{ p: 3 }}>
                         <Typography
-                          variant="h6"
+                          variant="h4"
                           component="h4"
                           sx={{
                             fontWeight: 600,
@@ -345,7 +345,7 @@ export default function ProductsSection() {
                               {formatPrice(oferta.precioOriginal)}
                             </Typography>
                             <Typography
-                              variant="h6"
+                              variant="h4"
                               sx={{
                                 fontWeight: 700,
                                 color: 'primary.main',

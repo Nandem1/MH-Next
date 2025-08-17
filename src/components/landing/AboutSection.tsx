@@ -72,7 +72,7 @@ export default function AboutSection() {
             Quiénes somos
           </Typography>
           <Typography
-            variant="h6"
+            variant="h3"
             sx={{
               color: 'text.secondary',
               maxWidth: '600px',
@@ -117,7 +117,7 @@ export default function AboutSection() {
                   />
                 </Box>
                 <Typography
-                  variant="h6"
+                  variant="h3"
                   component="h3"
                   sx={{
                     fontWeight: 600,

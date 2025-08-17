@@ -104,7 +104,7 @@ export default function CareersSection() {
             Trabaja con nosotros
           </Typography>
           <Typography
-            variant="h6"
+            variant="h3"
             sx={{
               color: 'text.secondary',
               maxWidth: '600px',
@@ -156,7 +156,7 @@ export default function CareersSection() {
                     </Box>
                     <Box>
                       <Typography
-                        variant="h6"
+                        variant="h4"
                         component="h4"
                         sx={{
                           fontWeight: 600,
@@ -219,7 +219,7 @@ export default function CareersSection() {
                 >
                   <CardHeader
                     title={
-                      <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary', fontSize: '1rem' }}>
+                      <Typography variant="h4" sx={{ fontWeight: 600, color: 'text.primary', fontSize: '1rem' }}>
                         {posicion.titulo}
                       </Typography>
                     }
