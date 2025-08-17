@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { 
   AppBar, 
   Toolbar, 
@@ -13,9 +14,7 @@ import {
   List,
   ListItem,
   ListItemButton,
-  ListItemText,
-  useScrollTrigger,
-  Slide
+  ListItemText
 } from "@mui/material";
 import { 
   Menu as MenuIcon
@@ -24,24 +23,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
-interface Props {
-  window?: () => Window;
-}
-
-function HideOnScroll(props: Props) {
-  const { children, window } = props;
-  const trigger = useScrollTrigger({
-    target: window ? window() : undefined,
-  });
-
-  return (
-    <Slide appear={false} direction="down" in={!trigger}>
-      {children}
-    </Slide>
-  );
-}
-
-export default function LandingHeader(props: Props) {
+export default function LandingHeader() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -93,16 +75,15 @@ export default function LandingHeader(props: Props) {
 
   return (
     <>
-      <HideOnScroll {...props}>
-        <AppBar 
-          position="sticky" 
-          elevation={0}
-          sx={{ 
-            backgroundColor: 'background.paper',
-            backdropFilter: 'blur(20px)',
-            borderBottom: `1px solid ${theme.palette.divider}`,
-          }}
-        >
+      <AppBar 
+        position="sticky" 
+        elevation={0}
+        sx={{ 
+          backgroundColor: 'background.paper',
+          backdropFilter: 'blur(20px)',
+          borderBottom: `1px solid ${theme.palette.divider}`,
+        }}
+      >
           <Container maxWidth="lg" sx={{ px: { xs: 2, md: 4 } }}>
             <Toolbar sx={{ 
               minHeight: 64,
@@ -206,10 +187,9 @@ export default function LandingHeader(props: Props) {
                   <MenuIcon />
                 </IconButton>
               )}
-            </Toolbar>
-          </Container>
-        </AppBar>
-      </HideOnScroll>
+                         </Toolbar>
+           </Container>
+         </AppBar>
 
       {/* Mobile Drawer */}
       <Drawer

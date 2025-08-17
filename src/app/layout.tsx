@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ThemeRegistry } from "@/providers/ThemeRegistry";
+import ThemeRegistry from "./theme-registry";
 import { AuthProvider } from "@/context/AuthContext";
 import { QueryProvider } from "@/providers/QueryProvider";
-import { ThemeProvider } from "@/context/ThemeContext";
 import SchemaData from "@/components/seo/SchemaData";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -71,7 +70,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <head>
         <SchemaData />
       </head>
