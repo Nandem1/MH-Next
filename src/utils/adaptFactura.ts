@@ -47,11 +47,11 @@ export function adaptFactura(factura: FacturaResponseExtended): Factura {
     id: factura.id.toString(), // Usar ID real de la base de datos
     folio: factura.folio,
     // Usar nombre_proveedor si está disponible (nuevo formato), sino proveedor (formato antiguo)
-    proveedor: isNewFormat ? factura.nombre_proveedor : factura.proveedor,
+    proveedor: isNewFormat ? factura.nombre_proveedor! : factura.proveedor,
     local: factura.nombre_local || (factura.id_local ? (localMapping[factura.id_local] || "Local desconocido") : "Local desconocido"),
     estado: "BODEGA",
     // Usar fecha_factura si está disponible (nuevo formato), sino fecha_registro (formato antiguo)
-    fechaIngreso: isNewFormat ? factura.fecha_factura : factura.fecha_registro,
+    fechaIngreso: isNewFormat ? factura.fecha_factura! : factura.fecha_registro,
     image_url: transformDriveUrl(factura.image_url || ""),
     image_url_cloudinary: factura.image_url_cloudinary,
     // En el nuevo formato no viene nombre_usuario, usar valor por defecto
