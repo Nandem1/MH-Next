@@ -1,6 +1,6 @@
 // src/services/facturaService.ts
 import axios from "axios";
-import { Factura, FacturaResponse, FacturaDisponibleResponse, ActualizarMetodoPagoRequest } from "@/types/factura";
+import { Factura, FacturaResponse, FacturaDisponibleResponse, ActualizarMetodoPagoRequest, ActualizarFechaPagoRequest } from "@/types/factura";
 import { adaptFactura, adaptFacturaDisponible } from "@/utils/adaptFactura";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -94,16 +94,30 @@ export const actualizarMontoFactura = async (id: string, monto: number): Promise
 };
 
 // Nueva función para actualizar el método de pago de una factura
-export const actualizarMetodoPagoFactura = async (data: ActualizarMetodoPagoRequest): Promise<void> => {
+export const actualizarMetodoPagoFactura = async (data: ActualizarMetodoPagoRequest): Promise<FacturaResponse> => {
   try {
-    await axios.put(`${API_URL}/api-beta/facturas/${data.id}/metodo-pago`, {
+    const response = await axios.put(`${API_URL}/api-beta/facturas/${data.id}/metodo-pago`, {
       metodo_pago: data.metodo_pago,
       monto_pagado: data.monto_pagado,
       cheque: data.cheque,
     });
+    return response.data.data; // Acceder a la factura dentro de data.data
   } catch (error) {
     console.error("Error actualizando método de pago de factura:", error);
     throw new Error("No se pudo actualizar el método de pago de la factura");
+  }
+};
+
+// Nueva función para actualizar la fecha de pago de una factura
+export const actualizarFechaPagoFactura = async (data: ActualizarFechaPagoRequest): Promise<FacturaResponse> => {
+  try {
+    const response = await axios.put(`${API_URL}/api-beta/facturas/${data.id}/fecha-pago`, {
+      fecha_pago: data.fecha_pago,
+    });
+    return response.data.data; // Acceder a la factura dentro de data.data
+  } catch (error) {
+    console.error("Error actualizando fecha de pago de factura:", error);
+    throw new Error("No se pudo actualizar la fecha de pago de la factura");
   }
 };
 

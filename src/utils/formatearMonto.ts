@@ -96,3 +96,37 @@ export const formatearMontoPesos = (monto: number | string | null | undefined): 
     maximumFractionDigits: 0,
   }).format(numMonto);
 }; 
+
+// Función para calcular días restantes hasta la fecha de pago
+export const calcularDiasRestantes = (fechaPago: string): number => {
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0); // Resetear a inicio del día
+  
+  const fechaPagoDate = new Date(fechaPago);
+  fechaPagoDate.setHours(0, 0, 0, 0); // Resetear a inicio del día
+  
+  const diferenciaMs = fechaPagoDate.getTime() - hoy.getTime();
+  const diferenciaDias = Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24));
+  
+  return diferenciaDias;
+};
+
+// Función para obtener el texto de días restantes
+export const getDiasRestantesText = (fechaPago: string, metodoPago?: string): string => {
+  const dias = calcularDiasRestantes(fechaPago);
+  
+  // Si es transferencia o cheque, siempre mostrar "pagada" ya que están pagadas
+  if (metodoPago === "TRANSFERENCIA" || metodoPago === "CHEQUE") {
+    return "Pagada";
+  }
+  
+  if (dias === 0) {
+    return "Vence hoy";
+  } else if (dias === 1) {
+    return "Vence mañana";
+  } else if (dias > 1) {
+    return `${dias} días restantes`;
+  } else {
+    return `${Math.abs(dias)} días vencido`;
+  }
+}; 

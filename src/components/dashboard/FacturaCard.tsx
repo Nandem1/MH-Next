@@ -2,28 +2,28 @@
 
 import { Typography, Button, Box, Divider, IconButton, CircularProgress, Card, CardContent, Stack, Tooltip, useTheme, Chip } from "@mui/material";
 
-import PrintIcon from "@mui/icons-material/Print";
 import EditIcon from "@mui/icons-material/Edit";
 import PaymentIcon from "@mui/icons-material/Payment";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { Factura } from "@/types/factura";
 import { formatearRut } from "@/utils/formatearRut";
-import { formatearMonto } from "@/utils/formatearMonto";
+import { formatearMonto, getDiasRestantesText } from "@/utils/formatearMonto";
 
 interface FacturaCardProps {
   factura: Factura;
   onView: () => void;
-  onPrint: () => void;
   onEditarMonto: () => void;
   onEditarPago: () => void;
+  onEditarFechaPago: () => void;
 }
 
 export function FacturaCard({
   factura,
   onView,
-  onPrint,
   onEditarMonto,
   onEditarPago,
+  onEditarFechaPago,
 }: FacturaCardProps) {
   const theme = useTheme();
 
@@ -220,6 +220,54 @@ export function FacturaCard({
               </Typography>
             </Box>
 
+                         {/* Fecha de pago con ícono de editar */}
+             <Box display="flex" alignItems="center">
+               <Typography variant="body2" color="text.secondary">
+                 Fecha de pago:
+               </Typography>
+               {factura.isUpdating ? (
+                 <CircularProgress size={16} sx={{ ml: 1 }} />
+               ) : (
+                 <Typography variant="body2" fontWeight={500} sx={{ ml: 1 }}>
+                   {factura.fecha_pago ? new Date(factura.fecha_pago).toLocaleDateString() : "No establecida"}
+                 </Typography>
+               )}
+                               {!factura.fecha_pago && (
+                  <Tooltip title="Editar fecha de pago">
+                    <IconButton
+                      size="small"
+                      onClick={onEditarFechaPago}
+                      disabled={factura.isUpdating}
+                      sx={{
+                        ml: 1,
+                        width: 24,
+                        height: 24,
+                        color: theme.palette.primary.main,
+                        "&:hover": {
+                          bgcolor: theme.palette.primary.light,
+                          color: theme.palette.primary.contrastText,
+                        },
+                        "& .MuiSvgIcon-root": {
+                          fontSize: "0.875rem",
+                        },
+                      }}
+                    >
+                      <CalendarTodayIcon />
+                    </IconButton>
+                  </Tooltip>
+                )}
+             </Box>
+             {factura.fecha_pago && (
+               <Box display="flex" alignItems="center">
+                 <Typography variant="body2" color="text.secondary">
+                   Estado:
+                 </Typography>
+                                   <Typography variant="body2" fontWeight={500} sx={{ ml: 1 }}>
+                    {getDiasRestantesText(factura.fecha_pago, factura.metodo_pago)}
+                  </Typography>
+               </Box>
+             )}
+
             <Box display="flex" alignItems="center">
               <Typography variant="body2" color="text.secondary">
                 Subido por:
@@ -232,26 +280,16 @@ export function FacturaCard({
 
           <Divider />
 
-          {/* Acciones */}
-          <Stack direction="row" spacing={1}>
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth
-              onClick={onView}
-              sx={{ textTransform: "none" }}
-            >
-              Ver Factura
-            </Button>
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={onPrint}
-              sx={{ textTransform: "none" }}
-            >
-              <PrintIcon fontSize="small" />
-            </Button>
-          </Stack>
+                     {/* Acciones */}
+           <Button
+             variant="contained"
+             color="primary"
+             fullWidth
+             onClick={onView}
+             sx={{ textTransform: "none" }}
+           >
+             Ver Factura
+           </Button>
         </Stack>
       </CardContent>
     </Card>

@@ -3,30 +3,27 @@
 import { Paper, Button, Typography, IconButton, Box, CircularProgress, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Stack, Tooltip, Chip } from "@mui/material";
 import { useTheme } from "@mui/material";
 
-import DoneIcon from "@mui/icons-material/Done";
-import PrintIcon from "@mui/icons-material/Print";
 import EditIcon from "@mui/icons-material/Edit";
 import PaymentIcon from "@mui/icons-material/Payment";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import { Factura } from "@/types/factura";
 import { formatearRut } from "@/utils/formatearRut";
-import { formatearMonto } from "@/utils/formatearMonto";
+import { formatearMonto, getDiasRestantesText } from "@/utils/formatearMonto";
 
 interface FacturaTableDesktopProps {
   facturas: Factura[];
   onView: (factura: Factura) => void;
-  onChangeEstado: (id: string) => void;
-  onPrint: (factura: Factura) => void;
   onEditarMonto: (factura: Factura) => void;
   onEditarPago: (factura: Factura) => void;
+  onEditarFechaPago: (factura: Factura) => void;
 }
 
 export function FacturaTableDesktop({
   facturas,
   onView,
-  onChangeEstado,
-  onPrint,
   onEditarMonto,
   onEditarPago,
+  onEditarFechaPago,
 }: FacturaTableDesktopProps) {
   const theme = useTheme();
 
@@ -82,6 +79,7 @@ export function FacturaTableDesktop({
             <TableCell align="center">Pagado con</TableCell>
             <TableCell align="center">Monto</TableCell>
             <TableCell align="center">Fecha Ingreso</TableCell>
+            <TableCell align="center">Fecha Pago</TableCell>
             <TableCell align="center">Acciones</TableCell>
           </TableRow>
         </TableHead>
@@ -227,38 +225,66 @@ export function FacturaTableDesktop({
                 </Typography>
               </TableCell>
 
-              {/* Acciones */}
-              <TableCell align="center">
-                <Stack direction="row" spacing={1} justifyContent="center">
-                  <Button
-                    variant="contained"
-                    color="success"
-                    size="small"
-                    onClick={() => onChangeEstado(factura.id)}
-                    aria-label="Cambiar estado"
-                  >
-                    <DoneIcon fontSize="small" />
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    size="small"
-                    onClick={() => onView(factura)}
-                    aria-label="Ver factura"
-                  >
-                    Ver
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    size="small"
-                    onClick={() => onPrint(factura)}
-                    aria-label="Imprimir factura"
-                  >
-                    <PrintIcon fontSize="small" />
-                  </Button>
-                </Stack>
-              </TableCell>
+                             {/* Fecha de pago con ícono de editar */}
+               <TableCell align="center">
+                 <Box sx={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                   {factura.isUpdating ? (
+                     <CircularProgress size={16} />
+                   ) : (
+                     <Stack spacing={0.2} alignItems="center">
+                       <Typography variant="body2" fontWeight={500} noWrap>
+                         {factura.fecha_pago ? new Date(factura.fecha_pago).toLocaleDateString() : "No establecida"}
+                       </Typography>
+                                               {factura.fecha_pago && (
+                          <Typography variant="caption" color="text.secondary">
+                            {getDiasRestantesText(factura.fecha_pago, factura.metodo_pago)}
+                          </Typography>
+                        )}
+                     </Stack>
+                   )}
+                                       {!factura.fecha_pago && (
+                      <Tooltip title="Editar fecha de pago">
+                        <IconButton
+                          size="small"
+                          onClick={() => onEditarFechaPago(factura)}
+                          disabled={factura.isUpdating}
+                          sx={{
+                            position: "absolute",
+                            right: -12,
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            ml: 3,
+                            width: 24,
+                            height: 24,
+                            color: theme.palette.primary.main,
+                            "&:hover": {
+                              bgcolor: theme.palette.primary.light,
+                              color: theme.palette.primary.contrastText,
+                            },
+                            "& .MuiSvgIcon-root": {
+                              fontSize: "0.875rem",
+                            },
+                          }}
+                        >
+                          <CalendarTodayIcon />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                 </Box>
+               </TableCell>
+
+                             {/* Acciones */}
+               <TableCell align="center">
+                 <Button
+                   variant="contained"
+                   color="primary"
+                   size="small"
+                   onClick={() => onView(factura)}
+                   aria-label="Ver factura"
+                 >
+                   Ver
+                 </Button>
+               </TableCell>
             </TableRow>
           ))}
         </TableBody>

@@ -19,6 +19,8 @@ export interface FacturaResponse {
   id_proveedor?: number; // ID del proveedor para usar en endpoints
   // Nuevo campo para disponibilidad en nóminas
   asignado_a_nomina?: boolean; // Indica si la factura está asignada a una nómina
+  // Nuevo campo para fecha de pago
+  fecha_pago?: string; // Fecha de pago en formato ISO (YYYY-MM-DD)
 }
 
 // Nueva interfaz específica para el endpoint de facturas disponibles
@@ -51,9 +53,12 @@ export interface Factura {
   isUpdating?: boolean; // Estado de actualización
   pendingMonto?: number; // Monto pendiente de confirmación
   pendingMetodoPago?: string; // Método de pago pendiente de confirmación
+  pendingFechaPago?: string; // Fecha de pago pendiente de confirmación
   id_proveedor?: number; // ID del proveedor para usar en endpoints
   // Nuevo campo para disponibilidad en nóminas
   asignado_a_nomina?: boolean; // Indica si la factura está asignada a una nómina
+  // Nuevo campo para fecha de pago
+  fecha_pago?: string; // Fecha de pago en formato ISO (YYYY-MM-DD)
 }
 
 // Nueva estructura para cheques con múltiples facturas
@@ -99,6 +104,12 @@ export interface ActualizarMetodoPagoRequest {
     correlativo: string;
     monto: number; // Monto a asignar de este cheque a esta factura
   };
+}
+
+// Request para actualizar fecha de pago
+export interface ActualizarFechaPagoRequest {
+  id: string;
+  fecha_pago: string; // Formato YYYY-MM-DD
 }
 
 // Nuevos requests para gestión de cheques

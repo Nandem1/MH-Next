@@ -72,6 +72,8 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
+        <link rel="alternate" hrefLang="es-CL" href="https://mercadohouse.cl/" />
+        <link rel="alternate" hrefLang="x-default" href="https://mercadohouse.cl/" />
         <SchemaData />
       </head>
       <body className={inter.className}>

@@ -267,11 +267,44 @@ export default function LandingFooter() {
               variant="body2"
               sx={{
                 color: 'text.secondary',
-                fontSize: '0.75rem'
+                fontSize: '0.75rem',
+                mb: 1
               }}
             >
               &copy; 2025 Mercado House SPA. Todos los derechos reservados.
             </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, flexWrap: 'wrap' }}>
+              <Typography
+                component="a"
+                href="/politica-privacidad"
+                variant="body2"
+                sx={{
+                  color: 'text.secondary',
+                  textDecoration: 'none',
+                  fontSize: '0.75rem',
+                  '&:hover': {
+                    color: 'primary.main'
+                  }
+                }}
+              >
+                Política de Privacidad
+              </Typography>
+              <Typography
+                component="a"
+                href="/terminos-condiciones"
+                variant="body2"
+                sx={{
+                  color: 'text.secondary',
+                  textDecoration: 'none',
+                  fontSize: '0.75rem',
+                  '&:hover': {
+                    color: 'primary.main'
+                  }
+                }}
+              >
+                Términos y Condiciones
+              </Typography>
+            </Box>
           </Box>
         </Box>
       </Container>

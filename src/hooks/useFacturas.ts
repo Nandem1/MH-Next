@@ -1,7 +1,8 @@
 // src/hooks/useFacturas.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getFacturas, actualizarMontoFactura, actualizarMetodoPagoFactura } from "@/services/facturaService";
-import { Factura, ActualizarMetodoPagoRequest } from "@/types/factura";
+import { getFacturas, actualizarMontoFactura, actualizarMetodoPagoFactura, actualizarFechaPagoFactura } from "@/services/facturaService";
+import { Factura, ActualizarMetodoPagoRequest, ActualizarFechaPagoRequest } from "@/types/factura";
+import { adaptFactura } from "@/utils/adaptFactura";
 
 interface FacturasQueryResult {
   facturas: Factura[];
@@ -149,9 +150,11 @@ export const useActualizarMetodoPagoFactura = () => {
       }
       console.error("Error en mutación de método de pago de factura:", err);
     },
-    onSuccess: (_, variables) => {
-      // Actualizar el método de pago real y quitar el estado de updating
-      const { id, metodo_pago, monto_pagado, cheque } = variables;
+    onSuccess: (response, variables) => {
+      // Usar la respuesta del backend para actualizar todos los campos
+      const facturaActualizada = adaptFactura(response);
+      const { id } = variables;
+      
       const all = queryClient.getQueriesData({ queryKey: ["facturas"] });
       all.forEach(([queryKey, old]) => {
         const current = old as FacturasQueryResult | undefined;
@@ -162,9 +165,7 @@ export const useActualizarMetodoPagoFactura = () => {
             factura.id === id
               ? {
                   ...factura,
-                  metodo_pago,
-                  monto_pagado,
-                  cheque_correlativo: cheque?.correlativo,
+                  ...facturaActualizada,
                   isUpdating: false,
                   pendingMetodoPago: undefined,
                 }
@@ -172,18 +173,105 @@ export const useActualizarMetodoPagoFactura = () => {
           ),
         });
       });
+      
       // Actualizar entidad individual
       const currentEntity = queryClient.getQueryData<Factura>(["factura", id]);
       if (currentEntity) {
         queryClient.setQueryData(["factura", id], {
           ...currentEntity,
-          metodo_pago,
-          monto_pagado,
-          cheque_correlativo: cheque?.correlativo,
+          ...facturaActualizada,
           isUpdating: false,
           pendingMetodoPago: undefined,
         });
       }
+      
+      // Evitar refetch que borre el cambio optimista
+      // queryClient.invalidateQueries({ queryKey: ["facturas"] });
+    },
+  });
+};
+
+// Hook para actualizar fecha de pago de facturas con optimistic update
+export const useActualizarFechaPagoFactura = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: ActualizarFechaPagoRequest) => 
+      actualizarFechaPagoFactura(data),
+    onMutate: async (data) => {
+      // Cancelar queries en curso para evitar que sobrescriban nuestro optimistic update
+      await queryClient.cancelQueries({ queryKey: ["facturas"] });
+
+      // Guardar el estado anterior para poder revertir si es necesario
+      const previousFacturas = queryClient.getQueriesData({ queryKey: ["facturas"] });
+
+      // Optimistic update: marcar la factura como "updating"
+      previousFacturas.forEach(([queryKey, old]) => {
+        const current = old as FacturasQueryResult | undefined;
+        if (!current?.facturas) return;
+        queryClient.setQueryData(queryKey, {
+          ...current,
+          facturas: current.facturas.map((factura: Factura) =>
+            factura.id === data.id
+              ? { ...factura, isUpdating: true, pendingFechaPago: data.fecha_pago }
+              : factura
+          ),
+        });
+      });
+
+      // Optimistic también para la entidad individual
+      const currentEntity = queryClient.getQueryData<Factura>(["factura", data.id]);
+      if (currentEntity) {
+        queryClient.setQueryData(["factura", data.id], { ...currentEntity, isUpdating: true, pendingFechaPago: data.fecha_pago });
+      }
+
+      // Retornar el contexto para poder revertir si es necesario
+      return { previousFacturas };
+    },
+    onError: (err, _variables, context) => {
+      // Si hay error, revertir al estado anterior
+      if (context?.previousFacturas) {
+        context.previousFacturas.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      console.error("Error en mutación de fecha de pago de factura:", err);
+    },
+    onSuccess: (response, variables) => {
+      // Usar la respuesta del backend para actualizar todos los campos
+      const facturaActualizada = adaptFactura(response);
+      const { id } = variables;
+      
+      const all = queryClient.getQueriesData({ queryKey: ["facturas"] });
+      all.forEach(([queryKey, old]) => {
+        const current = old as FacturasQueryResult | undefined;
+        if (!current?.facturas) return;
+        queryClient.setQueryData(queryKey, {
+          ...current,
+          facturas: current.facturas.map((factura: Factura) =>
+            factura.id === id
+              ? {
+                  ...factura,
+                  ...facturaActualizada,
+                  isUpdating: false,
+                  pendingFechaPago: undefined,
+                }
+              : factura
+          ),
+        });
+      });
+      
+      // Actualizar entidad individual
+      const currentEntity = queryClient.getQueryData<Factura>(["factura", id]);
+      if (currentEntity) {
+        queryClient.setQueryData(["factura", id], {
+          ...currentEntity,
+          ...facturaActualizada,
+          isUpdating: false,
+          pendingFechaPago: undefined,
+        });
+      }
+      
       // Evitar refetch que borre el cambio optimista
       // queryClient.invalidateQueries({ queryKey: ["facturas"] });
     },

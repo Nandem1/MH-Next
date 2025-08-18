@@ -2,6 +2,12 @@
 import { Factura, FacturaResponse, FacturaDisponibleResponse } from "@/types/factura";
 import { montoAEntero } from "@/utils/formatearMonto";
 
+// Tipo para manejar ambos formatos de respuesta del backend
+type FacturaResponseExtended = FacturaResponse & {
+  nombre_proveedor?: string;
+  fecha_factura?: string;
+};
+
 const transformDriveUrl = (url: string) => {
   const regex = /\/file\/d\/(.*?)\/view/;
   const match = url.match(regex);
@@ -26,7 +32,7 @@ const transformDriveUrl = (url: string) => {
 //   return Math.round(monto / 1000) * 1000;
 // };
 
-export function adaptFactura(factura: FacturaResponse): Factura {
+export function adaptFactura(factura: FacturaResponseExtended): Factura {
   // Fallback de nombre de local cuando solo viene id_local
   const localMapping: Record<number, string> = {
     1: "LA CANTERA 3055",
@@ -34,16 +40,22 @@ export function adaptFactura(factura: FacturaResponse): Factura {
     3: "BALMACEDA 599",
   };
 
+  // Detectar formato: nuevo formato tiene 'nombre_proveedor' y 'fecha_factura'
+  const isNewFormat = 'nombre_proveedor' in factura && 'fecha_factura' in factura;
+  
   return {
     id: factura.id.toString(), // Usar ID real de la base de datos
     folio: factura.folio,
-    proveedor: factura.proveedor,
+    // Usar nombre_proveedor si está disponible (nuevo formato), sino proveedor (formato antiguo)
+    proveedor: isNewFormat ? factura.nombre_proveedor! : factura.proveedor,
     local: factura.nombre_local || (factura.id_local ? (localMapping[factura.id_local] || "Local desconocido") : "Local desconocido"),
     estado: "BODEGA",
-    fechaIngreso: factura.fecha_registro,
+    // Usar fecha_factura si está disponible (nuevo formato), sino fecha_registro (formato antiguo)
+    fechaIngreso: isNewFormat ? factura.fecha_factura! : factura.fecha_registro,
     image_url: transformDriveUrl(factura.image_url || ""),
     image_url_cloudinary: factura.image_url_cloudinary,
-    nombre_usuario: factura.nombre_usuario,
+    // En el nuevo formato no viene nombre_usuario, usar valor por defecto
+    nombre_usuario: isNewFormat ? "Usuario desconocido" : factura.nombre_usuario,
     rut_proveedor: factura.rut_proveedor || "undefined",
     monto: montoAEntero(typeof factura.monto === 'string' ? parseFloat(factura.monto) : factura.monto || 0), // Convertir string a entero
     // Nuevas propiedades de método de pago con valores del backend o por defecto
@@ -53,6 +65,8 @@ export function adaptFactura(factura: FacturaResponse): Factura {
     id_proveedor: factura.id_proveedor, // ID del proveedor para endpoints
     // Nuevo campo para disponibilidad en nóminas
     asignado_a_nomina: factura.asignado_a_nomina || false,
+    // Nuevo campo para fecha de pago
+    fecha_pago: factura.fecha_pago,
   };
 }
 
@@ -76,5 +90,6 @@ export function adaptFacturaDisponible(factura: FacturaDisponibleResponse): Fact
     cheque_correlativo: undefined,
     id_proveedor: undefined,
     asignado_a_nomina: false, // Por definición, las facturas disponibles no están asignadas
+    fecha_pago: undefined, // No viene en la respuesta
   };
 }

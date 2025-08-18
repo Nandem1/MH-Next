@@ -8,7 +8,7 @@ export default function SchemaData() {
     "description": "Tu supermercado de confianza en La Serena y Coquimbo con más de 15 años sirviendo a la comunidad. Productos frescos, calidad y el mejor servicio.",
     "url": "https://mercadohouse.cl",
     "telephone": "+56-51-2-234-5678",
-    "priceRange": "$$",
+    "priceRange": "$",
     "servesCuisine": "Supermercado",
     "category": "Supermercado",
     "paymentAccepted": ["Cash", "Credit Card", "Debit Card"],
@@ -25,7 +25,7 @@ export default function SchemaData() {
       },
       {
         "@type": "PostalAddress",
-        "name": "SUPERMERCADO LAS COMPAÑÍAS", 
+        "name": "SUPERMERCADO LAS COMPAÑÍAS",
         "streetAddress": "Av Libertador 1476",
         "addressLocality": "Las Compañías",
         "addressRegion": "La Serena",
@@ -44,7 +44,7 @@ export default function SchemaData() {
     ],
     "openingHours": [
       "Mo-Su 08:00-22:00",
-      "Mo-Su 07:30-23:00", 
+      "Mo-Su 07:30-23:00",
       "Mo-Su 08:30-21:30"
     ],
     "geo": {
@@ -57,15 +57,16 @@ export default function SchemaData() {
       "ratingValue": "4.5",
       "reviewCount": "150"
     },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+56-51-2-234-5678",
+      "contactType": "customer service",
+      "areaServed": "CL",
+      "availableLanguage": "Spanish"
+    },
     "areaServed": [
-      {
-        "@type": "City",
-        "name": "La Serena"
-      },
-      {
-        "@type": "City", 
-        "name": "Coquimbo"
-      }
+      { "@type": "City", "name": "La Serena" },
+      { "@type": "City", "name": "Coquimbo" }
     ],
     "hasOfferCatalog": {
       "@type": "OfferCatalog",
@@ -83,7 +84,7 @@ export default function SchemaData() {
           "availability": "https://schema.org/InStock"
         },
         {
-          "@type": "Offer", 
+          "@type": "Offer",
           "itemOffered": {
             "@type": "Product",
             "name": "Helados de invierno 10unid",
@@ -96,8 +97,6 @@ export default function SchemaData() {
       ]
     }
   };
-
-
 
   const organizationSchema = {
     "@context": "https://schema.org",
@@ -125,6 +124,46 @@ export default function SchemaData() {
     ]
   };
 
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Ofertas Destacadas Mercadohouse",
+    "description": "Productos en oferta en nuestros supermercados de La Serena y Coquimbo",
+    "numberOfItems": 8,
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "item": {
+          "@type": "Product",
+          "name": "Refreskids Ambrosoli 180ml",
+          "description": "Caja de 24 unidades",
+          "offers": {
+            "@type": "Offer",
+            "price": "4200",
+            "priceCurrency": "CLP",
+            "availability": "https://schema.org/InStock"
+          }
+        }
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "item": {
+          "@type": "Product",
+          "name": "Helados de invierno 10unid",
+          "description": "Helados de invierno",
+          "offers": {
+            "@type": "Offer",
+            "price": "1790",
+            "priceCurrency": "CLP",
+            "availability": "https://schema.org/InStock"
+          }
+        }
+      }
+    ]
+  };
+
   return (
     <>
       <script
@@ -133,11 +172,16 @@ export default function SchemaData() {
           __html: JSON.stringify(localBusinessSchema)
         }}
       />
-      
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(organizationSchema)
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(itemListSchema)
         }}
       />
     </>

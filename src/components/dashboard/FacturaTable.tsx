@@ -12,7 +12,7 @@ import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useState, useEffect } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
-import { useActualizarMontoFactura, useActualizarMetodoPagoFactura } from "@/hooks/useFacturas";
+import { useActualizarMontoFactura, useActualizarMetodoPagoFactura, useActualizarFechaPagoFactura } from "@/hooks/useFacturas";
 import dynamic from "next/dynamic";
 
 // Lazy load de modales pesados
@@ -28,17 +28,7 @@ const ViewFacturaModal = dynamic(
   }
 );
 
-const ConfirmChangeEstadoModal = dynamic(
-  () => import("./ConfirmChangeEstadoModal").then(mod => ({ default: mod.ConfirmChangeEstadoModal })),
-  {
-    loading: () => (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px" }}>
-        <CircularProgress />
-      </Box>
-    ),
-    ssr: false,
-  }
-);
+
 
 const EditarMontoModal = dynamic(
   () => import("./EditarMontoModal").then(mod => ({ default: mod.EditarMontoModal })),
@@ -64,6 +54,18 @@ const EditarMetodoPagoModal = dynamic(
   }
 );
 
+const EditarFechaPagoModal = dynamic(
+  () => import("./EditarFechaPagoModal").then(mod => ({ default: mod.EditarFechaPagoModal })),
+  {
+    loading: () => (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px" }}>
+        <CircularProgress />
+      </Box>
+    ),
+    ssr: false,
+  }
+);
+
 interface FacturaTableProps {
   facturas: Factura[];
   isLoading: boolean;
@@ -78,6 +80,7 @@ export function FacturaTable({
   const isMobile = useResponsive("(max-width:600px)");
   const actualizarMontoMutation = useActualizarMontoFactura();
   const actualizarMetodoPagoMutation = useActualizarMetodoPagoFactura();
+  const actualizarFechaPagoMutation = useActualizarFechaPagoFactura();
 
   // Forzar recálculo de layout al montar
   useEffect(() => {
@@ -86,9 +89,9 @@ export function FacturaTable({
 
   const [openViewModal, setOpenViewModal] = useState(false);
   const [selectedFactura, setSelectedFactura] = useState<Factura | null>(null);
-  const [openConfirmModal, setOpenConfirmModal] = useState(false);
   const [openEditarMontoModal, setOpenEditarMontoModal] = useState(false);
   const [openEditarMetodoPagoModal, setOpenEditarMetodoPagoModal] = useState(false);
+  const [openEditarFechaPagoModal, setOpenEditarFechaPagoModal] = useState(false);
   const [facturaParaEditar, setFacturaParaEditar] = useState<Factura | null>(null);
   // Control local solo para UI (modales y snackbar)
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
@@ -107,18 +110,7 @@ export function FacturaTable({
     setOpenViewModal(false);
   };
 
-  const handleOpenConfirmModal = () => {
-    setOpenConfirmModal(true);
-  };
 
-  const handleCloseConfirmModal = () => {
-    setOpenConfirmModal(false);
-  };
-
-  const handleConfirmChangeEstado = () => {
-    // TODO: Implementar cambio de estado
-    handleCloseConfirmModal();
-  };
 
   const handleOpenEditarMontoModal = (factura: Factura) => {
     setFacturaParaEditar(factura);
@@ -174,8 +166,37 @@ export function FacturaTable({
     }
   };
 
+  const handleOpenEditarFechaPagoModal = (factura: Factura) => {
+    setFacturaParaEditar(factura);
+    setOpenEditarFechaPagoModal(true);
+  };
+
+  const handleCloseEditarFechaPagoModal = () => {
+    setFacturaParaEditar(null);
+    setOpenEditarFechaPagoModal(false);
+  };
+
+  const handleEditarFechaPago = async (fecha_pago: string) => {
+    if (!facturaParaEditar) return;
+    
+    try {
+      // Cerrar el modal inmediatamente (optimistic update ya actualizó la UI)
+      handleCloseEditarFechaPagoModal();
+      
+      // Ejecutar la mutación en background (sin await)
+      actualizarFechaPagoMutation.mutate({
+        id: facturaParaEditar.id,
+        fecha_pago
+      });
+    } catch (error) {
+      console.error("Error al actualizar fecha de pago:", error);
+      // El modal manejará el error automáticamente
+      throw error;
+    }
+  };
+
   // Verificar si se está actualizando alguna factura
-  const isUpdating = actualizarMontoMutation.isPending;
+  const isUpdating = actualizarMontoMutation.isPending || actualizarMetodoPagoMutation.isPending || actualizarFechaPagoMutation.isPending;
 
   // Manejar estados de la mutación: mostrar toast una sola vez y resetear estado interno de la mutación
   useEffect(() => {
@@ -217,70 +238,27 @@ export function FacturaTable({
     }
   }, [actualizarMetodoPagoMutation]);
 
-  const handlePrint = (factura: Factura) => {
-    if (!factura) return;
-
-    // Crear un elemento temporal para la impresión
-    const printElement = document.createElement('div');
-    printElement.id = 'print-element';
-    printElement.innerHTML = `
-      <style>
-        @media print {
-          body * {
-            visibility: hidden !important;
-          }
-          #print-element, #print-element * {
-            visibility: visible !important;
-          }
-          #print-element {
-            position: fixed !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 95% !important;
-            height: 95% !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            z-index: 9999 !important;
-          }
-          #print-element img {
-            width: 95% !important;
-            height: 95% !important;
-            max-width: 95% !important;
-            max-height: 95% !important;
-            object-fit: contain !important;
-          }
-          @page {
-            size: A4 portrait !important;
-            margin: 0 !important;
-          }
-        }
-      </style>
-      <img src="${factura.image_url_cloudinary}" alt="Factura ${factura.folio}" />
-    `;
-
-    // Remover elemento anterior si existe
-    const existingElement = document.getElementById('print-element');
-    if (existingElement) {
-      document.body.removeChild(existingElement);
+  // Manejar estados de la mutación de fecha de pago
+  useEffect(() => {
+    if (actualizarFechaPagoMutation.isSuccess) {
+      setSnackbar({
+        open: true,
+        message: 'Fecha de pago actualizada correctamente',
+        severity: 'success'
+      });
+      actualizarFechaPagoMutation.reset();
     }
+    if (actualizarFechaPagoMutation.isError) {
+      setSnackbar({
+        open: true,
+        message: 'Error al actualizar fecha de pago',
+        severity: 'error'
+      });
+      actualizarFechaPagoMutation.reset();
+    }
+  }, [actualizarFechaPagoMutation]);
 
-    // Agregar temporalmente al DOM
-    document.body.appendChild(printElement);
-    
-    // Esperar un momento para que el CSS se aplique
-    setTimeout(() => {
-      window.print();
-      
-      // Limpiar después de un breve delay
-      setTimeout(() => {
-        const elementToRemove = document.getElementById('print-element');
-        if (elementToRemove) {
-          document.body.removeChild(elementToRemove);
-        }
-      }, 100);
-    }, 100);
-  };
+
 
   if (isLoading) {
     return (
@@ -321,9 +299,9 @@ export function FacturaTable({
               key={factura.id}
               factura={factura}
               onView={() => handleOpenViewModal(factura)}
-              onPrint={() => handlePrint(factura)}
               onEditarMonto={() => handleOpenEditarMontoModal(factura)}
               onEditarPago={() => handleOpenEditarMetodoPagoModal(factura)}
+              onEditarFechaPago={() => handleOpenEditarFechaPagoModal(factura)}
             />
           ))}
         </Box>
@@ -331,10 +309,9 @@ export function FacturaTable({
         <FacturaTableDesktop
           facturas={facturas}
           onView={handleOpenViewModal}
-          onChangeEstado={handleOpenConfirmModal}
-          onPrint={handlePrint}
           onEditarMonto={handleOpenEditarMontoModal}
           onEditarPago={handleOpenEditarMetodoPagoModal}
+          onEditarFechaPago={handleOpenEditarFechaPagoModal}
         />
       )}
 
@@ -344,11 +321,7 @@ export function FacturaTable({
         factura={selectedFactura}
       />
 
-      <ConfirmChangeEstadoModal
-        open={openConfirmModal}
-        onClose={handleCloseConfirmModal}
-        onConfirm={handleConfirmChangeEstado}
-      />
+
 
       <EditarMontoModal
         open={openEditarMontoModal}
@@ -365,6 +338,15 @@ export function FacturaTable({
         onSubmit={handleEditarMetodoPago}
         factura={facturaParaEditar}
         loading={actualizarMetodoPagoMutation.isPending}
+      />
+
+      <EditarFechaPagoModal
+        open={openEditarFechaPagoModal}
+        onClose={handleCloseEditarFechaPagoModal}
+        onSubmit={handleEditarFechaPago}
+        fechaPagoActual={facturaParaEditar?.fecha_pago}
+        titulo={`Factura ${facturaParaEditar?.folio} - ${facturaParaEditar?.proveedor}`}
+        loading={actualizarFechaPagoMutation.isPending}
       />
 
       <Snackbar
