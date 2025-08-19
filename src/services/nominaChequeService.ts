@@ -23,6 +23,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 interface ApiResponse<T> {
   success: boolean;
   data: T;
+  pagination?: PaginationInfo;
+  filtros?: FiltrosNominas;
 }
 
 interface NominasResponse {
@@ -46,6 +48,20 @@ const getAuthHeaders = () => {
 // Helper para manejar diferentes estructuras de respuesta
 const parseNominasResponse = (responseData: ApiResponse<NominasResponse>): { data: NominaCanteraResponse[], pagination?: PaginationInfo, filtros?: FiltrosNominas } => {
   
+  // Estructura actual del backend: { success: true, data: [...], pagination: {...} }
+  if (responseData.data && Array.isArray(responseData.data) && responseData.pagination) {
+    return {
+      data: responseData.data,
+      pagination: {
+        page: responseData.pagination.page || 1,
+        limit: responseData.pagination.limit || 10,
+        total: responseData.pagination.total || responseData.data.length,
+        hasNext: responseData.pagination.hasNextPage !== undefined ? responseData.pagination.hasNextPage : 
+                (responseData.pagination.page || 1) * (responseData.pagination.limit || 10) < (responseData.pagination.total || responseData.data.length)
+      },
+      filtros: responseData.filtros || {}
+    };
+  }
   
   // Si responseData.data es directamente un array (estructura antigua)
   if (Array.isArray(responseData.data)) {
@@ -422,14 +438,8 @@ export const nominaChequeService = {
 
       const usuario = await getUsuarioAutenticado();
       
-      // Mapeo de locales para obtener el nombre del local
-      const localMapping: Record<number, string> = {
-        1: "LA CANTERA 3055",
-        2: "LIBERTADOR 1476", 
-        3: "BALMACEDA 599",
-      };
-
-      const localOrigen = usuario?.user?.id_local ? localMapping[usuario.user.id_local] : "Local desconocido";
+      // Enviar el ID numérico del local
+      const localOrigen = usuario?.user?.id_local || 1;
       
 
       
@@ -742,14 +752,8 @@ export const nominaChequeService = {
     try {
       const usuario = await getUsuarioAutenticado();
       
-      // Mapeo de locales para obtener el nombre del local
-      const localMapping: Record<number, string> = {
-        1: "LA CANTERA 3055",
-        2: "LIBERTADOR 1476", 
-        3: "BALMACEDA 599",
-      };
-
-      const localOrigen = usuario?.user?.id_local ? localMapping[usuario.user.id_local] : "Local desconocido";
+      // Enviar el ID numérico del local
+      const localOrigen = usuario?.user?.id_local || 1;
       
       const payload = {
         numero_nomina: data.nombre, // Cambiar nombre por numero_nomina

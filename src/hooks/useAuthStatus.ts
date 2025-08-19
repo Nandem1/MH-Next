@@ -73,7 +73,7 @@ export const useAuthStatus = (): AuthStatus => {
           rol_id: user.rol_id,
           nombre: user.nombre || user.name || "Usuario",
           email: user.email || "",
-          local_id: user.local_id || 1,
+          local_id: user.id_local || 1,
           local_nombre: user.local_nombre || "LA CANTERA 3055",
         };
         

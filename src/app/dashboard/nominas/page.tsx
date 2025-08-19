@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import {
   Container,
   Typography,
@@ -29,11 +29,12 @@ import {
   MenuItem,
   Autocomplete,
   useTheme,
+  TablePagination,
 } from "@mui/material";
 import { Add as AddIcon, Assignment as AssignmentIcon } from "@mui/icons-material";
 import { useNominasCheque } from "@/hooks/useNominasCheque";
 import { useUsuarios } from "@/hooks/useUsuarios";
-import { NominaCantera, CrearNominaRequest, AsignarChequeRequest, ActualizarTrackingRequest, TrackingEnvio, FacturaAsignada, AsignarChequeAFacturaRequest } from "@/types/nominaCheque";
+import { NominaCantera, CrearNominaRequest, AsignarChequeRequest, ActualizarTrackingRequest, TrackingEnvio, FacturaAsignada, AsignarChequeAFacturaRequest, FiltrosNominas } from "@/types/nominaCheque";
 import { CrearChequeRequest } from "@/types/factura";
 import { NuevaNominaModal } from "@/components/dashboard/NuevaNominaChequeModal";
 import { AsignarChequeModal } from "@/components/dashboard/AsignarChequeModal";
@@ -49,7 +50,7 @@ import { locales } from "@/hooks/useAuthStatus";
 export default function NominasPage() {
   const theme = useTheme();
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading, usuario } = useAuthStatus();
+  const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
 
   const {
     nominas,
@@ -64,6 +65,11 @@ export default function NominasPage() {
     setSelectedNomina,
     actualizarTracking,
     crearTracking,
+    aplicarFiltros,
+    limpiarFiltros,
+    pagination,
+    cambiarPagina,
+    cambiarLimite,
   } = useNominasCheque();
 
   const { data: usuarios, isLoading: isLoadingUsuarios } = useUsuarios();
@@ -80,17 +86,49 @@ export default function NominasPage() {
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error" | "info">("success");
 
   // Estados para filtros
-  const [filtroLocal, setFiltroLocal] = useState("");
+  const [filtroLocal, setFiltroLocal] = useState<number | null>(null);
   const [filtroEstado, setFiltroEstado] = useState("");
   const [filtroUsuario, setFiltroUsuario] = useState("");
   const [filtroTipo, setFiltroTipo] = useState("");
 
-  // Activar filtro de local por defecto según el usuario autenticado
-  useEffect(() => {
-    if (usuario?.local_nombre) {
-      setFiltroLocal(usuario.local_nombre);
+  // Aplicar filtros cuando cambien
+  const handleAplicarFiltros = useCallback(() => {
+    const filtros: FiltrosNominas = {};
+    
+    console.log('🔍 [DEBUG] handleAplicarFiltros - filtroLocal:', filtroLocal);
+    
+    if (filtroLocal) {
+      // Enviar el ID numérico del local al backend
+      filtros.local = filtroLocal.toString();
+      console.log('🔍 [DEBUG] Enviando filtro al backend:', {
+        filtroLocal,
+        filtrosLocal: filtros.local,
+        localNombre: locales.find(l => l.id === filtroLocal)?.nombre
+      });
+    } else {
+      console.log('🔍 [DEBUG] No se enviará filtro de local (filtroLocal es null)');
     }
-  }, [usuario?.local_nombre]);
+    
+    if (filtroEstado) filtros.estado = filtroEstado;
+    if (filtroUsuario) filtros.usuario = filtroUsuario;
+    if (filtroTipo) filtros.nombre = filtroTipo;
+    
+    console.log('🔍 [DEBUG] Filtros finales:', filtros);
+    
+    // Siempre aplicar filtros, incluso si no hay filtros seleccionados
+    // Esto mantiene el estado consistente para la paginación
+    aplicarFiltros(filtros);
+  }, [filtroLocal, filtroEstado, filtroUsuario, filtroTipo, aplicarFiltros]);
+
+  const handleLimpiarFiltros = useCallback(() => {
+    setFiltroLocal(null);
+    setFiltroEstado("");
+    setFiltroUsuario("");
+    setFiltroTipo("");
+    limpiarFiltros();
+  }, [limpiarFiltros]);
+
+  // No necesitamos useEffect para filtro automático
 
   const handleAsignarFacturasSuccess = useCallback(() => {
     setSnackbarMessage("Facturas asignadas correctamente");
@@ -296,15 +334,8 @@ export default function NominasPage() {
     return locales.find(l => l.id.toString() === localId)?.nombre || localId;
   };
 
-  // Filtrar nóminas
-  const nominasFiltradas = nominas.filter(nomina => {
-    const cumpleLocal = !filtroLocal || getLocalNombre(nomina.local).toLowerCase().includes(filtroLocal.toLowerCase());
-    const cumpleEstado = !filtroEstado || nomina.estado === filtroEstado;
-            const cumpleUsuario = !filtroUsuario || nomina.nombreUsuario.toLowerCase().includes(filtroUsuario.toLowerCase());
-    const cumpleTipo = !filtroTipo || nomina.tipoNomina === filtroTipo;
-    
-    return cumpleLocal && cumpleEstado && cumpleUsuario && cumpleTipo;
-  });
+  // Usar las nóminas directamente del hook (ya filtradas por el backend)
+  const nominasFiltradas = nominas;
 
   return (
     <Container maxWidth="xl" sx={{ py: 4, mt: 9 }}>
@@ -359,24 +390,49 @@ export default function NominasPage() {
             <FormControl fullWidth size="small">
               <InputLabel>Local</InputLabel>
               <Select
-                value={filtroLocal}
+                value={filtroLocal ?? ""}
                 label="Local"
-                onChange={(e) => setFiltroLocal(e.target.value)}
+                onChange={(e) => {
+                  const value = (e.target as HTMLInputElement).value as unknown;
+                  const selectedId = value === "" ? null : Number(value);
+                  console.log('🔍 [DEBUG] Local seleccionado:', {
+                    value,
+                    selectedId,
+                    selectedLocal: locales.find(l => l.id === selectedId)?.nombre,
+                    todosLosLocales: value === ""
+                  });
+                  setFiltroLocal(selectedId);
+                  // Construir filtros con el valor seleccionado (evita usar estado aún no actualizado)
+                  const filtrosInmediatos: FiltrosNominas = {};
+                  if (selectedId !== null) filtrosInmediatos.local = String(selectedId);
+                  if (filtroEstado) filtrosInmediatos.estado = filtroEstado;
+                  if (filtroUsuario) filtrosInmediatos.usuario = filtroUsuario;
+                  if (filtroTipo) filtrosInmediatos.nombre = filtroTipo;
+                  aplicarFiltros(filtrosInmediatos);
+                }}
               >
                 <MenuItem value="">Todos los locales</MenuItem>
-                {locales.map((local) => (
-                  <MenuItem key={local.id} value={local.nombre}>
-                    {local.nombre}
-                  </MenuItem>
-                ))}
+                {locales.map((local) => {
+                  console.log('🔍 [DEBUG] Renderizando local:', { id: local.id, nombre: local.nombre });
+                  return (
+                    <MenuItem key={local.id} value={local.id}>
+                      {local.nombre}
+                    </MenuItem>
+                  );
+                })}
               </Select>
             </FormControl>
             <FormControl fullWidth size="small">
               <InputLabel>Estado</InputLabel>
               <Select
+                disabled
                 value={filtroEstado}
                 label="Estado"
-                onChange={(e) => setFiltroEstado(e.target.value)}
+                onChange={(e) => {
+                  setFiltroEstado(e.target.value);
+                  // Aplicar filtro automáticamente
+                  setTimeout(() => handleAplicarFiltros(), 100);
+                }}
               >
                 <MenuItem value="">Todos</MenuItem>
                 <MenuItem value="pendiente">Pendiente</MenuItem>
@@ -385,12 +441,15 @@ export default function NominasPage() {
               </Select>
             </FormControl>
             <Autocomplete
+              disabled
               disablePortal
               options={usuarios || []}
               getOptionLabel={(option) => option.nombre}
               value={usuarios?.find(u => u.nombre === filtroUsuario) || null}
               onChange={(event, newValue) => {
                 setFiltroUsuario(newValue ? newValue.nombre : "");
+                // Aplicar filtro automáticamente
+                setTimeout(() => handleAplicarFiltros(), 100);
               }}
               loading={isLoadingUsuarios}
               fullWidth
@@ -419,9 +478,14 @@ export default function NominasPage() {
                            <FormControl fullWidth size="small">
                  <InputLabel>Tipo de Nómina</InputLabel>
                  <Select
+                   disabled
                    value={filtroTipo}
                    label="Tipo de Nómina"
-                   onChange={(e) => setFiltroTipo(e.target.value)}
+                   onChange={(e) => {
+                     setFiltroTipo(e.target.value);
+                     // Aplicar filtro automáticamente
+                     setTimeout(() => handleAplicarFiltros(), 100);
+                   }}
                  >
                    <MenuItem value="">Todos los tipos</MenuItem>
                    <MenuItem value="cheques">Cheques</MenuItem>
@@ -430,12 +494,7 @@ export default function NominasPage() {
                </FormControl>
             <Button
               variant="outlined"
-              onClick={() => {
-                setFiltroLocal("");
-                setFiltroEstado("");
-                setFiltroUsuario("");
-                setFiltroTipo("");
-              }}
+              onClick={handleLimpiarFiltros}
               fullWidth
               sx={{ height: 40 }}
             >
@@ -498,128 +557,139 @@ export default function NominasPage() {
               )}
             </Box>
           ) : (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ bgcolor: "background.default" }}>
-                    <TableCell sx={{ fontWeight: 600 }}>Número</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Fecha</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Local</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Monto</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Estado</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Creado por</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Tracking</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Acciones</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {nominasFiltradas.map((nomina) => (
-                    <TableRow
-                      key={nomina.id}
-                      sx={{
-                        cursor: "pointer",
-                        "&:hover": {
-                          bgcolor: "background.default",
-                        },
-                      }}
-                      onClick={() => handleViewNomina(nomina)}
-                    >
-                      <TableCell>
-                        <Typography variant="body2" fontWeight={600}>
-                          {nomina.numeroNomina}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(nomina.fechaEmision).toLocaleDateString('es-CL')}
-                      </TableCell>
-                      <TableCell>
-                        {getLocalNombre(nomina.local)}
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={nomina.tipoNomina === 'mixta' ? 'por pagar' : nomina.tipoNomina}
-                          color={nomina.tipoNomina === 'mixta' ? 'primary' : 
-                                 nomina.tipoNomina === 'facturas' ? 'secondary' : 'default'}
-                          size="small"
-                          sx={{ 
-                            fontWeight: 600,
-                            borderRadius: "8px",
-                            textTransform: "capitalize"
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight={600}>
-                          {formatearMontoPesos(nomina.montoTotal)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={nomina.estado}
-                          color={getEstadoColor(nomina.estado)}
-                          size="small"
-                          sx={{ 
-                            fontWeight: 600,
-                            borderRadius: "8px",
-                            textTransform: "capitalize"
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {nomina.nombreUsuario}
-                      </TableCell>
-                      <TableCell>
-                        {nomina.trackingEnvio ? (
-                          <Chip
-                            label={getTrackingText(nomina.trackingEnvio)}
-                            size="small"
-                            sx={{
-                              bgcolor: nomina.trackingEnvio.estado === "EN_ORIGEN" ? theme.palette.grey[200] :
-                                      nomina.trackingEnvio.estado === "EN_TRANSITO" ? theme.palette.warning.light :
-                                      theme.palette.info.light,
-                              color: nomina.trackingEnvio.estado === "EN_ORIGEN" ? theme.palette.text.secondary :
-                                     nomina.trackingEnvio.estado === "EN_TRANSITO" ? theme.palette.warning.dark :
-                                     theme.palette.info.dark,
-                              fontWeight: 600,
-                              borderRadius: "6px",
-                            }}
-                          />
-                        ) : (
-                          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                            Sin tracking
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewNomina(nomina);
-                          }}
-                          sx={{
-                            borderColor: theme.palette.divider,
-                            color: theme.palette.text.primary,
-                            textTransform: "none",
-                            fontWeight: 600,
-                            borderRadius: "8px",
-                            "&:hover": {
-                              borderColor: theme.palette.primary.main,
-                              bgcolor: theme.palette.primary.light,
-                              color: theme.palette.primary.contrastText,
-                            },
-                          }}
-                        >
-                          Ver Detalles
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                         <TableContainer>
+               <Table>
+                 <TableHead>
+                   <TableRow sx={{ bgcolor: "background.default" }}>
+                     <TableCell sx={{ fontWeight: 600 }}>Número</TableCell>
+                     <TableCell sx={{ fontWeight: 600 }}>Fecha</TableCell>
+                     <TableCell sx={{ fontWeight: 600 }}>Local</TableCell>
+                     <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
+                     <TableCell sx={{ fontWeight: 600 }}>Monto</TableCell>
+                     <TableCell sx={{ fontWeight: 600 }}>Estado</TableCell>
+                     <TableCell sx={{ fontWeight: 600 }}>Creado por</TableCell>
+                     <TableCell sx={{ fontWeight: 600 }}>Tracking</TableCell>
+                     <TableCell sx={{ fontWeight: 600 }}>Acciones</TableCell>
+                   </TableRow>
+                 </TableHead>
+                 <TableBody>
+                   {nominasFiltradas.map((nomina) => (
+                     <TableRow
+                       key={nomina.id}
+                       sx={{
+                         cursor: "pointer",
+                         "&:hover": {
+                           bgcolor: "background.default",
+                         },
+                       }}
+                       onClick={() => handleViewNomina(nomina)}
+                     >
+                       <TableCell>
+                         <Typography variant="body2" fontWeight={600}>
+                           {nomina.numeroNomina}
+                         </Typography>
+                       </TableCell>
+                       <TableCell>
+                         {new Date(nomina.fechaEmision).toLocaleDateString('es-CL')}
+                       </TableCell>
+                       <TableCell>
+                         {getLocalNombre(nomina.local)}
+                       </TableCell>
+                       <TableCell>
+                         <Chip
+                           label={nomina.tipoNomina === 'mixta' ? 'por pagar' : nomina.tipoNomina}
+                           color={nomina.tipoNomina === 'mixta' ? 'primary' : 
+                                  nomina.tipoNomina === 'facturas' ? 'secondary' : 'default'}
+                           size="small"
+                           sx={{ 
+                             fontWeight: 600,
+                             borderRadius: "8px",
+                             textTransform: "capitalize"
+                           }}
+                         />
+                       </TableCell>
+                       <TableCell>
+                         <Typography variant="body2" fontWeight={600}>
+                           {formatearMontoPesos(nomina.montoTotal)}
+                         </Typography>
+                       </TableCell>
+                       <TableCell>
+                         <Chip
+                           label={nomina.estado}
+                           color={getEstadoColor(nomina.estado)}
+                           size="small"
+                           sx={{ 
+                             fontWeight: 600,
+                             borderRadius: "8px",
+                             textTransform: "capitalize"
+                           }}
+                         />
+                       </TableCell>
+                       <TableCell>
+                         {nomina.nombreUsuario}
+                       </TableCell>
+                       <TableCell>
+                         {nomina.trackingEnvio ? (
+                           <Chip
+                             label={getTrackingText(nomina.trackingEnvio)}
+                             size="small"
+                             sx={{
+                               bgcolor: nomina.trackingEnvio.estado === "EN_ORIGEN" ? theme.palette.grey[200] :
+                                       nomina.trackingEnvio.estado === "EN_TRANSITO" ? theme.palette.warning.light :
+                                       theme.palette.info.light,
+                               color: nomina.trackingEnvio.estado === "EN_ORIGEN" ? theme.palette.text.secondary :
+                                      nomina.trackingEnvio.estado === "EN_TRANSITO" ? theme.palette.warning.dark :
+                                      theme.palette.info.dark,
+                               fontWeight: 600,
+                               borderRadius: "6px",
+                             }}
+                           />
+                         ) : (
+                           <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                             Sin tracking
+                           </Typography>
+                         )}
+                       </TableCell>
+                       <TableCell>
+                         <Button
+                           variant="outlined"
+                           size="small"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             handleViewNomina(nomina);
+                           }}
+                           sx={{
+                             borderColor: theme.palette.divider,
+                             color: theme.palette.text.primary,
+                             textTransform: "none",
+                             fontWeight: 600,
+                             borderRadius: "8px",
+                             "&:hover": {
+                               borderColor: theme.palette.primary.main,
+                               bgcolor: theme.palette.primary.light,
+                               color: theme.palette.primary.contrastText,
+                             },
+                           }}
+                         >
+                           Ver Detalles
+                         </Button>
+                       </TableCell>
+                     </TableRow>
+                   ))}
+                 </TableBody>
+               </Table>
+               <TablePagination
+                 component="div"
+                 count={pagination.total}
+                 page={pagination.page - 1}
+                 onPageChange={(event, newPage) => cambiarPagina(newPage + 1)}
+                 rowsPerPage={pagination.limit}
+                 onRowsPerPageChange={(event) => cambiarLimite(parseInt(event.target.value, 10))}
+                 rowsPerPageOptions={[5, 10, 25, 50]}
+                 labelRowsPerPage="Filas por página:"
+                 labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`}
+               />
+             </TableContainer>
           )}
         </Paper>
       </Stack>

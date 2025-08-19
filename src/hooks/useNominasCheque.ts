@@ -13,6 +13,7 @@ import {
   AsignarChequeAFacturaRequest
 } from "@/types/nominaCheque";
 import { CrearChequeRequest } from "@/types/factura";
+// import { Usuario } from "@/hooks/useAuthStatus";
 
 // Estado inicial para filtros
 const initialFiltros: FiltrosNominas = {
@@ -45,16 +46,14 @@ export const useNominasCheque = () => {
       
       setNominas(resultado.nominas);
       setPagination(resultado.pagination);
-      // Solo actualizar filtros si se pasaron nuevos filtros
-      if (nuevosFiltros) {
-        setFiltros(resultado.filtros);
-      }
+      // Mantener el estado local de filtros, no confiar en lo que retorna el backend
+      if (nuevosFiltros) setFiltros(filtrosAplicar);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar nóminas");
     } finally {
       setLoading(false);
     }
-  }, [filtros]); // Incluir filtros en las dependencias
+  }, [filtros]);
 
   // Aplicar filtros
   const aplicarFiltros = useCallback(async (nuevosFiltros: FiltrosNominas) => {
@@ -62,22 +61,24 @@ export const useNominasCheque = () => {
       setLoading(true);
       setError(null);
       
-      const filtrosCombinados = {
+      // Construir desde cero para evitar arrastrar 'local' u otros filtros eliminados
+      const filtrosCombinados: FiltrosNominas = {
+        page: 1,
+        limit: filtros.limit,
         ...nuevosFiltros,
-        page: 1 // Resetear a primera página al aplicar filtros
       };
       
       const resultado = await nominaChequeService.getNominas(filtrosCombinados);
       
       setNominas(resultado.nominas);
       setPagination(resultado.pagination);
-      setFiltros(resultado.filtros);
+      setFiltros(filtrosCombinados);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al aplicar filtros");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filtros]);
 
   // Cambiar página
   const cambiarPagina = useCallback(async (nuevaPagina: number) => {
@@ -94,7 +95,7 @@ export const useNominasCheque = () => {
       
       setNominas(resultado.nominas);
       setPagination(resultado.pagination);
-      setFiltros(resultado.filtros);
+      setFiltros(filtrosActualizados);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cambiar página");
     } finally {
@@ -118,7 +119,7 @@ export const useNominasCheque = () => {
       
       setNominas(resultado.nominas);
       setPagination(resultado.pagination);
-      setFiltros(resultado.filtros);
+      setFiltros(filtrosActualizados);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cambiar límite");
     } finally {
@@ -132,7 +133,7 @@ export const useNominasCheque = () => {
       setLoading(true);
       setError(null);
       
-      const filtrosLimpios = {
+      const filtrosLimpios: FiltrosNominas = {
         page: 1,
         limit: 10
       };
@@ -141,7 +142,7 @@ export const useNominasCheque = () => {
       
       setNominas(resultado.nominas);
       setPagination(resultado.pagination);
-      setFiltros(resultado.filtros);
+      setFiltros(filtrosLimpios);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al limpiar filtros");
     } finally {
@@ -156,10 +157,13 @@ export const useNominasCheque = () => {
         setLoading(true);
         setError(null);
         
-        const resultado = await nominaChequeService.getNominas({
+        // Cargar todas las nóminas sin filtro automático
+        const filtrosIniciales: FiltrosNominas = {
           page: 1,
           limit: 10
-        });
+        };
+        
+        const resultado = await nominaChequeService.getNominas(filtrosIniciales);
         
         setNominas(resultado.nominas);
         setPagination(resultado.pagination);
@@ -172,7 +176,7 @@ export const useNominasCheque = () => {
     };
     
     cargarInicial();
-  }, []); // Solo se ejecuta al montar el componente
+  }, []); // Sin dependencias, solo se ejecuta al montar
 
   // Cargar nómina específica con detalles completos
   const loadNomina = useCallback(async (id: string) => {
@@ -188,6 +192,8 @@ export const useNominasCheque = () => {
       throw err;
     }
   }, []);
+
+
 
   // Crear nueva nómina
   const crearNomina = useCallback(async (request: CrearNominaRequest) => {
@@ -250,30 +256,21 @@ export const useNominasCheque = () => {
   }, [selectedNomina?.id, queryClient]);
 
   // Convertir nómina a mixta
-  const convertirNominaAMixta = useCallback(async (nominaId: string, facturas: AsignarFacturaRequest[]) => {
-    try {
-      setError(null);
-      
-      // El servicio ya retorna la nómina actualizada
-      const nominaActualizada = await nominaChequeService.convertirNominaAMixta(nominaId, facturas);
-      
-      // ✅ Invalidar cache de facturas (para actualizar asignado_a_nomina)
-      queryClient.invalidateQueries({ queryKey: ["facturas"] });
-      queryClient.invalidateQueries({ queryKey: ["facturas", "disponibles"] });
-      
-      // Actualizar la nómina seleccionada si es la misma
-      if (selectedNomina?.id === nominaId) {
-        setSelectedNomina(nominaActualizada);
-      }
-      
-      // No es necesario recargar toda la lista aquí, el cache invalidation se encargará
-      // de actualizar los datos cuando sea necesario
-    } catch (err) {
-      console.error("❌ Error en convertirNominaAMixta:", err);
-      setError(err instanceof Error ? err.message : "Error al convertir nómina a mixta");
-      throw err;
-    }
-  }, [selectedNomina?.id, queryClient]);
+  // const convertirNominaAMixta = useCallback(async (nominaId: string, facturas: AsignarFacturaRequest[]) => {
+  //   try {
+  //     setError(null);
+  //     const nominaActualizada = await nominaChequeService.convertirNominaAMixta(nominaId, facturas);
+  //     queryClient.invalidateQueries({ queryKey: ["facturas"] });
+  //     queryClient.invalidateQueries({ queryKey: ["facturas", "disponibles"] });
+  //     if (selectedNomina?.id === nominaId) {
+  //       setSelectedNomina(nominaActualizada);
+  //     }
+  //   } catch (err) {
+  //     console.error("❌ Error en convertirNominaAMixta:", err);
+  //     setError(err instanceof Error ? err.message : "Error al convertir nómina a mixta");
+  //     throw err;
+  //   }
+  // }, [selectedNomina?.id, queryClient]);
 
   // Asignar cheque a nómina
   const asignarCheque = useCallback(async (nominaId: string, request: AsignarChequeRequest) => {
@@ -422,58 +419,54 @@ export const useNominasCheque = () => {
   }, [selectedNomina?.id, loadNomina, loadNominas, queryClient]);
 
   // Obtener nóminas por estado de tracking
-  const getNominasPorEstadoTracking = useCallback(async (estado: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await nominaChequeService.getNominasPorEstadoTracking(estado);
-      setNominas(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al filtrar nóminas");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // const getNominasPorEstadoTracking = useCallback(async (estado: string) => {
+  //   try {
+  //     setLoading(true);
+  //     setError(null);
+  //     const data = await nominaChequeService.getNominasPorEstadoTracking(estado);
+  //     setNominas(data);
+  //   } catch (err) {
+  //     setError(err instanceof Error ? err.message : "Error al filtrar nóminas");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, []);
 
   // Obtener todas las nóminas con tracking
-  const getNominasConTracking = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await nominaChequeService.getNominasConTracking();
-      setNominas(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar nóminas con tracking");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // const getNominasConTracking = useCallback(async () => {
+  //   try {
+  //     setLoading(true);
+  //     setError(null);
+  //     const data = await nominaChequeService.getNominasConTracking();
+  //     setNominas(data);
+  //   } catch (err) {
+  //     setError(err instanceof Error ? err.message : "Error al cargar nóminas con tracking");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, []);
 
   return {
     nominas,
-    selectedNomina,
     loading,
     error,
+    selectedNomina,
+    pagination,
+    filtros,
+    loadNominas,
+    loadNomina,
+    aplicarFiltros,
+    limpiarFiltros,
+    cambiarPagina,
+    cambiarLimite,
     crearNomina,
     crearNominaMixta,
     asignarCheque,
+    asignarFacturas,
     asignarChequeAFactura,
     crearYAsignarChequeAFactura,
-    asignarFacturas,
-    convertirNominaAMixta,
     actualizarTracking,
     crearTracking,
-    loadNominas,
-    loadNomina,
-    getNominasPorEstadoTracking,
-    getNominasConTracking,
     setSelectedNomina,
-    setError,
-    pagination,
-    filtros,
-    aplicarFiltros,
-    cambiarPagina,
-    cambiarLimite,
-    limpiarFiltros,
   };
 }; 

@@ -124,6 +124,11 @@ export interface PaginationInfo {
   limit: number;
   total: number;
   hasNext: boolean;
+  // Nuevos campos del backend
+  offset?: number;
+  totalPages?: number;
+  hasNextPage?: boolean;
+  hasPrevPage?: boolean;
 }
 
 // Request types
