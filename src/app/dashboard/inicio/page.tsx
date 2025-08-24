@@ -31,9 +31,9 @@ export default function InicioPage() {
           prefetchUsuarios(),
           prefetchProveedores(),
         ]);
-      } catch (error) {
+      } catch {
         // Silenciar errores de prefetch - no afectan la UX
-        console.debug('Prefetch error:', error);
+    
       }
     };
 

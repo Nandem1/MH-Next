@@ -300,27 +300,17 @@ export const getChequesDisponibles = async (
   offset: number = 0
 ): Promise<ChequesResponse> => {
   try {
-    console.log("🔄 [DEBUG] Obteniendo cheques disponibles:", { limit, offset });
+
     
     const response = await axios.get<ChequesResponse>(buildApiUrl('/cheques/disponibles'), {
       params: { limit, offset },
       headers: getAuthHeaders()
     });
 
-    console.log("✅ [DEBUG] Cheques disponibles obtenidos:", response.data);
+    
     return response.data;
-  } catch (error) {
-    console.error("❌ [DEBUG] Error obteniendo cheques disponibles:", error);
-    if (axios.isAxiosError(error)) {
-      console.error("📊 [DEBUG] Detalles del error:", {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        url: error.config?.url,
-        method: error.config?.method,
-        headers: error.config?.headers
-      });
-    }
+  } catch {
+
     throw new Error("No se pudieron cargar los cheques disponibles");
   }
 }; 

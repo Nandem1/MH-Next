@@ -116,13 +116,6 @@ export function AsignarChequeAFacturaModal({
           monto: montoAAsignar // Usar monto neto en lugar del monto completo del cheque
         };
         
-        console.log("🔄 [DEBUG] Asignando cheque con monto neto:", {
-          montoOriginal: chequeSeleccionado.monto,
-          montoNeto: montoAAsignar,
-          totalNotasCredito: montoNeto.totalNotasCredito,
-          notasCredito: montoNeto.notasCredito.length
-        });
-        
         await onAsignar(nominaId, parseInt(factura.id), asignacionRequest);
         onClose();
       } catch (error) {

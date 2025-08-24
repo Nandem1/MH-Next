@@ -6,13 +6,12 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemSecondaryAction,
   IconButton,
   Chip,
   Alert,
   useTheme,
-  useMediaQuery,
   Paper,
+  CircularProgress,
 } from "@mui/material";
 import { 
   Delete,
@@ -26,30 +25,22 @@ interface RindeGastosHistorialProps {
   gastos: Gasto[];
   onEliminarGasto: (id: string) => void;
   formatearMonto: (monto: number) => string;
+  loadingEliminarGasto?: boolean;
 }
 
-// Colores para categorías
-const coloresCategorias: Record<string, string> = {
-  "Alimentación": "#FF6B6B",
-  "Transporte": "#4ECDC4",
-  "Oficina": "#45B7D1",
-  "Comunicaciones": "#96CEB4",
-  "Mantenimiento": "#FFEAA7",
-  "Servicios": "#DDA0DD",
-  "Otros": "#A8A8A8",
-};
+
 
 export function RindeGastosHistorial({ 
   gastos, 
   onEliminarGasto, 
-  formatearMonto 
+  formatearMonto,
+  loadingEliminarGasto = false
 }: RindeGastosHistorialProps) {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   // Agrupar gastos por fecha
   const gastosAgrupados = gastos.reduce((grupos, gasto) => {
-    const fechaKey = format(gasto.fecha, "yyyy-MM-dd");
+    const fechaKey = format(new Date(gasto.fecha), "yyyy-MM-dd");
     if (!grupos[fechaKey]) {
       grupos[fechaKey] = [];
     }
@@ -123,7 +114,7 @@ export function RindeGastosHistorial({
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     {formatearMonto(
-                      gastosAgrupados[fecha].reduce((sum, g) => sum + g.monto, 0)
+                      gastosAgrupados[fecha].reduce((sum, g) => sum + parseFloat(g.monto), 0)
                     )} • {gastosAgrupados[fecha].length} gasto{gastosAgrupados[fecha].length !== 1 ? 's' : ''}
                   </Typography>
                 </Box>
@@ -161,18 +152,37 @@ export function RindeGastosHistorial({
                               >
                                 {gasto.descripcion}
                               </Typography>
-                              <Chip
-                                size="small"
-                                label={gasto.categoria || "Otros"}
-                                sx={{
-                                  height: 20,
-                                  fontSize: "0.75rem",
-                                  backgroundColor: theme.palette.mode === 'dark' 
-                                    ? theme.palette.grey[800] 
-                                    : theme.palette.grey[200],
-                                  color: theme.palette.text.secondary,
-                                }}
-                              />
+                              <Box sx={{ display: 'flex', gap: 0.5, mb: 0.5 }}>
+                                <Chip
+                                  size="small"
+                                  label={gasto.nombreCuentaContable}
+                                  sx={{
+                                    height: 20,
+                                    fontSize: "0.75rem",
+                                    backgroundColor: theme.palette.primary.main + "20",
+                                    color: theme.palette.primary.main,
+                                  }}
+                                />
+                                <Chip
+                                  size="small"
+                                  label={gasto.categoria}
+                                  sx={{
+                                    height: 20,
+                                    fontSize: "0.75rem",
+                                    backgroundColor: theme.palette.mode === 'dark' 
+                                      ? theme.palette.grey[800] 
+                                      : theme.palette.grey[200],
+                                    color: theme.palette.text.secondary,
+                                  }}
+                                />
+                              </Box>
+                              {(gasto.observaciones || gasto.comprobante) && (
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                  {gasto.observaciones && `💬 ${gasto.observaciones}`}
+                                  {gasto.observaciones && gasto.comprobante && ' • '}
+                                  {gasto.comprobante && '📎 Comprobante'}
+                                </Typography>
+                              )}
                             </Box>
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                               <Typography
@@ -182,21 +192,29 @@ export function RindeGastosHistorial({
                                   fontWeight: 600,
                                 }}
                               >
-                                {formatearMonto(gasto.monto)}
+                                {formatearMonto(parseFloat(gasto.monto))}
                               </Typography>
                               <IconButton
                                 size="small"
                                 aria-label="eliminar"
                                 onClick={() => onEliminarGasto(gasto.id)}
+                                disabled={loadingEliminarGasto}
                                 sx={{
                                   color: theme.palette.text.secondary,
                                   "&:hover": {
                                     color: theme.palette.error.main,
                                     backgroundColor: theme.palette.error.main + "10",
                                   },
+                                  "&:disabled": {
+                                    color: theme.palette.action.disabled,
+                                  },
                                 }}
                               >
-                                <Delete fontSize="small" />
+                                {loadingEliminarGasto ? (
+                                  <CircularProgress size={16} sx={{ color: "inherit" }} />
+                                ) : (
+                                  <Delete fontSize="small" />
+                                )}
                               </IconButton>
                             </Box>
                           </Box>

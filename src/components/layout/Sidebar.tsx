@@ -19,6 +19,7 @@ import InventoryIcon from "@mui/icons-material/Inventory";
 import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
 import StorageIcon from "@mui/icons-material/Storage";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import Image from "next/image";
 
 import { useRouter, usePathname } from "next/navigation";
@@ -216,6 +217,20 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
               </ListItemButton>
             </List>
           </Collapse>
+
+          {/* Rinde Gastos */}
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={pathname === "/dashboard/rinde-gastos"}
+              onClick={() => goTo("/dashboard/rinde-gastos")}
+              sx={navButtonStyle()}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <AccountBalanceWalletIcon />
+              </ListItemIcon>
+              <ListItemText primary="Rinde Gastos" />
+            </ListItemButton>
+          </ListItem>
 
           {/* BODEGA (submenu) */}
           {canSeeBodega && (

@@ -49,6 +49,7 @@ export const ROUTE_RULES: Record<string, RouteRule> = {
   "/dashboard/bodega/inicio": { allowedRoles: [ROLES.SUPERVISOR], allowedLocales: [LOCALES.LOCAL_1] },
   "/dashboard/bodega/nuevo-movimiento": { allowedRoles: [ROLES.SUPERVISOR], allowedLocales: [LOCALES.LOCAL_1] },
   "/dashboard/bodega/stock-general": { allowedRoles: [ROLES.SUPERVISOR], allowedLocales: [LOCALES.LOCAL_1] },
+  "/dashboard/rinde-gastos": {}, // Acceso permitido para todos los usuarios
 };
 
 export const canAccessRoute = (path: string, user?: AuthLikeUser): boolean => {

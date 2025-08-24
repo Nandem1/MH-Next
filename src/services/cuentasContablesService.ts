@@ -2,7 +2,7 @@ export interface CuentaContable {
   id: string;
   nombre: string;
   codigo?: string;
-  categoria?: 'ACTIVOS' | 'GASTOS_OPERACIONALES' | 'GASTOS_GENERALES' | 'OTROS';
+  categoria: 'ACTIVOS' | 'GASTOS_OPERACIONALES' | 'GASTOS_GENERALES' | 'OTROS';
   esMasUtilizada?: boolean;
 }
 
@@ -78,10 +78,11 @@ class CuentasContablesService {
   }
   
   // Registrar uso de una cuenta (no hace nada, mantenido por compatibilidad)
-  async registrarUsoCuenta(cuentaId: string): Promise<void> {
-    // No hacemos nada ya que no trackearemos frecuencia
-    console.log(`Cuenta ${cuentaId} utilizada`);
-  }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async registrarUsoCuenta(_cuentaId: string): Promise<void> {
+      // No hacemos nada ya que no trackearemos frecuencia
+      
+    }
   
   // Método eliminado - las estadísticas ahora son monetarias y se calculan desde los gastos
   

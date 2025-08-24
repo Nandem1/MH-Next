@@ -43,8 +43,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { user, token } = await loginService(email, password);
       setUsuario(user);
 
-      // Guardar el token en localStorage
-      localStorage.setItem("token", token);
+      // Guardar el token en localStorage (usar nombre consistente)
+      localStorage.setItem("authToken", token);
       localStorage.setItem("showLoginMessage", "true");
       router.push("/dashboard/inicio");
 
@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await logoutService();
       setUsuario(null);
       // Limpiar el token al hacer logout
-      localStorage.removeItem("token");
+      localStorage.removeItem("authToken");
       localStorage.setItem("showLogoutMessage", "true");
       router.push("/login");
     } catch (error) {

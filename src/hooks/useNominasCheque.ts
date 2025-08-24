@@ -275,29 +275,29 @@ export const useNominasCheque = () => {
   // Asignar cheque a nómina
   const asignarCheque = useCallback(async (nominaId: string, request: AsignarChequeRequest) => {
     try {
-      console.log("🔄 [DEBUG] Iniciando asignarCheque en hook:", { nominaId, request });
+  
       setError(null);
       
       await nominaChequeService.asignarCheque(nominaId, request);
       
-      console.log("🔄 [DEBUG] Servicio completado, invalidando cache...");
+      
       
       // Invalidar cache de cheques disponibles
       queryClient.invalidateQueries({ queryKey: ["cheques", "disponibles"] });
       
-      console.log("🔄 [DEBUG] Cache invalidado, recargando nómina...");
+      
       
       // Recargar la nómina para obtener los datos actualizados
       if (selectedNomina?.id === nominaId) {
         await loadNomina(nominaId);
       }
       
-      console.log("✅ [DEBUG] Asignación completada en hook");
+      
       
       // No es necesario recargar toda la lista aquí, el cache invalidation se encargará
       // de actualizar los datos cuando sea necesario
     } catch (err) {
-      console.error("❌ [DEBUG] Error en asignarCheque:", err);
+
       setError(err instanceof Error ? err.message : "Error al asignar cheque");
       throw err;
     }

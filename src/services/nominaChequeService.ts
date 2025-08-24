@@ -483,11 +483,7 @@ export const nominaChequeService = {
   // Asignar cheque a nómina
   async asignarCheque(nominaId: string, request: AsignarChequeRequest): Promise<void> {
     try {
-      console.log("🔄 [DEBUG] Iniciando asignación de cheque:", {
-        nominaId,
-        request,
-        url: `${API_BASE_URL}/api-beta/nominas/${nominaId}/cheques`
-      });
+
 
       // El backend ahora maneja las 3 cosas en un solo endpoint POST:
       // - id_cheque: ID del cheque a asignar (number)
@@ -499,7 +495,7 @@ export const nominaChequeService = {
         monto_asignado: request.montoAsignado, // Enviar el monto real del cheque
       };
 
-      console.log("🔄 [DEBUG] Payload a enviar:", payload);
+
 
       const response = await fetch(`${API_BASE_URL}/api-beta/nominas/${nominaId}/cheques`, {
         method: "POST",
@@ -508,21 +504,16 @@ export const nominaChequeService = {
         body: JSON.stringify(payload),
       });
 
-      console.log("🔄 [DEBUG] Response status:", response.status);
-      console.log("🔄 [DEBUG] Response ok:", response.ok);
+
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("❌ [DEBUG] Error response:", errorText);
-        console.error("❌ [DEBUG] Response status:", response.status);
-        console.error("❌ [DEBUG] Response statusText:", response.statusText);
         throw new Error(`Error al asignar cheque: ${response.status} ${response.statusText}`);
       }
 
-      console.log("✅ [DEBUG] Cheque asignado exitosamente");
+
 
     } catch (error) {
-      console.error("❌ [DEBUG] Error assigning cheque:", error);
+
       throw error;
     }
   },

@@ -95,25 +95,21 @@ export default function NominasPage() {
   const handleAplicarFiltros = useCallback(() => {
     const filtros: FiltrosNominas = {};
     
-    console.log('🔍 [DEBUG] handleAplicarFiltros - filtroLocal:', filtroLocal);
+
     
     if (filtroLocal) {
       // Enviar el ID numérico del local al backend
       filtros.local = filtroLocal.toString();
-      console.log('🔍 [DEBUG] Enviando filtro al backend:', {
-        filtroLocal,
-        filtrosLocal: filtros.local,
-        localNombre: locales.find(l => l.id === filtroLocal)?.nombre
-      });
+
     } else {
-      console.log('🔍 [DEBUG] No se enviará filtro de local (filtroLocal es null)');
+
     }
     
     if (filtroEstado) filtros.estado = filtroEstado;
     if (filtroUsuario) filtros.usuario = filtroUsuario;
     if (filtroTipo) filtros.nombre = filtroTipo;
     
-    console.log('🔍 [DEBUG] Filtros finales:', filtros);
+
     
     // Siempre aplicar filtros, incluso si no hay filtros seleccionados
     // Esto mantiene el estado consistente para la paginación
@@ -395,12 +391,7 @@ export default function NominasPage() {
                 onChange={(e) => {
                   const value = (e.target as HTMLInputElement).value as unknown;
                   const selectedId = value === "" ? null : Number(value);
-                  console.log('🔍 [DEBUG] Local seleccionado:', {
-                    value,
-                    selectedId,
-                    selectedLocal: locales.find(l => l.id === selectedId)?.nombre,
-                    todosLosLocales: value === ""
-                  });
+
                   setFiltroLocal(selectedId);
                   // Construir filtros con el valor seleccionado (evita usar estado aún no actualizado)
                   const filtrosInmediatos: FiltrosNominas = {};
@@ -413,7 +404,7 @@ export default function NominasPage() {
               >
                 <MenuItem value="">Todos los locales</MenuItem>
                 {locales.map((local) => {
-                  console.log('🔍 [DEBUG] Renderizando local:', { id: local.id, nombre: local.nombre });
+
                   return (
                     <MenuItem key={local.id} value={local.id}>
                       {local.nombre}

@@ -12,20 +12,21 @@ import {
   useTheme,
   Autocomplete,
   Chip,
+  CircularProgress,
 } from "@mui/material";
 import { format } from "date-fns";
-import { Gasto } from "../../services/rindeGastosService";
-import { CuentaContable } from "../../services/cuentasContablesService";
-import { useCuentasContables } from "../../hooks/useCuentasContables";
+import { CrearGastoRequest, CuentaContable } from "../../services/rindeGastosService";
+import { useRindeGastos } from "../../hooks/useRindeGastos";
 
 interface RindeGastosFormProps {
-  onAgregarGasto: (gasto: Omit<Gasto, "id" | "fechaCreacion" | "estado">) => Promise<void>;
+  onAgregarGasto: (gasto: CrearGastoRequest) => Promise<void>;
   saldoDisponible: number;
+  loading?: boolean;
 }
 
 // Las categorías ahora se cargan dinámicamente desde el servicio
 
-export function RindeGastosForm({ onAgregarGasto, saldoDisponible }: RindeGastosFormProps) {
+export function RindeGastosForm({ onAgregarGasto, saldoDisponible, loading: externalLoading }: RindeGastosFormProps) {
   const theme = useTheme();
   
   // Estado del formulario
@@ -34,46 +35,66 @@ export function RindeGastosForm({ onAgregarGasto, saldoDisponible }: RindeGastos
   const [fecha, setFecha] = useState<Date>(new Date());
   const [cuentaSeleccionada, setCuentaSeleccionada] = useState<CuentaContable | null>(null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [internalLoading, setInternalLoading] = useState(false);
+  
+  // Usar loading externo si se proporciona, sino usar interno
+  const loading = externalLoading !== undefined ? externalLoading : internalLoading;
   
   // Hook para cuentas contables
   const {
-    cuentas: cuentasContables,
-    cuentasMasUsadas,
-    loading: loadingCuentas,
-    error: errorCuentas,
-    registrarUso,
-  } = useCuentasContables();
+    todasLasCuentas: cuentasContables,
+    cuentasMasUtilizadas,
+    loadingTodasLasCuentas: loadingCuentas,
+    errorTodasLasCuentas: errorCuentas,
+  } = useRindeGastos();
 
   // Limpiar errores de cuentas cuando cambie el error principal
   useEffect(() => {
     if (errorCuentas && !error) {
-      setError(errorCuentas);
+      setError(errorCuentas.message);
     }
   }, [errorCuentas, error]);
 
-  // Validaciones
+  // Validaciones según backend
   const validarFormulario = () => {
+    // Descripción no puede estar vacía o ser solo espacios
     if (!descripcion.trim()) {
       setError("La descripción es obligatoria");
       return false;
     }
+    
+    // Monto debe ser número > 0 y <= $10,000,000
     if (!monto || monto <= 0) {
       setError("El monto debe ser mayor a 0");
+      return false;
+    }
+    if (typeof monto === "number" && monto > 10000000) {
+      setError("El monto no puede exceder $10.000.000");
       return false;
     }
     if (typeof monto === "number" && monto > saldoDisponible && saldoDisponible >= 0) {
       setError("El monto excede el saldo disponible");
       return false;
     }
+    
+    // Fecha no puede ser futura
     if (!fecha) {
       setError("La fecha es obligatoria");
       return false;
     }
+    const hoy = new Date();
+    hoy.setHours(23, 59, 59, 999); // Final del día de hoy
+    if (fecha > hoy) {
+      setError("La fecha no puede ser futura");
+      return false;
+    }
+    
+    // Cuenta contable debe estar seleccionada
     if (!cuentaSeleccionada) {
       setError("Debe seleccionar una cuenta contable");
       return false;
     }
+    
     return true;
   };
 
@@ -86,22 +107,19 @@ export function RindeGastosForm({ onAgregarGasto, saldoDisponible }: RindeGastos
       return;
     }
 
-    setLoading(true);
+    setInternalLoading(true);
     
     try {
-      // Crear el gasto
+      // Crear el gasto según formato esperado por backend
       await onAgregarGasto({
         descripcion: descripcion.trim(),
         monto: Number(monto),
-        fecha,
-        categoria: cuentaSeleccionada?.nombre || "Sin categoría",
-        cuentaContableId: cuentaSeleccionada?.id,
+        fecha: format(fecha, "yyyy-MM-dd"), // String YYYY-MM-DD
+        categoria: cuentaSeleccionada?.categoria || "GASTOS_OPERACIONALES", // Categoría de la cuenta
+        cuenta_contable_id: cuentaSeleccionada?.id || "", // String ID
+        observaciones: "", // Campo opcional
+        comprobante_url: "", // Campo opcional
       });
-      
-      // Registrar el uso de la cuenta seleccionada
-      if (cuentaSeleccionada) {
-        await registrarUso(cuentaSeleccionada.id);
-      }
 
       // Limpiar formulario
       setDescripcion("");
@@ -112,7 +130,7 @@ export function RindeGastosForm({ onAgregarGasto, saldoDisponible }: RindeGastos
     } catch (error) {
       setError("Error al registrar el gasto" + error);
     } finally {
-      setLoading(false);
+      setInternalLoading(false);
     }
   };
 
@@ -203,13 +221,13 @@ export function RindeGastosForm({ onAgregarGasto, saldoDisponible }: RindeGastos
 
             <Grid size={12}>
               {/* Cuentas más utilizadas */}
-              {cuentasMasUsadas.length > 0 && (
+              {cuentasMasUtilizadas && cuentasMasUtilizadas.length > 0 && (
                                   <Box sx={{ mb: 2 }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                       Más utilizadas:
                     </Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {cuentasMasUsadas.map((cuenta) => (
+                      {cuentasMasUtilizadas.map((cuenta) => (
                         <Chip
                           key={cuenta.id}
                           label={cuenta.nombre}
@@ -231,7 +249,7 @@ export function RindeGastosForm({ onAgregarGasto, saldoDisponible }: RindeGastos
                 fullWidth
                 size="small"
                 loading={loadingCuentas}
-                options={cuentasContables}
+                options={cuentasContables || []}
                 value={cuentaSeleccionada}
                 onChange={(_, newValue) => setCuentaSeleccionada(newValue)}
                 getOptionLabel={(option) => option.nombre}
@@ -255,7 +273,7 @@ export function RindeGastosForm({ onAgregarGasto, saldoDisponible }: RindeGastos
                       <Typography variant="body2">
                         {option.nombre}
                       </Typography>
-                      {option.esMasUtilizada && (
+                      {option.es_mas_utilizada && (
                         <Chip
                           label="Frecuente"
                           size="small"
@@ -341,7 +359,14 @@ export function RindeGastosForm({ onAgregarGasto, saldoDisponible }: RindeGastos
                   },
                 }}
               >
-                {loading ? "Guardando..." : "Guardar Gasto"}
+                {loading ? (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <CircularProgress size={16} sx={{ color: "inherit" }} />
+                    Guardando...
+                  </Box>
+                ) : (
+                  "Guardar Gasto"
+                )}
               </Button>
             </Grid>
           </Grid>
