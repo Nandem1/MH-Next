@@ -83,7 +83,7 @@ export function AsignarFacturasModal({
       if (tieneFiltros || esCargaInicial) {
         const response = await getFacturasDisponibles({
           page: 1,
-          limit: 20,
+          limit: 150,
           proveedor: filtros?.proveedor || undefined,
           folio: filtros?.folio || undefined
         });
