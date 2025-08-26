@@ -296,7 +296,7 @@ export const getChequesDisponiblesParaNominas = async (
 
 // Obtener cheques disponibles usando el nuevo endpoint
 export const getChequesDisponibles = async (
-  limit: number = 50,
+  limit: number = 100,
   offset: number = 0
 ): Promise<ChequesResponse> => {
   try {
