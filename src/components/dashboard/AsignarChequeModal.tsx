@@ -35,7 +35,7 @@ export function AsignarChequeModal({
   const [error, setError] = useState<string>("");
   const [isAsignando, setIsAsignando] = useState(false);
 
-  const { data: chequesResponse, isLoading } = useChequesDisponibles();
+  const { data: chequesResponse, isLoading } = useChequesDisponibles(150, 0);
 
   // Obtener cheques disponibles (ya filtrados por el backend)
   const chequesDisponibles = chequesResponse?.data || [];

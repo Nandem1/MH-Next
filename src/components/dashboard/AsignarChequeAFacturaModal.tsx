@@ -35,7 +35,7 @@ export function AsignarChequeAFacturaModal({
   
   const { data: chequesResponse, isLoading } = useChequesByProveedor(
     idProveedor, 
-    100, 
+    150, 
     0
   );
 
