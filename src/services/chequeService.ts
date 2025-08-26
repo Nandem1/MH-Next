@@ -53,7 +53,7 @@ const getAuthHeaders = () => {
 
 // Obtener todos los cheques con información de uso
 export const getCheques = async (
-  limit: number = 50,
+  limit: number = 150,
   offset: number = 0
 ): Promise<ChequesResponse> => {
   try {
@@ -251,7 +251,7 @@ export const checkChequeAsignadoANomina = async (chequeId: number): Promise<bool
 
 // Obtener cheques disponibles para nóminas (no asignados a ninguna nómina)
 export const getChequesDisponiblesParaNominas = async (
-  limit: number = 50,
+  limit: number = 150,
   offset: number = 0
 ): Promise<ChequesResponse> => {
   try {
