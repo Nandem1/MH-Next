@@ -274,7 +274,7 @@ export function FacturaTable({
     return (
       <Container sx={{ py: 4, flexGrow: 1 }}>
         <Typography color="error" textAlign="center">
-          Error cargando facturas
+          Factura no encontrada
         </Typography>
       </Container>
     );

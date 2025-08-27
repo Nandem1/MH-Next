@@ -46,7 +46,6 @@ export function AsignarFacturasModal({
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false); // Estado separado para loading de búsqueda
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterProveedor, setFilterProveedor] = useState('');
   const [filterProveedorId, setFilterProveedorId] = useState('');
   const { showSnackbar } = useSnackbar();
   
@@ -191,7 +190,6 @@ export function AsignarFacturasModal({
     if (!open) {
       setFacturasSeleccionadas([]);
       setSearchTerm('');
-      setFilterProveedor('');
       setFilterProveedorId('');
       setSearchLoading(false);
     }
@@ -265,7 +263,6 @@ export function AsignarFacturasModal({
               getOptionLabel={(option) => option.nombre}
               value={proveedores?.find(p => p.id.toString() === filterProveedorId) || null}
               onChange={(_, newValue) => {
-                setFilterProveedor(newValue?.nombre || '');
                 setFilterProveedorId(newValue?.id.toString() || '');
               }}
               loading={isLoadingProveedores}
