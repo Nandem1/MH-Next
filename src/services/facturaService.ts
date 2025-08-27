@@ -143,7 +143,7 @@ export const getFacturasDisponibles = async (filtros: {
     
     if (filtros.page) params.append('page', filtros.page.toString());
     if (filtros.limit) params.append('limit', filtros.limit.toString());
-    if (filtros.proveedor) params.append('proveedor', filtros.proveedor);
+    if (filtros.proveedor) params.append('id_proveedor', filtros.proveedor);
     if (filtros.folio) params.append('folio', filtros.folio);
 
     const queryString = params.toString();

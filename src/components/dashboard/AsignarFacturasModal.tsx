@@ -47,6 +47,7 @@ export function AsignarFacturasModal({
   const [searchLoading, setSearchLoading] = useState(false); // Estado separado para loading de búsqueda
   const [searchTerm, setSearchTerm] = useState('');
   const [filterProveedor, setFilterProveedor] = useState('');
+  const [filterProveedorId, setFilterProveedorId] = useState('');
   const { showSnackbar } = useSnackbar();
   
   // Cargar proveedores usando el hook como en la tabla de facturas
@@ -166,14 +167,14 @@ export function AsignarFacturasModal({
 
   // Cargar facturas cuando cambia el filtro de proveedor - optimizado
   useEffect(() => {
-    if (open && filterProveedor && filterProveedor.trim() !== '') {
-      cargarFacturasDisponibles({ proveedor: filterProveedor.trim() });
-    } else if (open && filterProveedor === '') {
+    if (open && filterProveedorId && filterProveedorId.trim() !== '') {
+      cargarFacturasDisponibles({ proveedor: filterProveedorId.trim() });
+    } else if (open && filterProveedorId === '') {
       // Si se limpia el filtro, recargar sin filtros
       cargarFacturasDisponibles({});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterProveedor, open]); // Solo depende de filterProveedor y open
+  }, [filterProveedorId, open]); // Solo depende de filterProveedorId y open
 
   // Cargar facturas cuando cambia la búsqueda por folio - optimizado
   useEffect(() => {
@@ -191,6 +192,7 @@ export function AsignarFacturasModal({
       setFacturasSeleccionadas([]);
       setSearchTerm('');
       setFilterProveedor('');
+      setFilterProveedorId('');
       setSearchLoading(false);
     }
   }, [open]);
@@ -261,8 +263,11 @@ export function AsignarFacturasModal({
               disablePortal
               options={proveedores || []}
               getOptionLabel={(option) => option.nombre}
-              value={proveedores?.find(p => p.nombre === filterProveedor) || null}
-              onChange={(_, newValue) => setFilterProveedor(newValue?.nombre || '')}
+              value={proveedores?.find(p => p.id.toString() === filterProveedorId) || null}
+              onChange={(_, newValue) => {
+                setFilterProveedor(newValue?.nombre || '');
+                setFilterProveedorId(newValue?.id.toString() || '');
+              }}
               loading={isLoadingProveedores}
               size="small"
               sx={{ 
