@@ -21,6 +21,29 @@ export interface FacturaResponse {
   asignado_a_nomina?: boolean; // Indica si la factura está asignada a una nómina
   // Nuevo campo para fecha de pago
   fecha_pago?: string; // Fecha de pago en formato ISO (YYYY-MM-DD)
+  
+  // Campos nuevos relacionados con cheques
+  cheque_id?: number | null;              // ID del cheque asociado
+  cheque_correlativo?: string | null;     // Número correlativo del cheque
+  cheque_monto?: number | null;           // Monto total del cheque
+  cheque_fecha_creacion?: string | null;  // Fecha de creación del cheque
+  cheque_monto_asignado?: number | null;  // Monto asignado de la factura al cheque
+  cheque_nombre_usuario?: string | null;  // Nombre del usuario que creó el cheque
+
+  // Campos unificados de nómina (prioriza nómina por factura, luego por cheque)
+  nomina_id?: number | null;                    // ID de la nómina asociada
+  nomina_numero?: string | null;               // Número de la nómina
+  nomina_tipo?: string | null;                 // Tipo: 'cheques', 'facturas', 'mixta'
+  nomina_estado?: string | null;               // Estado: 'pendiente', 'pagada', etc.
+  nomina_monto_asignado?: number | null;       // Monto asignado a la nómina
+  nomina_fecha_asignacion?: string | null;     // Fecha de asignación a la nómina
+
+  // Campos de tracking de la nómina
+  tracking_estado?: string | null;             // Estado: 'EN_ORIGEN', 'EN_TRANSITO', 'RECIBIDA'
+  tracking_local_origen?: string | null;       // Local de origen
+  tracking_local_destino?: string | null;      // Local de destino
+  tracking_fecha_envio?: string | null;        // Fecha de envío
+  tracking_fecha_recepcion?: string | null;    // Fecha de recepción
 }
 
 // Nueva interfaz específica para el endpoint de facturas disponibles
@@ -49,7 +72,6 @@ export interface Factura {
   // Nuevos campos para método de pago
   metodo_pago: "POR_PAGAR" | "CHEQUE" | "TRANSFERENCIA" | "EFECTIVO";
   monto_pagado?: number;
-  cheque_correlativo?: string; // Número de cheque cuando método_pago es "CHEQUE"
   isUpdating?: boolean; // Estado de actualización
   pendingMonto?: number; // Monto pendiente de confirmación
   pendingMetodoPago?: string; // Método de pago pendiente de confirmación
@@ -59,6 +81,29 @@ export interface Factura {
   asignado_a_nomina?: boolean; // Indica si la factura está asignada a una nómina
   // Nuevo campo para fecha de pago
   fecha_pago?: string; // Fecha de pago en formato ISO (YYYY-MM-DD)
+  
+  // Campos nuevos relacionados con cheques
+  cheque_id?: number | null;              // ID del cheque asociado
+  cheque_correlativo?: string | null;     // Número correlativo del cheque
+  cheque_monto?: number | null;           // Monto total del cheque
+  cheque_fecha_creacion?: string | null;  // Fecha de creación del cheque
+  cheque_monto_asignado?: number | null;  // Monto asignado de la factura al cheque
+  cheque_nombre_usuario?: string | null;  // Nombre del usuario que creó el cheque
+
+  // Campos unificados de nómina (prioriza nómina por factura, luego por cheque)
+  nomina_id?: number | null;                    // ID de la nómina asociada
+  nomina_numero?: string | null;               // Número de la nómina
+  nomina_tipo?: string | null;                 // Tipo: 'cheques', 'facturas', 'mixta'
+  nomina_estado?: string | null;               // Estado: 'pendiente', 'pagada', etc.
+  nomina_monto_asignado?: number | null;       // Monto asignado a la nómina
+  nomina_fecha_asignacion?: string | null;     // Fecha de asignación a la nómina
+
+  // Campos de tracking de la nómina
+  tracking_estado?: string | null;             // Estado: 'EN_ORIGEN', 'EN_TRANSITO', 'RECIBIDA'
+  tracking_local_origen?: string | null;       // Local de origen
+  tracking_local_destino?: string | null;      // Local de destino
+  tracking_fecha_envio?: string | null;        // Fecha de envío
+  tracking_fecha_recepcion?: string | null;    // Fecha de recepción
 }
 
 // Nueva estructura para cheques con múltiples facturas

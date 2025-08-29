@@ -61,12 +61,34 @@ export function adaptFactura(factura: FacturaResponseExtended): Factura {
     // Nuevas propiedades de método de pago con valores del backend o por defecto
     metodo_pago: factura.metodo_pago || "POR_PAGAR",
     monto_pagado: factura.monto_pagado ? montoAEntero(typeof factura.monto_pagado === 'string' ? parseFloat(factura.monto_pagado) : factura.monto_pagado) : undefined,
-    cheque_correlativo: factura.cheque_correlativo,
     id_proveedor: factura.id_proveedor, // ID del proveedor para endpoints
     // Nuevo campo para disponibilidad en nóminas
     asignado_a_nomina: factura.asignado_a_nomina || false,
     // Nuevo campo para fecha de pago
     fecha_pago: factura.fecha_pago,
+    
+    // Campos nuevos relacionados con cheques
+    cheque_id: factura.cheque_id,
+    cheque_correlativo: factura.cheque_correlativo,
+    cheque_monto: factura.cheque_monto,
+    cheque_fecha_creacion: factura.cheque_fecha_creacion,
+    cheque_monto_asignado: factura.cheque_monto_asignado,
+    cheque_nombre_usuario: factura.cheque_nombre_usuario,
+
+    // Campos unificados de nómina (prioriza nómina por factura, luego por cheque)
+    nomina_id: factura.nomina_id,
+    nomina_numero: factura.nomina_numero,
+    nomina_tipo: factura.nomina_tipo,
+    nomina_estado: factura.nomina_estado,
+    nomina_monto_asignado: factura.nomina_monto_asignado,
+    nomina_fecha_asignacion: factura.nomina_fecha_asignacion,
+
+    // Campos de tracking de la nómina
+    tracking_estado: factura.tracking_estado,
+    tracking_local_origen: factura.tracking_local_origen,
+    tracking_local_destino: factura.tracking_local_destino,
+    tracking_fecha_envio: factura.tracking_fecha_envio,
+    tracking_fecha_recepcion: factura.tracking_fecha_recepcion,
   };
 }
 
@@ -87,9 +109,31 @@ export function adaptFacturaDisponible(factura: FacturaDisponibleResponse): Fact
     // Valores por defecto para campos que no vienen en la respuesta
     metodo_pago: "POR_PAGAR",
     monto_pagado: undefined,
-    cheque_correlativo: undefined,
     id_proveedor: undefined,
     asignado_a_nomina: false, // Por definición, las facturas disponibles no están asignadas
     fecha_pago: undefined, // No viene en la respuesta
+    
+    // Campos nuevos relacionados con cheques (null por defecto para facturas disponibles)
+    cheque_id: null,
+    cheque_correlativo: null,
+    cheque_monto: null,
+    cheque_fecha_creacion: null,
+    cheque_monto_asignado: null,
+    cheque_nombre_usuario: null,
+
+    // Campos unificados de nómina (null por defecto para facturas disponibles)
+    nomina_id: null,
+    nomina_numero: null,
+    nomina_tipo: null,
+    nomina_estado: null,
+    nomina_monto_asignado: null,
+    nomina_fecha_asignacion: null,
+
+    // Campos de tracking de la nómina (null por defecto para facturas disponibles)
+    tracking_estado: null,
+    tracking_local_origen: null,
+    tracking_local_destino: null,
+    tracking_fecha_envio: null,
+    tracking_fecha_recepcion: null,
   };
 }

@@ -47,12 +47,25 @@ export function FacturaCard({
       return "POR PAGAR";
     }
     
-    // Para cheques, siempre mostrar solo "Cheque" - el correlativo se mostrará en un span separado
+    // Para cheques, siempre mostrar solo "CHEQUE" - el correlativo se mostrará en un span separado
     if (factura.metodo_pago === "CHEQUE") {
-      return "Cheque";
+      return "CHEQUE";
     }
     
     return factura.metodo_pago;
+  };
+
+  const getTrackingColor = (estado: string | null) => {
+    switch (estado) {
+      case "EN_ORIGEN":
+        return "warning";
+      case "EN_TRANSITO":
+        return "info";
+      case "RECIBIDA":
+        return "success";
+      default:
+        return "default";
+    }
   };
 
   return (
@@ -100,57 +113,116 @@ export function FacturaCard({
 
           {/* Información */}
           <Stack spacing={1}>
-            <Box display="flex" alignItems="center">
-              <Typography variant="body2" color="text.secondary">
-                Local:
-              </Typography>
-              <Typography variant="body2" fontWeight={500} sx={{ ml: 1 }}>
-                {factura.local}
-              </Typography>
-            </Box>
+                         <Box display="flex" alignItems="center">
+               <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                 Local:
+               </Typography>
+               <Typography variant="caption" fontWeight={500} sx={{ ml: 1, fontSize: '0.75rem' }}>
+                 {factura.local}
+               </Typography>
+             </Box>
 
-            {/* PAGADO CON con diseño minimalista */}
-            <Box display="flex" alignItems="center">
-              <Typography variant="body2" color="text.secondary">
-                Pagado con:
-              </Typography>
-              {factura.isUpdating ? (
-                <CircularProgress size={16} sx={{ ml: 1 }} />
-              ) : (
-                <Box sx={{ ml: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.2 }}>
+                         {/* Nómina + Estado of tracking */}
+             <Box display="flex" alignItems="center">
+               <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                 Nómina:
+               </Typography>
+               <Box sx={{ ml: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.1 }}>
+                 <Typography variant="caption" fontWeight={500} sx={{ fontSize: '0.75rem' }}>
+                   {factura.nomina_numero || "No asignada"}
+                 </Typography>
+                {factura.tracking_estado && (
                   <Chip
-                    label={getPagoText(factura)}
-                    color={getPagoColor(factura.metodo_pago || "POR_PAGAR")}
+                    label={factura.tracking_estado.replace('_', ' ')}
+                    color={getTrackingColor(factura.tracking_estado)}
                     variant="outlined"
                     size="small"
-                    sx={{
-                      fontSize: '0.75rem',
-                      height: '20px',
-                      '& .MuiChip-label': {
-                        px: 1,
-                        fontWeight: 500,
-                      },
-                      // Estilos especiales para estados principales
-                      ...(factura.metodo_pago === "POR_PAGAR" && {
-                        borderColor: '#ff9800',
-                        color: '#ff9800',
-                        backgroundColor: 'rgba(255, 152, 0, 0.08)',
-                        '&:hover': {
-                          backgroundColor: 'rgba(255, 152, 0, 0.12)',
+                                                                                   sx={{
+                        fontSize: '0.7rem',
+                        height: '18px',
+                        '& .MuiChip-label': {
+                          px: 0.8,
+                          fontWeight: 500,
                         },
-                      }),
-                      ...(factura.metodo_pago === "CHEQUE" && {
-                        borderColor: '#2196f3',
-                        color: '#2196f3',
-                        backgroundColor: 'rgba(33, 150, 243, 0.08)',
-                        '&:hover': {
-                          backgroundColor: 'rgba(33, 150, 243, 0.12)',
-                        },
-                      }),
-                    }}
+                                              // Estilos especiales para estados de tracking con el mismo blur que Pagado con
+                        ...(factura.tracking_estado === "EN_ORIGEN" && {
+                          borderColor: '#757575',
+                          color: '#757575',
+                          backgroundColor: 'rgba(117, 117, 117, 0.08)',
+                          '&:hover': {
+                            backgroundColor: 'rgba(117, 117, 117, 0.12)',
+                          },
+                        }),
+                       ...(factura.tracking_estado === "EN_TRANSITO" && {
+                         borderColor: '#2196f3',
+                         color: '#2196f3',
+                         backgroundColor: 'rgba(33, 150, 243, 0.08)',
+                         '&:hover': {
+                           backgroundColor: 'rgba(33, 150, 243, 0.12)',
+                         },
+                       }),
+                       ...(factura.tracking_estado === "RECIBIDA" && {
+                         borderColor: '#4caf50',
+                         color: '#4caf50',
+                         backgroundColor: 'rgba(76, 175, 80, 0.08)',
+                         '&:hover': {
+                           backgroundColor: 'rgba(76, 175, 80, 0.12)',
+                         },
+                       }),
+                     }}
                   />
-                </Box>
-              )}
+                )}
+              </Box>
+            </Box>
+
+                         {/* PAGADO CON con diseño minimalista */}
+             <Box display="flex" alignItems="center">
+               <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                 Pagado con:
+               </Typography>
+                             {factura.isUpdating ? (
+                 <CircularProgress size={16} sx={{ ml: 1 }} />
+               ) : (
+                 <Box sx={{ ml: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 0.1 }}>
+                   <Chip
+                     label={getPagoText(factura)}
+                     color={getPagoColor(factura.metodo_pago || "POR_PAGAR")}
+                     variant="outlined"
+                     size="small"
+                                           sx={{
+                        fontSize: '0.7rem',
+                        height: '18px',
+                        '& .MuiChip-label': {
+                          px: 0.8,
+                          fontWeight: 500,
+                        },
+                        // Estilos especiales para estados principales
+                        ...(factura.metodo_pago === "POR_PAGAR" && {
+                          borderColor: '#ff9800',
+                          color: '#ff9800',
+                          backgroundColor: 'rgba(255, 152, 0, 0.08)',
+                          '&:hover': {
+                            backgroundColor: 'rgba(255, 152, 0, 0.12)',
+                          },
+                        }),
+                        ...(factura.metodo_pago === "CHEQUE" && {
+                          borderColor: '#2196f3',
+                          color: '#2196f3',
+                          backgroundColor: 'rgba(33, 150, 243, 0.08)',
+                          '&:hover': {
+                            backgroundColor: 'rgba(33, 150, 243, 0.12)',
+                          },
+                        }),
+                      }}
+                   />
+                   {/* Mostrar número de cheque cuando el método de pago es CHEQUE */}
+                   {factura.metodo_pago === "CHEQUE" && factura.cheque_correlativo && (
+                     <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, alignSelf: "flex-start", fontSize: '0.7rem' }}>
+                       #{factura.cheque_correlativo}
+                     </Typography>
+                   )}
+                 </Box>
+               )}
               <Tooltip title="Editar método de pago">
                 <IconButton
                   size="small"
@@ -175,18 +247,18 @@ export function FacturaCard({
               </Tooltip>
             </Box>
 
-            {/* Monto con ícono de editar */}
-            <Box display="flex" alignItems="center">
-              <Typography variant="body2" color="text.secondary">
-                Monto:
-              </Typography>
-              {factura.isUpdating ? (
-                <CircularProgress size={16} sx={{ ml: 1 }} />
-              ) : (
-                <Typography variant="body2" fontWeight={500} sx={{ ml: 1 }}>
-                  {formatearMonto(factura.monto)}
-                </Typography>
-              )}
+                         {/* Monto con ícono de editar */}
+             <Box display="flex" alignItems="center">
+               <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                 Monto:
+               </Typography>
+               {factura.isUpdating ? (
+                 <CircularProgress size={16} sx={{ ml: 1 }} />
+               ) : (
+                 <Typography variant="caption" fontWeight={500} sx={{ ml: 1, fontSize: '0.75rem' }}>
+                   {formatearMonto(factura.monto)}
+                 </Typography>
+               )}
               <Tooltip title="Editar monto">
                 <IconButton
                   size="small"
@@ -211,27 +283,27 @@ export function FacturaCard({
               </Tooltip>
             </Box>
 
-            <Box display="flex" alignItems="center">
-              <Typography variant="body2" color="text.secondary">
-                Fecha:
-              </Typography>
-              <Typography variant="body2" fontWeight={500} sx={{ ml: 1 }}>
-                {new Date(factura.fechaIngreso).toLocaleDateString()}
-              </Typography>
-            </Box>
-
-                         {/* Fecha de pago con ícono de editar */}
-             <Box display="flex" alignItems="center">
-               <Typography variant="body2" color="text.secondary">
-                 Fecha de pago:
+                         <Box display="flex" alignItems="center">
+               <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                 Fecha:
                </Typography>
-               {factura.isUpdating ? (
-                 <CircularProgress size={16} sx={{ ml: 1 }} />
-               ) : (
-                 <Typography variant="body2" fontWeight={500} sx={{ ml: 1 }}>
-                   {factura.fecha_pago ? new Date(factura.fecha_pago).toLocaleDateString() : "No establecida"}
-                 </Typography>
-               )}
+               <Typography variant="caption" fontWeight={500} sx={{ ml: 1, fontSize: '0.75rem' }}>
+                 {new Date(factura.fechaIngreso).toLocaleDateString()}
+               </Typography>
+             </Box>
+
+                                       {/* Fecha de pago con ícono de editar */}
+              <Box display="flex" alignItems="center">
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                  Fecha de pago:
+                </Typography>
+                {factura.isUpdating ? (
+                  <CircularProgress size={16} sx={{ ml: 1 }} />
+                ) : (
+                  <Typography variant="caption" fontWeight={500} sx={{ ml: 1, fontSize: '0.75rem' }}>
+                    {factura.fecha_pago ? new Date(factura.fecha_pago).toLocaleDateString() : "No establecida"}
+                  </Typography>
+                )}
                                {!factura.fecha_pago && (
                   <Tooltip title="Editar fecha de pago">
                     <IconButton
@@ -257,25 +329,25 @@ export function FacturaCard({
                   </Tooltip>
                 )}
              </Box>
-             {factura.fecha_pago && (
-               <Box display="flex" alignItems="center">
-                 <Typography variant="body2" color="text.secondary">
-                   Estado:
-                 </Typography>
-                                   <Typography variant="body2" fontWeight={500} sx={{ ml: 1 }}>
-                    {getDiasRestantesText(factura.fecha_pago, factura.metodo_pago)}
+                           {factura.fecha_pago && (
+                <Box display="flex" alignItems="center">
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                    Estado:
                   </Typography>
-               </Box>
-             )}
+                                    <Typography variant="caption" fontWeight={500} sx={{ ml: 1, fontSize: '0.75rem' }}>
+                     {getDiasRestantesText(factura.fecha_pago, factura.metodo_pago)}
+                   </Typography>
+                </Box>
+              )}
 
-            <Box display="flex" alignItems="center">
-              <Typography variant="body2" color="text.secondary">
-                Subido por:
-              </Typography>
-              <Typography variant="body2" fontWeight={500} sx={{ ml: 1 }}>
-                {factura.nombre_usuario}
-              </Typography>
-            </Box>
+                         <Box display="flex" alignItems="center">
+               <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                 Subido por:
+               </Typography>
+               <Typography variant="caption" fontWeight={500} sx={{ ml: 1, fontSize: '0.75rem' }}>
+                 {factura.nombre_usuario}
+               </Typography>
+             </Box>
           </Stack>
 
           <Divider />
