@@ -83,7 +83,6 @@ export const useActualizarMontoFactura = () => {
       // Actualizar el monto real y quitar el estado de updating
       const { id, monto } = variables;
       
-      // Actualizar todas las queries de facturas (incluyendo filtros)
       const all = queryClient.getQueriesData({ queryKey: ["facturas"] });
       all.forEach(([queryKey, old]) => {
         const current = old as FacturasQueryResult | undefined;
@@ -95,15 +94,13 @@ export const useActualizarMontoFactura = () => {
           ),
         });
       });
-      
       // Actualizar entidad individual
       const currentEntity = queryClient.getQueryData<Factura>(["factura", id]);
       if (currentEntity) {
         queryClient.setQueryData(["factura", id], { ...currentEntity, monto, isUpdating: false, pendingMonto: undefined });
       }
-      
-      // NO invalidar queries para evitar el flash de datos viejos
-      // Los datos ya están actualizados
+      // Evitar refetch que borre el cambio optimista
+      // queryClient.invalidateQueries({ queryKey: ["facturas"] });
     },
   });
 };
@@ -177,7 +174,6 @@ export const useActualizarMetodoPagoFactura = () => {
       console.log('🔄 Factura adaptada:', facturaActualizada);
       const { id } = variables;
       
-      // Actualizar todas las queries de facturas (incluyendo filtros)
       const all = queryClient.getQueriesData({ queryKey: ["facturas"] });
       all.forEach(([queryKey, old]) => {
         const current = old as FacturasQueryResult | undefined;
@@ -208,8 +204,8 @@ export const useActualizarMetodoPagoFactura = () => {
         });
       }
       
-      // NO invalidar queries para evitar el flash de datos viejos
-      // Los datos ya están actualizados con la respuesta del backend
+      // Invalidar queries para asegurar que los datos estén sincronizados
+      queryClient.invalidateQueries({ queryKey: ["facturas"] });
     },
   });
 };
@@ -296,8 +292,8 @@ export const useActualizarFechaPagoFactura = () => {
         });
       }
       
-      // NO invalidar queries para evitar el flash de datos viejos
-      // Los datos ya están actualizados con la respuesta del backend
+      // Evitar refetch que borre el cambio optimista
+      // queryClient.invalidateQueries({ queryKey: ["facturas"] });
     },
   });
 };
