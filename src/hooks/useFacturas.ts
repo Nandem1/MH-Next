@@ -82,6 +82,8 @@ export const useActualizarMontoFactura = () => {
     onSuccess: (_, variables) => {
       // Actualizar el monto real y quitar el estado de updating
       const { id, monto } = variables;
+      
+      // Actualizar todas las queries de facturas (incluyendo filtros)
       const all = queryClient.getQueriesData({ queryKey: ["facturas"] });
       all.forEach(([queryKey, old]) => {
         const current = old as FacturasQueryResult | undefined;
@@ -93,13 +95,15 @@ export const useActualizarMontoFactura = () => {
           ),
         });
       });
+      
       // Actualizar entidad individual
       const currentEntity = queryClient.getQueryData<Factura>(["factura", id]);
       if (currentEntity) {
         queryClient.setQueryData(["factura", id], { ...currentEntity, monto, isUpdating: false, pendingMonto: undefined });
       }
-      // Evitar refetch que borre el cambio optimista
-      // queryClient.invalidateQueries({ queryKey: ["facturas"] });
+      
+      // NO invalidar queries para evitar el flash de datos viejos
+      // Los datos ya están actualizados
     },
   });
 };
@@ -118,7 +122,7 @@ export const useActualizarMetodoPagoFactura = () => {
       // Guardar el estado anterior para poder revertir si es necesario
       const previousFacturas = queryClient.getQueriesData({ queryKey: ["facturas"] });
 
-      // Optimistic update: marcar la factura como "updating"
+      // Optimistic update: actualizar todos los campos relevantes
       previousFacturas.forEach(([queryKey, old]) => {
         const current = old as FacturasQueryResult | undefined;
         if (!current?.facturas) return;
@@ -126,7 +130,14 @@ export const useActualizarMetodoPagoFactura = () => {
           ...current,
           facturas: current.facturas.map((factura: Factura) =>
             factura.id === data.id
-              ? { ...factura, isUpdating: true, pendingMetodoPago: data.metodo_pago }
+              ? {
+                  ...factura,
+                  metodo_pago: data.metodo_pago,
+                  monto_pagado: data.monto_pagado,
+                  cheque_correlativo: data.metodo_pago === "CHEQUE" ? data.cheque?.correlativo : undefined,
+                  isUpdating: true,
+                  pendingMetodoPago: data.metodo_pago,
+                }
               : factura
           ),
         });
@@ -135,7 +146,14 @@ export const useActualizarMetodoPagoFactura = () => {
       // Optimistic también para la entidad individual
       const currentEntity = queryClient.getQueryData<Factura>(["factura", data.id]);
       if (currentEntity) {
-        queryClient.setQueryData(["factura", data.id], { ...currentEntity, isUpdating: true, pendingMetodoPago: data.metodo_pago });
+        queryClient.setQueryData(["factura", data.id], {
+          ...currentEntity,
+          metodo_pago: data.metodo_pago,
+          monto_pagado: data.monto_pagado,
+          cheque_correlativo: data.metodo_pago === "CHEQUE" ? data.cheque?.correlativo : undefined,
+          isUpdating: true,
+          pendingMetodoPago: data.metodo_pago,
+        });
       }
 
       // Retornar el contexto para poder revertir si es necesario
@@ -148,13 +166,18 @@ export const useActualizarMetodoPagoFactura = () => {
           queryClient.setQueryData(queryKey, data);
         });
       }
+      // Invalidar queries para asegurar que los datos estén sincronizados
+      queryClient.invalidateQueries({ queryKey: ["facturas"] });
       console.error("Error en mutación de método de pago de factura:", err);
     },
     onSuccess: (response, variables) => {
       // Usar la respuesta del backend para actualizar todos los campos
+      console.log('🔄 Respuesta del backend (método de pago):', response);
       const facturaActualizada = adaptFactura(response);
+      console.log('🔄 Factura adaptada:', facturaActualizada);
       const { id } = variables;
       
+      // Actualizar todas las queries de facturas (incluyendo filtros)
       const all = queryClient.getQueriesData({ queryKey: ["facturas"] });
       all.forEach(([queryKey, old]) => {
         const current = old as FacturasQueryResult | undefined;
@@ -185,8 +208,8 @@ export const useActualizarMetodoPagoFactura = () => {
         });
       }
       
-      // Evitar refetch que borre el cambio optimista
-      // queryClient.invalidateQueries({ queryKey: ["facturas"] });
+      // NO invalidar queries para evitar el flash de datos viejos
+      // Los datos ya están actualizados con la respuesta del backend
     },
   });
 };
@@ -199,6 +222,7 @@ export const useActualizarFechaPagoFactura = () => {
     mutationFn: (data: ActualizarFechaPagoRequest) => 
       actualizarFechaPagoFactura(data),
     onMutate: async (data) => {
+      console.log('📤 Datos enviados al backend:', data);
       // Cancelar queries en curso para evitar que sobrescriban nuestro optimistic update
       await queryClient.cancelQueries({ queryKey: ["facturas"] });
 
@@ -272,8 +296,8 @@ export const useActualizarFechaPagoFactura = () => {
         });
       }
       
-      // Evitar refetch que borre el cambio optimista
-      // queryClient.invalidateQueries({ queryKey: ["facturas"] });
+      // NO invalidar queries para evitar el flash de datos viejos
+      // Los datos ya están actualizados con la respuesta del backend
     },
   });
 };

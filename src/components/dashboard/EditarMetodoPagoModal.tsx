@@ -208,106 +208,14 @@ export function EditarMetodoPagoModal({
         };
       }
 
-      // Optimistic update: actualizar inmediatamente la UI (todas las queries de facturas)
-      queryClient.setQueriesData({ queryKey: ["facturas"] }, (oldData: { facturas: Factura[]; total: number } | undefined) => {
-        if (!oldData?.facturas) return oldData;
-        return {
-          ...oldData,
-          facturas: oldData.facturas.map((f: Factura) =>
-            f.id === (factura?.id || "")
-              ? {
-                  ...f,
-                  metodo_pago: metodoPago,
-                  monto_pagado: montoAEnviar,
-                  cheque_correlativo: metodoPago === "CHEQUE" ? (data.cheque?.correlativo || "") : undefined,
-                }
-              : f
-          ),
-        };
-      });
-      
-      // Optimistic update para cheques por proveedor
-      if (metodoPago === "CHEQUE" && factura?.id_proveedor) {
-        const correlativo = data.cheque?.correlativo || "";
-        const monto = data.cheque?.monto || 0;
-        
-
-        
-        // Función para actualizar una query específica
-        const updateQueryData = (limit: number, offset: number) => {
-          const queryKey = ["cheques", "proveedor", factura.id_proveedor, limit, offset];
-          
-          queryClient.setQueryData(queryKey, (oldData: { data?: { cheques?: Array<{ correlativo: string; monto_asignado?: number; cantidad_facturas?: number }> } } | undefined) => {
-            if (!oldData?.data?.cheques) {
-              return oldData;
-            }
-            
-            // Buscar si el cheque ya existe
-            const existingChequeIndex = oldData.data.cheques.findIndex((c: { correlativo: string; monto_asignado?: number; cantidad_facturas?: number }) => c.correlativo === correlativo);
-            
-            if (existingChequeIndex >= 0) {
-              // Actualizar cheque existente
-              const updatedCheques = [...oldData.data.cheques];
-              updatedCheques[existingChequeIndex] = {
-                ...updatedCheques[existingChequeIndex],
-                monto_asignado: (updatedCheques[existingChequeIndex].monto_asignado || 0) + monto,
-                cantidad_facturas: (updatedCheques[existingChequeIndex].cantidad_facturas || 0) + 1
-              };
-              
-              return {
-                ...oldData,
-                data: {
-                  ...oldData.data,
-                  cheques: updatedCheques
-                }
-              };
-            } else {
-              // Agregar nuevo cheque
-              const newCheque = {
-                id: Date.now(), // ID temporal
-                correlativo,
-                monto: monto,
-                monto_asignado: monto,
-                cantidad_facturas: 1,
-                created_at: new Date().toISOString(),
-                nombre_usuario: "Usuario actual"
-              };
-              
-              return {
-                ...oldData,
-                data: {
-                  ...oldData.data,
-                  cheques: [newCheque, ...oldData.data.cheques]
-                }
-              };
-            }
-          });
-        };
-        
-        // Actualizar las queries más comunes
-        updateQueryData(100, 0); // La que usa el modal
-        updateQueryData(50, 0);  // La más común
-        
-        // NO invalidar las queries aquí, ya que eso sobrescribe los cambios optimistas
-        // Solo invalidar en caso de error
-      }
+      // El optimistic update se maneja en el hook useActualizarMetodoPagoFactura
+      // para evitar conflictos y duplicación de lógica
       
       // Cerrar modal inmediatamente
       onClose();
       
       // Ejecutar la actualización real en background
-      try {
-        await onSubmit(data);
-      } catch (error) {
-        console.error("❌ Error en actualización real, revirtiendo optimistic update:", error);
-        
-        // Revertir optimistic updates en caso de error
-        queryClient.invalidateQueries({ queryKey: ["facturas"] });
-        queryClient.invalidateQueries({ queryKey: ["cheques", "proveedor"] });
-        
-        // Mostrar error al usuario
-        // Nota: Aquí podrías mostrar un toast o notificación de error
-      }
+      await onSubmit(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al actualizar método de pago");
     }
