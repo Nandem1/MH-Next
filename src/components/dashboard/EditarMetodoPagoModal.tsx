@@ -20,7 +20,6 @@ import { useState, useEffect } from "react";
 import { useTheme } from "@mui/material";
 import { Factura, ActualizarMetodoPagoRequest, Cheque } from "@/types/factura";
 import { useChequesByProveedor, useFacturasByCheque, useNotasCreditoByCheque, useNotasCreditoByFactura } from "@/hooks/useCheques";
-import { useQueryClient } from "@tanstack/react-query";
 import { montoAEntero, stringMontoAEntero } from "@/utils/formatearMonto";
 
 interface EditarMetodoPagoModalProps {
@@ -39,7 +38,6 @@ export function EditarMetodoPagoModal({
   loading = false,
 }: EditarMetodoPagoModalProps) {
   const theme = useTheme();
-  const queryClient = useQueryClient();
   const [metodoPago, setMetodoPago] = useState<"POR_PAGAR" | "CHEQUE" | "TRANSFERENCIA" | "EFECTIVO">("POR_PAGAR");
   const [montoPagado, setMontoPagado] = useState("");
   const [correlativoCheque, setCorrelativoCheque] = useState("");
