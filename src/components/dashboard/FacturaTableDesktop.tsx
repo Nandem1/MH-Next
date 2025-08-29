@@ -127,7 +127,7 @@ export function FacturaTableDesktop({
                     {factura.local}
                   </Typography>
                   <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                    Subido por: {factura.nombre_usuario}
+                    {factura.nombre_usuario}
                   </Typography>
                 </Stack>
               </TableCell>
@@ -235,7 +235,7 @@ export function FacturaTableDesktop({
                       disabled={factura.isUpdating}
                       sx={{
                         position: "absolute",
-                        right: -12,
+                        right: -22,
                         top: "50%",
                         transform: "translateY(-50%)",
                         width: 24,
@@ -273,7 +273,7 @@ export function FacturaTableDesktop({
                       disabled={factura.isUpdating}
                       sx={{
                         position: "absolute",
-                        right: -12,
+                        right: -22,
                         top: "50%",
                         transform: "translateY(-50%)",
                         ml: 3,
@@ -326,7 +326,7 @@ export function FacturaTableDesktop({
                           disabled={factura.isUpdating}
                           sx={{
                             position: "absolute",
-                            right: -12,
+                            right: -22,
                             top: "50%",
                             transform: "translateY(-50%)",
                             ml: 3,
