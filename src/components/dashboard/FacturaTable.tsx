@@ -12,7 +12,7 @@ import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useState, useEffect } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
-import { useActualizarMontoFactura, useActualizarMetodoPagoFactura, useActualizarFechaPagoFactura } from "@/hooks/useFacturas";
+import { useActualizarMontoFactura, useActualizarMetodoPagoFactura, useActualizarFechaPagoFactura, useActualizarCamposBasicosFactura } from "@/hooks/useFacturas";
 import dynamic from "next/dynamic";
 
 // Lazy load de modales pesados
@@ -66,6 +66,18 @@ const EditarFechaPagoModal = dynamic(
   }
 );
 
+const EditarCamposBasicosModal = dynamic(
+  () => import("./EditarCamposBasicosModal").then(mod => ({ default: mod.EditarCamposBasicosModal })),
+  {
+    loading: () => (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px" }}>
+        <CircularProgress />
+      </Box>
+    ),
+    ssr: false,
+  }
+);
+
 interface FacturaTableProps {
   facturas: Factura[];
   isLoading: boolean;
@@ -81,6 +93,7 @@ export function FacturaTable({
   const actualizarMontoMutation = useActualizarMontoFactura();
   const actualizarMetodoPagoMutation = useActualizarMetodoPagoFactura();
   const actualizarFechaPagoMutation = useActualizarFechaPagoFactura();
+  const actualizarCamposBasicosMutation = useActualizarCamposBasicosFactura();
 
   // Forzar recálculo de layout al montar
   useEffect(() => {
@@ -92,6 +105,7 @@ export function FacturaTable({
   const [openEditarMontoModal, setOpenEditarMontoModal] = useState(false);
   const [openEditarMetodoPagoModal, setOpenEditarMetodoPagoModal] = useState(false);
   const [openEditarFechaPagoModal, setOpenEditarFechaPagoModal] = useState(false);
+  const [openEditarCamposBasicosModal, setOpenEditarCamposBasicosModal] = useState(false);
   const [facturaParaEditar, setFacturaParaEditar] = useState<Factura | null>(null);
   // Control local solo para UI (modales y snackbar)
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
@@ -195,8 +209,34 @@ export function FacturaTable({
     }
   };
 
+  const handleOpenEditarCamposBasicosModal = (factura: Factura) => {
+    setFacturaParaEditar(factura);
+    setOpenEditarCamposBasicosModal(true);
+  };
+
+  const handleCloseEditarCamposBasicosModal = () => {
+    setFacturaParaEditar(null);
+    setOpenEditarCamposBasicosModal(false);
+  };
+
+  const handleEditarCamposBasicos = async (data: import("@/types/factura").ActualizarCamposBasicosRequest) => {
+    if (!facturaParaEditar) return;
+    
+    try {
+      // Cerrar el modal inmediatamente (optimistic update ya actualizó la UI)
+      handleCloseEditarCamposBasicosModal();
+      
+      // Ejecutar la mutación en background (sin await)
+      actualizarCamposBasicosMutation.mutate(data);
+    } catch (error) {
+      console.error("Error al actualizar campos básicos:", error);
+      // El modal manejará el error automáticamente
+      throw error;
+    }
+  };
+
   // Verificar si se está actualizando alguna factura
-  const isUpdating = actualizarMontoMutation.isPending || actualizarMetodoPagoMutation.isPending || actualizarFechaPagoMutation.isPending;
+  const isUpdating = actualizarMontoMutation.isPending || actualizarMetodoPagoMutation.isPending || actualizarFechaPagoMutation.isPending || actualizarCamposBasicosMutation.isPending;
 
   // Manejar estados de la mutación: mostrar toast una sola vez y resetear estado interno de la mutación
   useEffect(() => {
@@ -258,6 +298,26 @@ export function FacturaTable({
     }
   }, [actualizarFechaPagoMutation]);
 
+  // Manejar estados de la mutación de campos básicos
+  useEffect(() => {
+    if (actualizarCamposBasicosMutation.isSuccess) {
+      setSnackbar({
+        open: true,
+        message: 'Campos básicos actualizados correctamente',
+        severity: 'success'
+      });
+      actualizarCamposBasicosMutation.reset();
+    }
+    if (actualizarCamposBasicosMutation.isError) {
+      setSnackbar({
+        open: true,
+        message: 'Error al actualizar campos básicos',
+        severity: 'error'
+      });
+      actualizarCamposBasicosMutation.reset();
+    }
+  }, [actualizarCamposBasicosMutation]);
+
 
 
   if (isLoading) {
@@ -302,6 +362,7 @@ export function FacturaTable({
               onEditarMonto={() => handleOpenEditarMontoModal(factura)}
               onEditarPago={() => handleOpenEditarMetodoPagoModal(factura)}
               onEditarFechaPago={() => handleOpenEditarFechaPagoModal(factura)}
+              onEditarCamposBasicos={() => handleOpenEditarCamposBasicosModal(factura)}
             />
           ))}
         </Box>
@@ -312,6 +373,7 @@ export function FacturaTable({
           onEditarMonto={handleOpenEditarMontoModal}
           onEditarPago={handleOpenEditarMetodoPagoModal}
           onEditarFechaPago={handleOpenEditarFechaPagoModal}
+          onEditarCamposBasicos={handleOpenEditarCamposBasicosModal}
         />
       )}
 
@@ -347,6 +409,14 @@ export function FacturaTable({
         fechaPagoActual={facturaParaEditar?.fecha_pago}
         titulo={`Factura ${facturaParaEditar?.folio} - ${facturaParaEditar?.proveedor}`}
         loading={actualizarFechaPagoMutation.isPending}
+      />
+
+      <EditarCamposBasicosModal
+        open={openEditarCamposBasicosModal}
+        onClose={handleCloseEditarCamposBasicosModal}
+        onSubmit={handleEditarCamposBasicos}
+        factura={facturaParaEditar}
+        loading={actualizarCamposBasicosMutation.isPending}
       />
 
       <Snackbar

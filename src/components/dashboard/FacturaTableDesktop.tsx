@@ -1,11 +1,13 @@
 "use client";
 
-import { Paper, Button, Typography, IconButton, Box, CircularProgress, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Stack, Tooltip, Chip } from "@mui/material";
+import { Paper, Typography, IconButton, Box, CircularProgress, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Stack, Tooltip, Chip } from "@mui/material";
 import { useTheme } from "@mui/material";
 
 import EditIcon from "@mui/icons-material/Edit";
 import PaymentIcon from "@mui/icons-material/Payment";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import SettingsIcon from "@mui/icons-material/Settings";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import { Factura } from "@/types/factura";
 import { formatearRut } from "@/utils/formatearRut";
 import { formatearMonto, getDiasRestantesText } from "@/utils/formatearMonto";
@@ -16,6 +18,7 @@ interface FacturaTableDesktopProps {
   onEditarMonto: (factura: Factura) => void;
   onEditarPago: (factura: Factura) => void;
   onEditarFechaPago: (factura: Factura) => void;
+  onEditarCamposBasicos: (factura: Factura) => void;
 }
 
 export function FacturaTableDesktop({
@@ -24,6 +27,7 @@ export function FacturaTableDesktop({
   onEditarMonto,
   onEditarPago,
   onEditarFechaPago,
+  onEditarCamposBasicos,
 }: FacturaTableDesktopProps) {
   const theme = useTheme();
 
@@ -347,15 +351,40 @@ export function FacturaTableDesktop({
 
                              {/* Acciones */}
                <TableCell align="center">
-                 <Button
-                   variant="contained"
-                   color="primary"
-                   size="small"
-                   onClick={() => onView(factura)}
-                   aria-label="Ver factura"
-                 >
-                   Ver
-                 </Button>
+                                   <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+                    <Tooltip title="Ver factura">
+                      <IconButton
+                        size="small"
+                        onClick={() => onView(factura)}
+                        sx={{
+                          borderRadius: "50%",
+                          color: theme.palette.primary.main,
+                          border: `2px solid ${theme.palette.primary.main}`,
+                          "& .MuiSvgIcon-root": {
+                            fontSize: "1rem",
+                          },
+                        }}
+                      >
+                        <VisibilityIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Configurar folio, usuario, local y proveedor">
+                      <IconButton
+                        size="small"
+                        onClick={() => onEditarCamposBasicos(factura)}
+                        sx={{
+                          borderRadius: "50%",
+                          color: theme.palette.secondary.main,
+                          border: `2px solid ${theme.palette.secondary.main}`,
+                          "& .MuiSvgIcon-root": {
+                            fontSize: "1rem",
+                          },
+                        }}
+                      >
+                        <SettingsIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                </TableCell>
             </TableRow>
           ))}

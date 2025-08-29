@@ -157,6 +157,14 @@ export interface ActualizarFechaPagoRequest {
   fecha_pago: string; // Formato YYYY-MM-DD
 }
 
+export interface ActualizarCamposBasicosRequest {
+  id: string;
+  folio?: string;
+  id_local?: number;
+  id_usuario?: number;
+  id_proveedor?: number;
+}
+
 // Nuevos requests para gestión de cheques
 export interface CrearChequeRequest {
   correlativo: string;

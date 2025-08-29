@@ -1,10 +1,12 @@
 "use client";
 
-import { Typography, Button, Box, Divider, IconButton, CircularProgress, Card, CardContent, Stack, Tooltip, useTheme, Chip } from "@mui/material";
+import { Typography, Box, Divider, IconButton, CircularProgress, Card, CardContent, Stack, Tooltip, useTheme, Chip } from "@mui/material";
 
 import EditIcon from "@mui/icons-material/Edit";
 import PaymentIcon from "@mui/icons-material/Payment";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import SettingsIcon from "@mui/icons-material/Settings";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { Factura } from "@/types/factura";
 import { formatearRut } from "@/utils/formatearRut";
@@ -16,6 +18,7 @@ interface FacturaCardProps {
   onEditarMonto: () => void;
   onEditarPago: () => void;
   onEditarFechaPago: () => void;
+  onEditarCamposBasicos: () => void;
 }
 
 export function FacturaCard({
@@ -24,6 +27,7 @@ export function FacturaCard({
   onEditarMonto,
   onEditarPago,
   onEditarFechaPago,
+  onEditarCamposBasicos,
 }: FacturaCardProps) {
   const theme = useTheme();
 
@@ -353,15 +357,38 @@ export function FacturaCard({
           <Divider />
 
                      {/* Acciones */}
-           <Button
-             variant="contained"
-             color="primary"
-             fullWidth
-             onClick={onView}
-             sx={{ textTransform: "none" }}
-           >
-             Ver Factura
-           </Button>
+           <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+             <Tooltip title="Ver factura">
+               <IconButton
+                 onClick={onView}
+                 sx={{
+                   borderRadius: "50%",
+                   color: theme.palette.primary.main,
+                   border: `2px solid ${theme.palette.primary.main}`,
+                   "& .MuiSvgIcon-root": {
+                     fontSize: "1.2rem",
+                   },
+                 }}
+               >
+                 <VisibilityIcon />
+               </IconButton>
+             </Tooltip>
+             <Tooltip title="Configurar folio, usuario, local y proveedor">
+               <IconButton
+                 onClick={onEditarCamposBasicos}
+                 sx={{
+                   borderRadius: "50%",
+                   color: theme.palette.secondary.main,
+                   border: `2px solid ${theme.palette.secondary.main}`,
+                   "& .MuiSvgIcon-root": {
+                     fontSize: "1.2rem",
+                   },
+                 }}
+               >
+                 <SettingsIcon />
+               </IconButton>
+             </Tooltip>
+           </Box>
         </Stack>
       </CardContent>
     </Card>

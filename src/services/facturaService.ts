@@ -97,6 +97,22 @@ export const actualizarFechaPagoFactura = async (data: ActualizarFechaPagoReques
   }
 };
 
+// Nueva función para actualizar campos básicos de una factura
+export const actualizarCamposBasicosFactura = async (id: string, datos: {
+  folio?: string;
+  id_local?: number;
+  id_usuario?: number;
+  id_proveedor?: number;
+}): Promise<FacturaResponse> => {
+  try {
+    const response = await axios.put(`${API_URL}/api-beta/facturas/${id}/basica`, datos);
+    return response.data.data; // Acceder a la factura dentro de data.data
+  } catch (error) {
+    console.error("Error actualizando campos básicos de factura:", error);
+    throw new Error("No se pudieron actualizar los campos básicos de la factura");
+  }
+};
+
 // ===== NUEVOS MÉTODOS PARA NÓMINAS HÍBRIDAS =====
 
 // Obtener facturas disponibles (no asignadas a nóminas)
