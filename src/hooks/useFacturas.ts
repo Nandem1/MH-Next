@@ -206,6 +206,11 @@ export const useActualizarMetodoPagoFactura = () => {
       
       // Invalidar queries para asegurar que los datos estén sincronizados
       queryClient.invalidateQueries({ queryKey: ["facturas"] });
+      
+      // Si es cheque, invalidar también las queries de cheques para mantener sincronización
+      if (variables.metodo_pago === "CHEQUE") {
+        queryClient.invalidateQueries({ queryKey: ["cheques", "proveedor"] });
+      }
     },
   });
 };
