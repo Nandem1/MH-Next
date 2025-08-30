@@ -41,7 +41,7 @@ export function FacturasAsignadasView({ facturas }: FacturasAsignadasViewProps) 
           No hay facturas asignadas
         </Typography>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          Puedes asignar facturas usando el botón "Asignar Facturas".
+          Puedes asignar facturas usando el botón &quot;Asignar Facturas&quot;.
         </Typography>
       </Box>
     );
