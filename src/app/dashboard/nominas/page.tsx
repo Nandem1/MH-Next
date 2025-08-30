@@ -865,6 +865,10 @@ export default function NominasPage() {
                  <Box sx={{ p: 4 }}>
                    <FacturasAsignadasView
                      facturas={selectedNomina.facturas || []}
+                     onFacturaClick={(factura) => {
+                       setFacturaSeleccionada(factura);
+                       setModalAsignarChequeAFacturaOpen(true);
+                     }}
                    />
                  </Box>
             </Box>

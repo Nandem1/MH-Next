@@ -22,9 +22,10 @@ import { formatearMontoPesos } from '@/utils/formatearMonto';
 
 interface FacturasAsignadasViewProps {
   facturas: FacturaAsignada[];
+  onFacturaClick: (factura: FacturaAsignada) => void;
 }
 
-export function FacturasAsignadasView({ facturas }: FacturasAsignadasViewProps) {
+export function FacturasAsignadasView({ facturas, onFacturaClick }: FacturasAsignadasViewProps) {
   const theme = useTheme();
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
@@ -129,9 +130,11 @@ export function FacturasAsignadasView({ facturas }: FacturasAsignadasViewProps) 
                        key={factura.id}
                        sx={{ 
                          '&:hover': { 
-                           bgcolor: 'action.hover'
+                           bgcolor: 'action.hover',
+                           cursor: 'pointer'
                          } 
                        }}
+                       onClick={() => onFacturaClick(factura)}
                      >
                        <TableCell sx={{ fontWeight: 500, color: 'text.primary' }}>
                          #{factura.folio}
@@ -195,6 +198,7 @@ export function FacturasAsignadasView({ facturas }: FacturasAsignadasViewProps) 
                      borderRadius: "12px",
                      border: `1px solid ${theme.palette.divider}`,
                      transition: "all 0.3s ease-in-out",
+                     cursor: "pointer",
                      position: "relative",
                      overflow: "hidden",
                      "&:hover": {
@@ -221,9 +225,9 @@ export function FacturasAsignadasView({ facturas }: FacturasAsignadasViewProps) 
                       content.style.opacity = '1';
                       chequeContent.style.opacity = '0';
                     }
-                  }}
-                  
-                >
+                                     }}
+                   onClick={() => onFacturaClick(factura)}
+                 >
                   {/* Contenido de la factura (visible por defecto) */}
                   <Box className="factura-content" sx={{ transition: "opacity 0.3s ease-in-out" }}>
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
