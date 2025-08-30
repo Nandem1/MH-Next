@@ -5,6 +5,8 @@ import ThemeRegistry from "./theme-registry";
 import { AuthProvider } from "@/context/AuthContext";
 import { QueryProvider } from "@/providers/QueryProvider";
 import SchemaData from "@/components/seo/SchemaData";
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Analytics } from '@vercel/analytics/next';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -84,6 +86,8 @@ export default function RootLayout({
             </QueryProvider>
           </AuthProvider>
         </ThemeRegistry>
+        <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
