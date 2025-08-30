@@ -15,12 +15,14 @@ export const useFacturas = (
   local?: string,
   usuario?: string,
   proveedor?: string,
-  folio?: string
+  folio?: string,
+  fechaDesde?: string,
+  fechaHasta?: string
 ) => {
   const queryClient = useQueryClient();
   const result = useQuery<{ facturas: Factura[]; total: number }>({
-    queryKey: ["facturas", page, limit, local ?? "", usuario ?? "", proveedor ?? "", folio ?? ""],
-    queryFn: () => getFacturas(page, limit, local, usuario, proveedor, folio),
+    queryKey: ["facturas", page, limit, local ?? "", usuario ?? "", proveedor ?? "", folio ?? "", fechaDesde ?? "", fechaHasta ?? ""],
+    queryFn: () => getFacturas(page, limit, local, usuario, proveedor, folio, fechaDesde, fechaHasta),
     // Usar configuración global del QueryClient
     // staleTime, retry, refetchOnWindowFocus, etc. se manejan globalmente
   });

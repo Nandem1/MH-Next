@@ -14,10 +14,16 @@ import {
   Stack,
   Paper,
   Typography,
+  Popover,
 } from "@mui/material";
+import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { es } from 'date-fns/locale';
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import { useResponsive } from "@/hooks/useResponsive";
 import { useUsuarios } from "@/hooks/useUsuarios";
 import { useProveedores } from "@/hooks/useProveedores";
@@ -28,9 +34,13 @@ interface FacturaSearchBarProps {
   onLocalChange: (local: string) => void;
   onUsuarioChange: (usuario: string) => void;
   onProveedorChange: (proveedor: string) => void;
+  onFechaDesdeChange: (fechaDesde: string) => void;
+  onFechaHastaChange: (fechaHasta: string) => void;
   localActual: string;
   usuarioActual: string;
   proveedorActual: string;
+  fechaDesdeActual: string;
+  fechaHastaActual: string;
   onGestionCheques?: () => void;
 }
 
@@ -47,14 +57,24 @@ export function FacturaSearchBar({
   onLocalChange,
   onUsuarioChange,
   onProveedorChange,
+  onFechaDesdeChange,
+  onFechaHastaChange,
   localActual,
   usuarioActual,
   proveedorActual,
+  fechaDesdeActual,
+  fechaHastaActual,
   onGestionCheques,
 }: FacturaSearchBarProps) {
   const theme = useTheme();
   const [folio, setFolio] = useState("");
   const isSmall = useResponsive("(max-width:600px)");
+  
+  // Estado para el calendario de rango
+  const [calendarAnchor, setCalendarAnchor] = useState<HTMLButtonElement | null>(null);
+  const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
+  const [fechaFin, setFechaFin] = useState<Date | null>(null);
+  const [seleccionandoInicio, setSeleccionandoInicio] = useState(true);
   
   const { data: usuarios, isLoading: isLoadingUsuarios } = useUsuarios();
   const { data: proveedores, isLoading: isLoadingProveedores } = useProveedores();
@@ -91,9 +111,75 @@ export function FacturaSearchBar({
     onProveedorChange(selectedProveedor);
   };
 
+  // Handlers para el calendario de rango
+  const handleCalendarOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setCalendarAnchor(event.currentTarget);
+    // Inicializar con fechas actuales si existen
+    if (fechaDesdeActual) {
+      const [year, month, day] = fechaDesdeActual.split('-').map(Number);
+      setFechaInicio(new Date(year, month - 1, day));
+    }
+    if (fechaHastaActual) {
+      const [year, month, day] = fechaHastaActual.split('-').map(Number);
+      setFechaFin(new Date(year, month - 1, day));
+    }
+  };
+
+  const handleCalendarClose = () => {
+    setCalendarAnchor(null);
+  };
+
+  const handleDateSelect = (date: Date | null) => {
+    if (!date) return;
+
+    if (seleccionandoInicio) {
+      setFechaInicio(date);
+      setFechaFin(null);
+      setSeleccionandoInicio(false);
+    } else {
+      // Si la fecha seleccionada es anterior a la fecha inicio, intercambiar
+      if (date < fechaInicio!) {
+        setFechaFin(fechaInicio);
+        setFechaInicio(date);
+      } else {
+        setFechaFin(date);
+      }
+      setSeleccionandoInicio(true);
+    }
+  };
+
+  const handleApplyDateRange = () => {
+    if (fechaInicio) {
+      // Formatear fecha sin problemas de timezone
+      const year = fechaInicio.getFullYear();
+      const month = String(fechaInicio.getMonth() + 1).padStart(2, '0');
+      const day = String(fechaInicio.getDate()).padStart(2, '0');
+      const fechaInicioStr = `${year}-${month}-${day}`;
+      onFechaDesdeChange(fechaInicioStr);
+    }
+    if (fechaFin) {
+      // Formatear fecha sin problemas de timezone
+      const year = fechaFin.getFullYear();
+      const month = String(fechaFin.getMonth() + 1).padStart(2, '0');
+      const day = String(fechaFin.getDate()).padStart(2, '0');
+      const fechaFinStr = `${year}-${month}-${day}`;
+      onFechaHastaChange(fechaFinStr);
+    }
+    handleCalendarClose();
+  };
+
+  const handleClearDateRange = () => {
+    setFechaInicio(null);
+    setFechaFin(null);
+    setSeleccionandoInicio(true);
+    onFechaDesdeChange("");
+    onFechaHastaChange("");
+    // No cerrar el calendario, solo limpiar las fechas
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (folio.trim() || localActual || usuarioActual || proveedorActual) {
+    if (folio.trim() || localActual || usuarioActual || proveedorActual || fechaDesdeActual || fechaHastaActual) {
       onSearch(folio, localActual, usuarioActual, proveedorActual);
     }
   };
@@ -101,6 +187,13 @@ export function FacturaSearchBar({
   const handleClear = () => {
     setFolio("");
     onClear();
+    // Limpiar también los filtros de fechas
+    onFechaDesdeChange("");
+    onFechaHastaChange("");
+    // Limpiar también el estado interno del calendario
+    setFechaInicio(null);
+    setFechaFin(null);
+    setSeleccionandoInicio(true);
   };
 
   // Encontrar los valores seleccionados para mostrar en los Autocomplete
@@ -109,7 +202,19 @@ export function FacturaSearchBar({
   const selectedLocal = locales.find(l => l.id === localActual) || null;
 
   // Verificar si hay filtros activos
-  const hasActiveFilters = folio.trim() || localActual || usuarioActual || proveedorActual;
+  const hasActiveFilters = folio.trim() || localActual || usuarioActual || proveedorActual || fechaDesdeActual || fechaHastaActual;
+
+  // Texto para mostrar en el botón del calendario
+  const getCalendarButtonText = () => {
+    if (fechaDesdeActual && fechaHastaActual) {
+      const [yearDesde, monthDesde, dayDesde] = fechaDesdeActual.split('-').map(Number);
+      const [yearHasta, monthHasta, dayHasta] = fechaHastaActual.split('-').map(Number);
+      const desde = new Date(yearDesde, monthDesde - 1, dayDesde).toLocaleDateString();
+      const hasta = new Date(yearHasta, monthHasta - 1, dayHasta).toLocaleDateString();
+      return desde === hasta ? desde : `${desde} - ${hasta}`;
+    }
+    return "Seleccionar fechas";
+  };
 
   return (
     <Paper
@@ -326,6 +431,28 @@ export function FacturaSearchBar({
           clearOnEscape
         />
 
+        {/* Botón del calendario de rango */}
+        <Button
+          variant="outlined"
+          onClick={handleCalendarOpen}
+          startIcon={<CalendarTodayIcon />}
+          fullWidth={isSmall}
+          size="small"
+          sx={{ 
+            minWidth: isSmall ? "100%" : 200,
+            textTransform: "none",
+            borderRadius: "8px",
+            borderColor: theme.palette.divider,
+            color: theme.palette.text.primary,
+            "&:hover": {
+              borderColor: theme.palette.text.primary,
+              bgcolor: theme.palette.action.hover,
+            },
+          }}
+        >
+          {getCalendarButtonText()}
+        </Button>
+
         <Stack direction="row" spacing={2} sx={{ minWidth: isSmall ? "100%" : "auto" }}>
           <Button
             variant="contained"
@@ -385,6 +512,98 @@ export function FacturaSearchBar({
           )}
         </Stack>
       </Box>
+
+      {/* Popover del calendario */}
+      <Popover
+        open={Boolean(calendarAnchor)}
+        anchorEl={calendarAnchor}
+        onClose={handleCalendarClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left',
+        }}
+        PaperProps={{
+          sx: {
+            borderRadius: "12px",
+            p: 2,
+            minWidth: 320,
+          }
+        }}
+      >
+        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
+          <Box sx={{ textAlign: 'center', mb: 2 }}>
+            <Typography variant="h6" fontWeight={600} sx={{ color: "text.primary", mb: 1 }}>
+              Seleccionar Rango de Fechas
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              {seleccionandoInicio 
+                ? "Selecciona la fecha de inicio" 
+                : "Selecciona la fecha de fin"
+              }
+            </Typography>
+            {fechaInicio && (
+              <Typography variant="body2" sx={{ color: "text.primary", mt: 1 }}>
+                Desde: {fechaInicio.toLocaleDateString()}
+              </Typography>
+            )}
+            {fechaFin && (
+              <Typography variant="body2" sx={{ color: "text.primary" }}>
+                Hasta: {fechaFin.toLocaleDateString()}
+              </Typography>
+            )}
+          </Box>
+          
+          <DateCalendar
+            value={seleccionandoInicio ? fechaInicio : fechaFin}
+            onChange={handleDateSelect}
+            sx={{
+              '& .MuiPickersDay-root': {
+                borderRadius: '8px',
+                '&.Mui-selected': {
+                  bgcolor: theme.palette.primary.main,
+                  color: theme.palette.primary.contrastText,
+                  '&:hover': {
+                    bgcolor: theme.palette.primary.dark,
+                  },
+                },
+                '&.MuiPickersDay-today': {
+                  border: `2px solid ${theme.palette.primary.main}`,
+                },
+              },
+            }}
+          />
+          
+          <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+            <Button
+              variant="contained"
+              onClick={handleApplyDateRange}
+              disabled={!fechaInicio}
+              fullWidth
+              sx={{ 
+                textTransform: "none", 
+                borderRadius: "8px",
+              }}
+            >
+              Aplicar
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={handleClearDateRange}
+              fullWidth
+              sx={{ 
+                textTransform: "none", 
+                borderRadius: "8px",
+              }}
+            >
+              Limpiar
+            </Button>
+          </Stack>
+        </LocalizationProvider>
+      </Popover>
 
       {/* Mostrar filtros activos */}
       {hasActiveFilters && (
@@ -449,6 +668,28 @@ export function FacturaSearchBar({
               }}
             />
           )}
+                     {fechaDesdeActual && fechaHastaActual && (
+             <Chip
+               label={`Fechas: ${(() => {
+                 const [yearDesde, monthDesde, dayDesde] = fechaDesdeActual.split('-').map(Number);
+                 const [yearHasta, monthHasta, dayHasta] = fechaHastaActual.split('-').map(Number);
+                 const desde = new Date(yearDesde, monthDesde - 1, dayDesde).toLocaleDateString();
+                 const hasta = new Date(yearHasta, monthHasta - 1, dayHasta).toLocaleDateString();
+                 return `${desde} - ${hasta}`;
+               })()}`}
+               size="small"
+               onDelete={() => {
+                 onFechaDesdeChange("");
+                 onFechaHastaChange("");
+                 onSearch(folio, localActual, usuarioActual, proveedorActual);
+               }}
+               sx={{
+                 bgcolor: theme.palette.mode === 'light' ? theme.palette.grey[200] : theme.palette.grey[800],
+                 color: theme.palette.text.primary,
+                 fontWeight: 500,
+               }}
+             />
+           )}
         </Stack>
       )}
     </Paper>

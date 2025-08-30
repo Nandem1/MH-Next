@@ -27,6 +27,8 @@ export function FacturaPageContent() {
   const [localActivo, setLocalActivo] = useState<string>("");
   const [usuarioActivo, setUsuarioActivo] = useState<string>("");
   const [proveedorActivo, setProveedorActivo] = useState<string>("");
+  const [fechaDesdeActivo, setFechaDesdeActivo] = useState<string>("");
+  const [fechaHastaActivo, setFechaHastaActivo] = useState<string>("");
 
   const { data, isLoading, error } = useFacturas(
     page,
@@ -34,7 +36,9 @@ export function FacturaPageContent() {
     localActivo,
     usuarioActivo,
     proveedorActivo,
-    folioActivo
+    folioActivo,
+    fechaDesdeActivo,
+    fechaHastaActivo
   );
   const facturas = data?.facturas ?? [];
   const totalFacturas = data?.total ?? 0;
@@ -64,11 +68,25 @@ export function FacturaPageContent() {
     setPage(1);
   };
 
+  const handleFechaDesdeChange = (nuevaFechaDesde: string) => {
+    setFolioActivo("");
+    setFechaDesdeActivo(nuevaFechaDesde);
+    setPage(1);
+  };
+
+  const handleFechaHastaChange = (nuevaFechaHasta: string) => {
+    setFolioActivo("");
+    setFechaHastaActivo(nuevaFechaHasta);
+    setPage(1);
+  };
+
   const handleClearSearch = () => {
     setFolioActivo("");
     setLocalActivo("");
     setUsuarioActivo("");
     setProveedorActivo("");
+    setFechaDesdeActivo("");
+    setFechaHastaActivo("");
     setPage(1);
   };
 
@@ -100,9 +118,13 @@ export function FacturaPageContent() {
         onLocalChange={handleLocalChange}
         onUsuarioChange={handleUsuarioChange}
         onProveedorChange={handleProveedorChange}
+        onFechaDesdeChange={handleFechaDesdeChange}
+        onFechaHastaChange={handleFechaHastaChange}
         localActual={localActivo}
         usuarioActual={usuarioActivo}
         proveedorActual={proveedorActivo}
+        fechaDesdeActual={fechaDesdeActivo}
+        fechaHastaActual={fechaHastaActivo}
       />
 
       {isLoading ? (
