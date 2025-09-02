@@ -85,6 +85,41 @@ export interface MetricsData {
     platform?: string;
     environment?: string;
   };
+  whatsapp: {
+    status: string;
+    connection: {
+      state: string;
+      lastSeen: string;
+      uptime: string;
+      uptime_hours: string;
+    };
+    messages: {
+      total_received: number;
+      total_sent: number;
+      last_message: string;
+      last_message_ago: string;
+    };
+    clients: {
+      active: number;
+      total: number;
+    };
+    qr: {
+      generated: boolean;
+      last_generation: string | null;
+    };
+    errors: {
+      count: number;
+      recent: Array<{
+        message?: string;
+        timestamp?: string;
+        type?: string;
+      }>;
+    };
+    performance: {
+      messages_per_minute: number;
+      avg_response_time: string;
+    };
+  };
   redis?: {
     connected: boolean;
     keys: number;
