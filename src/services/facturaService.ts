@@ -19,6 +19,7 @@ export const getFacturas = async (
   usuario?: string,
   proveedor?: string,
   folio?: string,
+  chequeCorrelativo?: string,
   fechaDesde?: string,
   fechaHasta?: string
 ): Promise<{ facturas: Factura[]; total: number }> => {
@@ -34,6 +35,14 @@ export const getFacturas = async (
     // Si hay folio, usamos endpoint específico con el mismo formato que lista
     if (folio) {
       const response = await axios.get<FacturaAPIResponse>(`${API_URL}/api-beta/facturas/${folio}`);
+      const { facturas: rawFacturas, total_registros } = response.data;
+      const facturas: Factura[] = rawFacturas.map((f) => adaptFactura(f));
+      return { facturas, total: total_registros };
+    }
+
+    // Si hay correlativo de cheque, usamos endpoint específico
+    if (chequeCorrelativo) {
+      const response = await axios.get<FacturaAPIResponse>(`${API_URL}/api-beta/facturas/cheque/${chequeCorrelativo}`);
       const { facturas: rawFacturas, total_registros } = response.data;
       const facturas: Factura[] = rawFacturas.map((f) => adaptFactura(f));
       return { facturas, total: total_registros };

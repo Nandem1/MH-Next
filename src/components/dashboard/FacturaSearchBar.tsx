@@ -29,7 +29,7 @@ import { useUsuarios } from "@/hooks/useUsuarios";
 import { useProveedores } from "@/hooks/useProveedores";
 
 interface FacturaSearchBarProps {
-  onSearch: (folio: string, local: string, usuario: string, proveedor: string) => void;
+  onSearch: (folio: string, chequeCorrelativo: string, local: string, usuario: string, proveedor: string) => void;
   onClear: () => void;
   onLocalChange: (local: string) => void;
   onUsuarioChange: (usuario: string) => void;
@@ -68,6 +68,7 @@ export function FacturaSearchBar({
 }: FacturaSearchBarProps) {
   const theme = useTheme();
   const [folio, setFolio] = useState("");
+  const [chequeCorrelativo, setChequeCorrelativo] = useState("");
   const isSmall = useResponsive("(max-width:600px)");
   
   // Estado para el calendario de rango
@@ -179,13 +180,14 @@ export function FacturaSearchBar({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (folio.trim() || localActual || usuarioActual || proveedorActual || fechaDesdeActual || fechaHastaActual) {
-      onSearch(folio, localActual, usuarioActual, proveedorActual);
+    if (folio.trim() || chequeCorrelativo.trim() || localActual || usuarioActual || proveedorActual || fechaDesdeActual || fechaHastaActual) {
+      onSearch(folio, chequeCorrelativo, localActual, usuarioActual, proveedorActual);
     }
   };
 
   const handleClear = () => {
     setFolio("");
+    setChequeCorrelativo("");
     onClear();
     // Limpiar también los filtros de fechas
     onFechaDesdeChange("");
@@ -202,7 +204,7 @@ export function FacturaSearchBar({
   const selectedLocal = locales.find(l => l.id === localActual) || null;
 
   // Verificar si hay filtros activos
-  const hasActiveFilters = folio.trim() || localActual || usuarioActual || proveedorActual || fechaDesdeActual || fechaHastaActual;
+  const hasActiveFilters = folio.trim() || chequeCorrelativo.trim() || localActual || usuarioActual || proveedorActual || fechaDesdeActual || fechaHastaActual;
 
   // Texto para mostrar en el botón del calendario
   const getCalendarButtonText = () => {
@@ -236,252 +238,321 @@ export function FacturaSearchBar({
         onSubmit={handleSubmit}
         sx={{
           display: "flex",
-          flexDirection: isSmall ? "column" : "row",
-          gap: 2,
-          alignItems: "stretch",
-          flexWrap: "wrap",
+          flexDirection: "column",
+          gap: 3,
         }}
       >
-        <TextField
-          label="Buscar por Folio"
-          variant="outlined"
-          value={folio}
-          onChange={(e) => setFolio(e.target.value)}
-          fullWidth={isSmall}
-          size="small"
-          placeholder="Ingrese el folio de la factura"
+        {/* Primera fila: Búsquedas principales */}
+        <Box
           sx={{
-            flex: 1,
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "8px",
-              color: theme.palette.text.primary,
-              "& fieldset": {
-                borderColor: theme.palette.divider,
-              },
-              "&:hover fieldset": {
-                borderColor: theme.palette.text.primary,
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: theme.palette.primary.main,
-              },
-            },
-            "& .MuiInputLabel-root": {
-              color: theme.palette.text.secondary,
-              "&.Mui-focused": {
-                color: theme.palette.primary.main,
-              },
-            },
-            input: {
-              color: theme.palette.text.primary,
-            },
-          }}
-          InputProps={{
-            style: { color: theme.palette.text.primary },
-          }}
-          InputLabelProps={{
-            style: { color: theme.palette.text.secondary },
-          }}
-        />
-
-        <Autocomplete
-          disablePortal
-          options={proveedoresUnicos}
-          getOptionLabel={(option) => option.nombre}
-          isOptionEqualToValue={(option, value) => option.id === value.id}
-          value={selectedProveedor}
-          onChange={handleProveedorChange}
-          loading={isLoadingProveedores}
-          fullWidth={isSmall}
-          size="small"
-          sx={{ 
-            minWidth: isSmall ? "100%" : 200,
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "8px",
-              color: theme.palette.text.primary,
-              "& fieldset": {
-                borderColor: theme.palette.divider,
-              },
-              "&:hover fieldset": {
-                borderColor: theme.palette.text.primary,
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: theme.palette.primary.main,
-              },
-            },
-            "& .MuiInputLabel-root": {
-              color: theme.palette.text.secondary,
-              "&.Mui-focused": {
-                color: theme.palette.primary.main,
-              },
-            },
-          }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Proveedor"
-              InputProps={{
-                ...params.InputProps,
-                endAdornment: (
-                  <>
-                    {isLoadingProveedores ? <CircularProgress color="inherit" size={20} /> : null}
-                    {params.InputProps.endAdornment}
-                  </>
-                ),
-              }}
-            />
-          )}
-          noOptionsText="No se encontraron proveedores"
-          loadingText="Cargando proveedores..."
-          clearOnBlur
-          clearOnEscape
-        />
-
-        <Autocomplete
-          disablePortal
-          options={locales}
-          getOptionLabel={(option) => option.nombre}
-          isOptionEqualToValue={(option, value) => option.id === value.id}
-          value={selectedLocal}
-          onChange={handleLocalChange}
-          fullWidth={isSmall}
-          size="small"
-          sx={{ 
-            minWidth: isSmall ? "100%" : 200,
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "8px",
-              color: theme.palette.text.primary,
-              "& fieldset": {
-                borderColor: theme.palette.divider,
-              },
-              "&:hover fieldset": {
-                borderColor: theme.palette.text.primary,
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: theme.palette.primary.main,
-              },
-            },
-            "& .MuiInputLabel-root": {
-              color: theme.palette.text.secondary,
-              "&.Mui-focused": {
-                color: theme.palette.primary.main,
-              },
-            },
-          }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Local"
-            />
-          )}
-          noOptionsText="No se encontraron locales"
-          clearOnBlur
-          clearOnEscape
-        />
-
-        <Autocomplete
-          disablePortal
-          options={usuariosUnicos}
-          getOptionLabel={(option) => option.nombre}
-          isOptionEqualToValue={(option, value) => option.id === value.id}
-          value={selectedUsuario}
-          onChange={handleUsuarioChange}
-          loading={isLoadingUsuarios}
-          fullWidth={isSmall}
-          size="small"
-          sx={{ 
-            minWidth: isSmall ? "100%" : 200,
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "8px",
-              color: theme.palette.text.primary,
-              "& fieldset": {
-                borderColor: theme.palette.divider,
-              },
-              "&:hover fieldset": {
-                borderColor: theme.palette.text.primary,
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: theme.palette.primary.main,
-              },
-            },
-            "& .MuiInputLabel-root": {
-              color: theme.palette.text.secondary,
-              "&.Mui-focused": {
-                color: theme.palette.primary.main,
-              },
-            },
-          }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Usuario"
-              InputProps={{
-                ...params.InputProps,
-                endAdornment: (
-                  <>
-                    {isLoadingUsuarios ? <CircularProgress color="inherit" size={20} /> : null}
-                    {params.InputProps.endAdornment}
-                  </>
-                ),
-              }}
-            />
-          )}
-          noOptionsText="No se encontraron usuarios"
-          loadingText="Cargando usuarios..."
-          clearOnBlur
-          clearOnEscape
-        />
-
-        {/* Botón del calendario de rango */}
-        <Button
-          variant="outlined"
-          onClick={handleCalendarOpen}
-          startIcon={<CalendarTodayIcon />}
-          fullWidth={isSmall}
-          size="small"
-          sx={{ 
-            minWidth: isSmall ? "100%" : 200,
-            textTransform: "none",
-            borderRadius: "8px",
-            borderColor: theme.palette.divider,
-            color: theme.palette.text.primary,
-            "&:hover": {
-              borderColor: theme.palette.text.primary,
-              bgcolor: theme.palette.action.hover,
-            },
+            display: "flex",
+            flexDirection: isSmall ? "column" : "row",
+            gap: 2,
+            alignItems: "stretch",
           }}
         >
-          {getCalendarButtonText()}
-        </Button>
+          <Tooltip 
+            title={chequeCorrelativo.trim() ? "Deshabilita el campo de correlativo de cheque" : ""}
+            placement="top"
+          >
+            <TextField
+              label="Buscar por Folio"
+              variant="outlined"
+              value={folio}
+              onChange={(e) => setFolio(e.target.value)}
+              fullWidth={isSmall}
+              size="small"
+              placeholder="Ingrese el folio de la factura"
+              disabled={!!chequeCorrelativo.trim()}
+              sx={{
+                flex: isSmall ? "none" : 1,
+                minWidth: isSmall ? "100%" : "auto",
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
+                  color: theme.palette.text.primary,
+                  "& fieldset": {
+                    borderColor: theme.palette.divider,
+                  },
+                  "&:hover fieldset": {
+                    borderColor: theme.palette.text.primary,
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: theme.palette.primary.main,
+                  },
+                },
+                "& .MuiInputLabel-root": {
+                  color: theme.palette.text.secondary,
+                  "&.Mui-focused": {
+                    color: theme.palette.primary.main,
+                  },
+                },
+                input: {
+                  color: theme.palette.text.primary,
+                },
+                // Estilos para campo deshabilitado
+                "&.Mui-disabled": {
+                  bgcolor: theme.palette.action.disabledBackground,
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": {
+                      borderColor: theme.palette.action.disabled,
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: theme.palette.action.disabled,
+                  },
+                },
+              }}
+              InputProps={{
+                style: { color: theme.palette.text.primary },
+              }}
+              InputLabelProps={{
+                style: { color: theme.palette.text.secondary },
+              }}
+            />
+          </Tooltip>
 
-        <Stack direction="row" spacing={2} sx={{ minWidth: isSmall ? "100%" : "auto" }}>
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            startIcon={<SearchIcon />}
+          <Tooltip 
+            title={folio.trim() ? "Deshabilita el campo de folio" : ""}
+            placement="top"
+          >
+            <TextField
+              label="Buscar por Correlativo de Cheque"
+              variant="outlined"
+              value={chequeCorrelativo}
+              onChange={(e) => setChequeCorrelativo(e.target.value)}
+              fullWidth={isSmall}
+              size="small"
+              placeholder="Ingrese el correlativo del cheque"
+              disabled={!!folio.trim()}
+              sx={{
+                flex: isSmall ? "none" : 1,
+                minWidth: isSmall ? "100%" : "auto",
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "8px",
+                  color: theme.palette.text.primary,
+                  "& fieldset": {
+                    borderColor: theme.palette.divider,
+                  },
+                  "&:hover fieldset": {
+                    borderColor: theme.palette.text.primary,
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: theme.palette.primary.main,
+                  },
+                },
+                "& .MuiInputLabel-root": {
+                  color: theme.palette.text.secondary,
+                  "&.Mui-focused": {
+                    color: theme.palette.primary.main,
+                  },
+                },
+                input: {
+                  color: theme.palette.text.primary,
+                },
+                // Estilos para campo deshabilitado
+                "&.Mui-disabled": {
+                  bgcolor: theme.palette.action.disabledBackground,
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": {
+                      borderColor: theme.palette.action.disabled,
+                    },
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: theme.palette.action.disabled,
+                  },
+                },
+              }}
+              InputProps={{
+                style: { color: theme.palette.text.primary },
+              }}
+              InputLabelProps={{
+                style: { color: theme.palette.text.secondary },
+              }}
+            />
+          </Tooltip>
+        </Box>
+
+        {/* Segunda fila: Filtros de selección */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: isSmall ? "column" : "row",
+            gap: 2,
+            alignItems: "stretch",
+          }}
+        >
+          <Autocomplete
+            disablePortal
+            options={proveedoresUnicos}
+            getOptionLabel={(option) => option.nombre}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            value={selectedProveedor}
+            onChange={handleProveedorChange}
+            loading={isLoadingProveedores}
+            fullWidth={isSmall}
+            size="small"
             sx={{ 
-              textTransform: "none", 
-              borderRadius: "8px",
-              px: 3,
-              py: 1,
-              bgcolor: theme.palette.primary.main,
-              color: theme.palette.primary.contrastText,
-              "&:hover": {
-                bgcolor: theme.palette.primary.dark,
+              flex: isSmall ? "none" : 1,
+              minWidth: isSmall ? "100%" : "auto",
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
+                color: theme.palette.text.primary,
+                "& fieldset": {
+                  borderColor: theme.palette.divider,
+                },
+                "&:hover fieldset": {
+                  borderColor: theme.palette.text.primary,
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: theme.palette.primary.main,
+                },
+              },
+              "& .MuiInputLabel-root": {
+                color: theme.palette.text.secondary,
+                "&.Mui-focused": {
+                  color: theme.palette.primary.main,
+                },
               },
             }}
-          >
-            Buscar
-          </Button>
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Proveedor"
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {isLoadingProveedores ? <CircularProgress color="inherit" size={20} /> : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+            noOptionsText="No se encontraron proveedores"
+            loadingText="Cargando proveedores..."
+            clearOnBlur
+            clearOnEscape
+          />
 
+          <Autocomplete
+            disablePortal
+            options={locales}
+            getOptionLabel={(option) => option.nombre}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            value={selectedLocal}
+            onChange={handleLocalChange}
+            fullWidth={isSmall}
+            size="small"
+            sx={{ 
+              flex: isSmall ? "none" : 1,
+              minWidth: isSmall ? "100%" : "auto",
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
+                color: theme.palette.text.primary,
+                "& fieldset": {
+                  borderColor: theme.palette.divider,
+                },
+                "&:hover fieldset": {
+                  borderColor: theme.palette.text.primary,
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: theme.palette.primary.main,
+                },
+              },
+              "& .MuiInputLabel-root": {
+                color: theme.palette.text.secondary,
+                "&.Mui-focused": {
+                  color: theme.palette.primary.main,
+                },
+              },
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Local"
+              />
+            )}
+            noOptionsText="No se encontraron locales"
+            clearOnBlur
+            clearOnEscape
+          />
+
+          <Autocomplete
+            disablePortal
+            options={usuariosUnicos}
+            getOptionLabel={(option) => option.nombre}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            value={selectedUsuario}
+            onChange={handleUsuarioChange}
+            loading={isLoadingUsuarios}
+            fullWidth={isSmall}
+            size="small"
+            sx={{ 
+              flex: isSmall ? "none" : 1,
+              minWidth: isSmall ? "100%" : "auto",
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
+                color: theme.palette.text.primary,
+                "& fieldset": {
+                  borderColor: theme.palette.divider,
+                },
+                "&:hover fieldset": {
+                  borderColor: theme.palette.text.primary,
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: theme.palette.primary.main,
+                },
+              },
+              "& .MuiInputLabel-root": {
+                color: theme.palette.text.secondary,
+                "&.Mui-focused": {
+                  color: theme.palette.primary.main,
+                },
+              },
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Usuario"
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {isLoadingUsuarios ? <CircularProgress color="inherit" size={20} /> : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+            noOptionsText="No se encontraron usuarios"
+            loadingText="Cargando usuarios..."
+            clearOnBlur
+            clearOnEscape
+          />
+        </Box>
+
+        {/* Tercera fila: Calendario y botones de acción */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: isSmall ? "column" : "row",
+            gap: 2,
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Button
             variant="outlined"
-            onClick={handleClear}
-            startIcon={<ClearIcon />}
+            onClick={handleCalendarOpen}
+            startIcon={<CalendarTodayIcon />}
+            fullWidth={isSmall}
+            size="small"
             sx={{ 
-              textTransform: "none", 
+              minWidth: isSmall ? "100%" : 200,
+              textTransform: "none",
               borderRadius: "8px",
-              px: 3,
-              py: 1,
               borderColor: theme.palette.divider,
               color: theme.palette.text.primary,
               "&:hover": {
@@ -490,27 +561,76 @@ export function FacturaSearchBar({
               },
             }}
           >
-            Limpiar
+            {getCalendarButtonText()}
           </Button>
 
-          {onGestionCheques && (
-            <Tooltip title="Gestión de Cheques">
-              <IconButton
-                onClick={onGestionCheques}
-                sx={{
-                  bgcolor: theme.palette.primary.main,
-                  color: theme.palette.primary.contrastText,
-                  borderRadius: "8px",
-                  "&:hover": {
-                    bgcolor: theme.palette.primary.dark,
-                  },
-                }}
-              >
-                <AccountBalanceIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Stack>
+          <Stack 
+            direction={isSmall ? "column" : "row"} 
+            spacing={2} 
+            sx={{ 
+              minWidth: isSmall ? "100%" : "auto",
+              flex: isSmall ? "none" : 1,
+              justifyContent: isSmall ? "stretch" : "flex-end",
+            }}
+          >
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              startIcon={<SearchIcon />}
+              sx={{ 
+                textTransform: "none", 
+                borderRadius: "8px",
+                px: 3,
+                py: 1,
+                bgcolor: theme.palette.primary.main,
+                color: theme.palette.primary.contrastText,
+                "&:hover": {
+                  bgcolor: theme.palette.primary.dark,
+                },
+              }}
+            >
+              Buscar
+            </Button>
+
+            <Button
+              variant="outlined"
+              onClick={handleClear}
+              startIcon={<ClearIcon />}
+              sx={{ 
+                textTransform: "none", 
+                borderRadius: "8px",
+                px: 3,
+                py: 1,
+                borderColor: theme.palette.divider,
+                color: theme.palette.text.primary,
+                "&:hover": {
+                  borderColor: theme.palette.text.primary,
+                  bgcolor: theme.palette.action.hover,
+                },
+              }}
+            >
+              Limpiar
+            </Button>
+
+            {onGestionCheques && (
+              <Tooltip title="Gestión de Cheques">
+                <IconButton
+                  onClick={onGestionCheques}
+                  sx={{
+                    bgcolor: theme.palette.primary.main,
+                    color: theme.palette.primary.contrastText,
+                    borderRadius: "8px",
+                    "&:hover": {
+                      bgcolor: theme.palette.primary.dark,
+                    },
+                  }}
+                >
+                  <AccountBalanceIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Stack>
+        </Box>
       </Box>
 
       {/* Popover del calendario */}
@@ -614,7 +734,22 @@ export function FacturaSearchBar({
               size="small"
               onDelete={() => {
                 setFolio("");
-                onSearch("", localActual, usuarioActual, proveedorActual);
+                onSearch("", chequeCorrelativo, localActual, usuarioActual, proveedorActual);
+              }}
+              sx={{
+                bgcolor: theme.palette.mode === 'light' ? theme.palette.grey[200] : theme.palette.grey[800],
+                color: theme.palette.text.primary,
+                fontWeight: 500,
+              }}
+            />
+          )}
+          {chequeCorrelativo && (
+            <Chip
+              label={`Cheque: ${chequeCorrelativo}`}
+              size="small"
+              onDelete={() => {
+                setChequeCorrelativo("");
+                onSearch(folio, "", localActual, usuarioActual, proveedorActual);
               }}
               sx={{
                 bgcolor: theme.palette.mode === 'light' ? theme.palette.grey[200] : theme.palette.grey[800],
@@ -629,7 +764,7 @@ export function FacturaSearchBar({
               size="small"
               onDelete={() => {
                 onLocalChange("");
-                onSearch(folio, "", usuarioActual, proveedorActual);
+                onSearch(folio, chequeCorrelativo, "", usuarioActual, proveedorActual);
               }}
               sx={{
                 bgcolor: theme.palette.mode === 'light' ? theme.palette.grey[200] : theme.palette.grey[800],
@@ -644,7 +779,7 @@ export function FacturaSearchBar({
               size="small"
               onDelete={() => {
                 onUsuarioChange("");
-                onSearch(folio, localActual, "", proveedorActual);
+                onSearch(folio, chequeCorrelativo, localActual, "", proveedorActual);
               }}
               sx={{
                 bgcolor: theme.palette.mode === 'light' ? theme.palette.grey[200] : theme.palette.grey[800],
@@ -659,7 +794,7 @@ export function FacturaSearchBar({
               size="small"
               onDelete={() => {
                 onProveedorChange("");
-                onSearch(folio, localActual, usuarioActual, "");
+                onSearch(folio, chequeCorrelativo, localActual, usuarioActual, "");
               }}
               sx={{
                 bgcolor: theme.palette.mode === 'light' ? theme.palette.grey[200] : theme.palette.grey[800],
@@ -681,7 +816,7 @@ export function FacturaSearchBar({
                onDelete={() => {
                  onFechaDesdeChange("");
                  onFechaHastaChange("");
-                 onSearch(folio, localActual, usuarioActual, proveedorActual);
+                 onSearch(folio, chequeCorrelativo, localActual, usuarioActual, proveedorActual);
                }}
                sx={{
                  bgcolor: theme.palette.mode === 'light' ? theme.palette.grey[200] : theme.palette.grey[800],

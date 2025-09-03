@@ -2,11 +2,13 @@
 
 import { Box, Tooltip, Typography, useTheme } from "@mui/material";
 import { useMetrics } from "@/hooks/useMetrics";
-import { useBotMetrics } from "@/hooks/useBotMetrics";
+// TEMPORALMENTE DESHABILITADO - Mientras se corrige el bot
+// import { useBotMetrics } from "@/hooks/useBotMetrics";
 
 export function MetricsIndicator() {
   const { metrics: nodeMetrics } = useMetrics();
-  const { metrics: botMetrics } = useBotMetrics();
+  // TEMPORALMENTE DESHABILITADO - Mientras se corrige el bot
+  // const { metrics: botMetrics } = useBotMetrics();
   const theme = useTheme();
 
   if (!nodeMetrics) return null;
@@ -21,11 +23,12 @@ export function MetricsIndicator() {
     return theme.palette.error.main;
   };
 
-  const getWhatsAppColor = (status: string) => {
-    if (status === 'connected') return theme.palette.success.main;
-    if (status === 'connecting') return theme.palette.warning.main;
-    return theme.palette.error.main;
-  };
+  // TEMPORALMENTE DESHABILITADO - Mientras se corrige el bot
+  // const getWhatsAppColor = (status: string) => {
+  //   if (status === 'connected') return theme.palette.success.main;
+  //   if (status === 'connecting') return theme.palette.warning.main;
+  //   return theme.palette.error.main;
+  // };
 
   return (
     <Box
@@ -72,8 +75,8 @@ export function MetricsIndicator() {
         </Box>
       </Tooltip>
 
-      {/* WhatsApp Status - Siempre mostrar ya que es crítico */}
-      <Tooltip title={`WhatsApp: ${botMetrics?.whatsapp?.status === 'connected' ? 'Connected' : 'Disconnected'} • ${botMetrics?.whatsapp?.clients?.active || 0}/${botMetrics?.whatsapp?.clients?.total || 0} clients`}>
+      {/* WhatsApp Status - TEMPORALMENTE DESHABILITADO mientras se corrige el bot */}
+      {/* <Tooltip title={`WhatsApp: ${botMetrics?.whatsapp?.status === 'connected' ? 'Connected' : 'Disconnected'} • ${botMetrics?.whatsapp?.clients?.active || 0}/${botMetrics?.whatsapp?.clients?.total || 0} clients`}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           <Box
             sx={{
@@ -84,11 +87,11 @@ export function MetricsIndicator() {
               boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
             }}
           />
-                      <Typography variant="caption" sx={{ color: "white", fontSize: "0.75rem", fontWeight: 500 }}>
-              Bot
-            </Typography>
+          <Typography variant="caption" sx={{ color: "white", fontSize: "0.75rem", fontWeight: 500 }}>
+            Bot
+          </Typography>
         </Box>
-      </Tooltip>
+      </Tooltip> */}
 
       {/* Errors */}
       {nodeMetrics.requests.errors && nodeMetrics.requests.errors.length > 0 && (

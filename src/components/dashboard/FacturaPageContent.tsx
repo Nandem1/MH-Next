@@ -24,6 +24,8 @@ export function FacturaPageContent() {
   const [limit] = useState(10);
   // Folio activo para consulta vía React Query
   const [folioActivo, setFolioActivo] = useState<string>("");
+  // Correlativo de cheque activo para consulta vía React Query
+  const [chequeCorrelativoActivo, setChequeCorrelativoActivo] = useState<string>("");
   const [localActivo, setLocalActivo] = useState<string>("");
   const [usuarioActivo, setUsuarioActivo] = useState<string>("");
   const [proveedorActivo, setProveedorActivo] = useState<string>("");
@@ -37,6 +39,7 @@ export function FacturaPageContent() {
     usuarioActivo,
     proveedorActivo,
     folioActivo,
+    chequeCorrelativoActivo,
     fechaDesdeActivo,
     fechaHastaActivo
   );
@@ -45,43 +48,51 @@ export function FacturaPageContent() {
 
   const handleSearch = async (
     folio: string,
+    chequeCorrelativo: string
   ) => {
     setPage(1);
     setFolioActivo(folio.trim());
+    setChequeCorrelativoActivo(chequeCorrelativo.trim());
   };
 
   const handleLocalChange = (nuevoLocal: string) => {
     setFolioActivo("");
+    setChequeCorrelativoActivo("");
     setLocalActivo(nuevoLocal);
     setPage(1);
   };
 
   const handleUsuarioChange = (nuevoUsuario: string) => {
     setFolioActivo("");
+    setChequeCorrelativoActivo("");
     setUsuarioActivo(nuevoUsuario);
     setPage(1);
   };
 
   const handleProveedorChange = (nuevoProveedor: string) => {
     setFolioActivo("");
+    setChequeCorrelativoActivo("");
     setProveedorActivo(nuevoProveedor);
     setPage(1);
   };
 
   const handleFechaDesdeChange = (nuevaFechaDesde: string) => {
     setFolioActivo("");
+    setChequeCorrelativoActivo("");
     setFechaDesdeActivo(nuevaFechaDesde);
     setPage(1);
   };
 
   const handleFechaHastaChange = (nuevaFechaHasta: string) => {
     setFolioActivo("");
+    setChequeCorrelativoActivo("");
     setFechaHastaActivo(nuevaFechaHasta);
     setPage(1);
   };
 
   const handleClearSearch = () => {
     setFolioActivo("");
+    setChequeCorrelativoActivo("");
     setLocalActivo("");
     setUsuarioActivo("");
     setProveedorActivo("");
@@ -142,7 +153,7 @@ export function FacturaPageContent() {
             isLoading={false}
             error={false}
           />
-          {!folioActivo && (
+          {!folioActivo && !chequeCorrelativoActivo && (
             <Box sx={{ display: "flex", justifyContent: "center" }}>
               <Pagination
                 count={Math.ceil(totalFacturas / limit)}
