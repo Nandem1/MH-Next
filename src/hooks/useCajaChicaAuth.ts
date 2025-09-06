@@ -20,22 +20,22 @@ export function useCajaChicaAuth() {
     refetchOnWindowFocus: true,
   });
 
-  // Usar datos del backend si están disponibles, sino usar JWT como fallback
+  // Usar datos del backend si están disponibles, sino usar fallback seguro
   const estadoCajaChica = estadoCajaChicaBackend || {
     usuarioId: usuario?.usuario_id || 0,
     nombre: usuario?.nombre || "Usuario",
     email: usuario?.email || "",
-    tieneCajaChica: true, // Asumir que tiene caja chica si está autenticado
+    tieneCajaChica: false, // No asumir que tiene caja chica por defecto
     montoFijo: 0,
     montoActual: 0,
     limiteMinimo: 0,
     fechaUltimoReembolso: null,
   };
 
-  // Autorización basada en JWT (siempre disponible)
+  // Autorización basada en datos del backend
   const autorizacion = {
     usuarioId: usuario?.usuario_id || 0,
-    tieneCajaChica: true // Asumir que tiene caja chica si está autenticado
+    tieneCajaChica: estadoCajaChicaBackend?.tieneCajaChica || false // Usar datos reales del backend
   };
 
   // Saldo disponible usando datos actualizados del backend
@@ -83,10 +83,10 @@ export function useCajaChicaAuth() {
     autorizacion,
     estadoCajaChica,
     saldoDisponible,
-    loadingAutorizacion: false,
+    loadingAutorizacion: loadingEstadoCaja, // Usar el loading real del backend
     loadingEstadoCaja,
     loadingSaldo: loadingEstadoCaja, // Mismo loading que estado
-    errorAutorizacion: null,
+    errorAutorizacion: errorEstadoCaja, // Usar el error real del backend
     errorEstadoCaja,
     errorSaldo: errorEstadoCaja, // Mismo error que estado
     refetchAutorizacion,

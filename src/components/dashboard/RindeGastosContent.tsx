@@ -34,7 +34,7 @@ export function RindeGastosContent({ showSnackbar }: RindeGastosContentProps) {
   // Hooks del nuevo sistema
   const { gastos, loading: loadingGastos, error: errorGastos, eliminarGasto } = useGastos();
   const { estado: estadoCajaChicaNew, loading: loadingCajaChicaNew } = useCajaChicaNew();
-  const { autorizacion, loadingAutorizacion } = useCajaChicaAuth();
+  const { autorizacion, loadingAutorizacion, errorAutorizacion } = useCajaChicaAuth();
   const { estadisticas, loading: loadingEstadisticas, error: errorEstadisticas } = useEstadisticasGastos();
   const { reiniciarCiclo, loading: loadingReiniciarCiclo } = useReiniciarCiclo();
 
@@ -75,8 +75,8 @@ export function RindeGastosContent({ showSnackbar }: RindeGastosContentProps) {
     );
   }
 
-  // Mostrar mensaje si no tiene autorización
-  if (!autorizacion?.tieneCajaChica) {
+  // Mostrar mensaje si no tiene autorización o si hay error en la autorización
+  if (!autorizacion?.tieneCajaChica || errorAutorizacion) {
     return (
       <Box sx={{ 
         height: "100%", 
@@ -91,7 +91,10 @@ export function RindeGastosContent({ showSnackbar }: RindeGastosContentProps) {
             No tienes autorización para manejar caja chica
           </Typography>
           <Typography variant="body2">
-            Contacta al administrador para obtener permisos de caja chica.
+            {errorAutorizacion 
+              ? "No se pudo verificar tu autorización. Contacta al administrador para obtener permisos de caja chica."
+              : "Contacta al administrador para obtener permisos de caja chica."
+            }
           </Typography>
         </Alert>
       </Box>

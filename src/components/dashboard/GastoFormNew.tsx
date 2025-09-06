@@ -46,10 +46,10 @@ export const GastoFormNew: React.FC<GastoFormNewProps> = ({ onGastoCreado }) => 
   const { estado: estadoCajaChica } = useCajaChicaNew();
   const { cuentas, cuentasMasUsadas, loading: loadingCuentas } = useCuentasContables();
   const { locales, loading: loadingLocales } = useLocales();
-  const { autorizacion } = useCajaChicaAuth();
+  const { autorizacion, errorAutorizacion } = useCajaChicaAuth();
 
   // Verificar autorización
-  if (!autorizacion?.tieneCajaChica) {
+  if (!autorizacion?.tieneCajaChica || errorAutorizacion) {
     return (
       <Paper 
         elevation={0}
@@ -66,7 +66,10 @@ export const GastoFormNew: React.FC<GastoFormNewProps> = ({ onGastoCreado }) => 
             No tienes autorización para manejar caja chica
           </Typography>
           <Typography variant="body2">
-            Contacta al administrador para obtener permisos de caja chica.
+            {errorAutorizacion 
+              ? "No se pudo verificar tu autorización. Contacta al administrador para obtener permisos de caja chica."
+              : "Contacta al administrador para obtener permisos de caja chica."
+            }
           </Typography>
         </Alert>
       </Paper>
