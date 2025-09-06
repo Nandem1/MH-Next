@@ -8,28 +8,38 @@ import {
   Skeleton,
   Grid,
 } from "@mui/material";
-import { useRindeGastos } from "../../hooks/useRindeGastos";
+import { EstadisticasCategoria } from "../../services/gastosService";
 import { formatearMonto } from "@/utils/rindeGastosValidation";
 
-export function EstadisticasCategorias() {
+interface EstadisticasCategoriasProps {
+  estadisticas: EstadisticasCategoria[];
+  loading: boolean;
+  error?: string | null;
+}
+
+export function EstadisticasCategorias({ estadisticas, loading, error }: EstadisticasCategoriasProps) {
   const theme = useTheme();
   
-  // Usar el hook profesional para obtener estadísticas
-  const { estadisticas, loadingEstadisticas, errorEstadisticas } = useRindeGastos();
+  // Debug logs
+  console.log('🔍 DEBUG EstadisticasCategorias:', {
+    estadisticas,
+    estadisticasLength: estadisticas?.length,
+    loading,
+    error
+  });
   
   // Obtener las estadísticas del backend
-  const estadisticasData = estadisticas?.data || [];
-  const metaData = estadisticas?.meta;
+  const estadisticasData = estadisticas || [];
 
   const formatearNombreCuenta = (nombre: string) => {
     // Formatear nombre para display más limpio
     return nombre.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
   };
 
-  const totalGastoGlobal = metaData?.totalGeneral || estadisticasData.reduce((sum, stat) => sum + parseFloat(stat.totalGasto), 0);
+  const totalGastoGlobal = estadisticasData.reduce((sum, stat) => sum + parseFloat(stat.totalGasto), 0);
 
   // Manejar estados de carga y error
-  if (loadingEstadisticas) {
+  if (loading) {
     return (
       <Box>
         <Typography 
@@ -41,7 +51,7 @@ export function EstadisticasCategorias() {
             mb: 3
           }}
         >
-          📊 Estadísticas por Cuenta
+          📊 Estadísticas por Cuenta Contable
         </Typography>
         <Grid container spacing={2}>
           {Array.from({ length: 6 }).map((_, index) => (
@@ -68,7 +78,7 @@ export function EstadisticasCategorias() {
     );
   }
 
-  if (errorEstadisticas) {
+  if (error) {
     return (
       <Box>
         <Typography 
@@ -80,7 +90,7 @@ export function EstadisticasCategorias() {
             mb: 3
           }}
         >
-          📊 Estadísticas por Cuenta
+          📊 Estadísticas por Cuenta Contable
         </Typography>
         <Paper 
           elevation={0} 
@@ -134,13 +144,13 @@ export function EstadisticasCategorias() {
           {estadisticasData
             .filter(stat => parseFloat(stat.totalGasto) > 0)
             .sort((a, b) => parseFloat(b.totalGasto) - parseFloat(a.totalGasto))
-            .slice(0, 6) // Top 6 cuentas más utilizadas
+            .slice(0, 6) // Top 6 categorías más utilizadas
             .map((stat) => {
               const totalGastoNum = parseFloat(stat.totalGasto);
-              const porcentajeGasto = totalGastoGlobal > 0 ? (totalGastoNum / totalGastoGlobal) * 100 : parseFloat(stat.porcentaje);
+              const porcentajeGasto = parseFloat(stat.porcentaje);
 
               return (
-                <Grid key={stat.cuenta_contable_id} size={{ xs: 12, sm: 6, md: 4 }}>
+                <Grid key={`${stat.categoria}-${stat.cuenta_contable_id}`} size={{ xs: 12, sm: 6, md: 4 }}>
                   <Paper 
                     elevation={0} 
                     sx={{ 
@@ -205,7 +215,7 @@ export function EstadisticasCategorias() {
                           fontWeight: 500
                         }}
                       >
-                        {porcentajeGasto.toFixed(1)}%
+                        {stat.cantidadGastos} gastos • {porcentajeGasto.toFixed(1)}%
                       </Typography>
                     </Box>
                   </Paper>

@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { rindeGastosService } from "@/services/rindeGastosService";
+import { gastosService } from "@/services/gastosService";
 import { useSnackbar } from "@/hooks/useSnackbar";
 
 interface UseCajaChicaOptions {
@@ -10,8 +10,8 @@ interface UseCajaChicaOptions {
 }
 
 /**
- * Hook personalizado para manejar la caja chica con localización dinámica
- * Funciona igual que useStock - automáticamente filtra por el local del usuario autenticado
+ * Hook personalizado para manejar la caja chica del usuario
+ * Sistema basado en usuarios individuales
  */
 export function useCajaChica(options: UseCajaChicaOptions = {}) {
   const { showSnackbar: externalShowSnackbar } = options;
@@ -25,7 +25,7 @@ export function useCajaChica(options: UseCajaChicaOptions = {}) {
   // ===== QUERIES =====
   
   /**
-   * Estado actual de caja chica del local del usuario
+   * Estado actual de caja chica del usuario
    */
   const {
     data: estadoCajaChica,
@@ -33,15 +33,15 @@ export function useCajaChica(options: UseCajaChicaOptions = {}) {
     error: errorEstadoCaja,
     refetch: refetchEstadoCaja
   } = useQuery({
-    queryKey: ['caja-chica', 'estado', usuario?.id_local],
-    queryFn: () => rindeGastosService.obtenerEstadoCajaChica(),
-    enabled: !!usuario?.id_local,
+    queryKey: ['usuario-caja-chica', 'estado', usuario?.usuario_id],
+    queryFn: () => gastosService.obtenerEstadoCajaChica(),
+    enabled: !!usuario?.usuario_id,
     staleTime: 30000, // 30 segundos
     refetchInterval: 60000, // Refrescar cada minuto para monitorear el estado
   });
   
   /**
-   * Historial de rendiciones del local
+   * Historial de rendiciones del usuario
    */
   const {
     data: historialRendiciones,
@@ -49,255 +49,111 @@ export function useCajaChica(options: UseCajaChicaOptions = {}) {
     error: errorHistorial,
     refetch: refetchHistorial
   } = useQuery({
-    queryKey: ['caja-chica', 'rendiciones', usuario?.id_local],
-    queryFn: () => rindeGastosService.obtenerHistorialRendiciones(),
-    enabled: !!usuario?.id_local,
+    queryKey: ['usuario-caja-chica', 'rendiciones', usuario?.usuario_id],
+    queryFn: () => gastosService.obtenerHistorialRendiciones(),
+    enabled: !!usuario?.usuario_id,
     staleTime: 300000, // 5 minutos
   });
   
   /**
-   * Alerta de estado de caja chica
+   * Saldo disponible del usuario
    */
   const {
-    data: alertaCajaChica,
-    isLoading: loadingAlerta
+    data: saldoDisponible,
+    isLoading: loadingSaldo
   } = useQuery({
-    queryKey: ['caja-chica', 'alerta', usuario?.id_local],
-    queryFn: () => rindeGastosService.obtenerAlertaCajaChica(),
-    enabled: !!usuario?.id_local && !!estadoCajaChica,
+    queryKey: ['usuario-caja-chica', 'saldo', usuario?.usuario_id],
+    queryFn: () => gastosService.obtenerSaldoDisponible(),
+    enabled: !!usuario?.usuario_id,
     staleTime: 30000,
   });
   
   // ===== MUTATIONS =====
   
   /**
-   * Generar nómina de rendición
+   * Reiniciar ciclo completo (genera nómina y reinicia)
    */
-  const generarNominaMutation = useMutation({
-    mutationFn: (observaciones?: string) => 
-      rindeGastosService.generarNominaRendicion(observaciones),
+  const reiniciarCicloCompletoMutation = useMutation({
+    mutationFn: () => gastosService.reiniciarCiclo(),
     onSuccess: (data: unknown) => {
-      const nominaId = (data as { nominaId?: string; id?: string })?.nominaId || (data as { nominaId?: string; id?: string })?.id || "nueva nómina";
+      const response = data as { data?: { nomina_generada?: { id?: string } } };
+      const nominaId = response?.data?.nomina_generada?.id || "nueva nómina";
       showSnackbar(
-        `✅ Nómina de rendición generada exitosamente: ${nominaId}`, 
+        `✅ Ciclo reiniciado exitosamente. Nómina generada: ${nominaId}`, 
         "success"
       );
-      // Invalidar queries relacionadas
-      queryClient.invalidateQueries({ queryKey: ['caja-chica'] });
+      // Invalidar todo el caché relacionado con gastos y caja chica
+      queryClient.invalidateQueries({ queryKey: ['usuario-caja-chica'] });
       queryClient.invalidateQueries({ queryKey: ['gastos'] });
-    },
-    onError: (error: unknown) => {
-      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Error al generar nómina de rendición";
-      showSnackbar(`❌ ${message}`, "error");
-    }
-  });
-  
-  /**
-   * Registrar reembolso de casa matriz (NO reinicia automáticamente)
-   */
-  const registrarReembolsoMutation = useMutation({
-    mutationFn: ({ 
-      nominaId, 
-      montoReembolso, 
-      comprobanteReembolso 
-    }: { 
-      nominaId: string; 
-      montoReembolso: number; 
-      comprobanteReembolso?: string 
-    }) => rindeGastosService.registrarReembolso(nominaId, montoReembolso, comprobanteReembolso),
-    onSuccess: () => {
-      showSnackbar(
-        `✅ Reembolso registrado exitosamente. Ahora puede reiniciar el ciclo.`, 
-        "success"
-      );
-      // Invalidar queries relacionadas
       queryClient.invalidateQueries({ queryKey: ['caja-chica'] });
-    },
-    onError: (error: unknown) => {
-      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Error al registrar reembolso";
-      showSnackbar(`❌ ${message}`, "error");
-    }
-  });
-
-  /**
-   * Reiniciar ciclo de caja chica manualmente
-   */
-  const reiniciarCicloMutation = useMutation({
-    mutationFn: ({ 
-      nominaId, 
-      observaciones 
-    }: { 
-      nominaId: string; 
-      observaciones?: string 
-    }) => rindeGastosService.reiniciarCiclo(nominaId, observaciones),
-    onSuccess: (data: unknown) => {
-      const montoActual = (data as { montoActual?: number; caja_chica?: { monto_actual?: number } })?.montoActual || (data as { montoActual?: number; caja_chica?: { monto_actual?: number } })?.caja_chica?.monto_actual || 0;
-      showSnackbar(
-        `✅ Ciclo reiniciado exitosamente. Nueva caja chica: $${montoActual.toLocaleString()}`, 
-        "success"
-      );
-      // Invalidar todas las queries relacionadas para refrescar el estado
-      queryClient.invalidateQueries({ queryKey: ['caja-chica'] });
-      queryClient.invalidateQueries({ queryKey: ['gastos'] });
-      queryClient.invalidateQueries({ queryKey: ['estadisticas'] });
+      queryClient.invalidateQueries({ queryKey: ['estadisticas-monetarias'] });
+      queryClient.invalidateQueries({ queryKey: ['usuario-caja-chica-estado'] });
+      queryClient.invalidateQueries({ queryKey: ['auth'] });
+      queryClient.invalidateQueries({ queryKey: ['usuario'] });
     },
     onError: (error: unknown) => {
       const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Error al reiniciar ciclo";
       showSnackbar(`❌ ${message}`, "error");
     }
   });
-
-  /**
-   * Reiniciar ciclo completo de caja chica (automático)
-   */
-  const reiniciarCicloCompletoMutation = useMutation({
-    mutationFn: () => rindeGastosService.reiniciarCicloCompleto(),
-    onSuccess: (data: unknown) => {
-      showSnackbar(`✅ ${(data as { mensaje?: string })?.mensaje || "Ciclo de caja chica reiniciado completamente"}`, "success");
-      // Invalidar todas las queries relacionadas para refrescar el estado
-      queryClient.invalidateQueries({ queryKey: ['caja-chica'] });
-      queryClient.invalidateQueries({ queryKey: ['gastos'] });
-      queryClient.invalidateQueries({ queryKey: ['estadisticas-monetarias'] });
-      refetchEstadoCaja();
-    },
-    onError: (error: unknown) => {
-      const message = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message || "Error al reiniciar ciclo completo";
-      showSnackbar(`❌ ${message}`, "error");
-    }
-  });
-  
-  /**
-   * Verificar si se puede aprobar un gasto
-   */
-  const verificarSaldoMutation = useMutation({
-    mutationFn: (monto: number) => rindeGastosService.verificarSaldoDisponible(monto),
-  });
   
   // ===== COMPUTED VALUES =====
   
   /**
-   * Información del local actual
-   * Nota: En producción, el nombre se obtiene dinámicamente del backend via JOIN con tabla locales
+   * Información del usuario actual
    */
-  const localInfo = {
-    id: estadoCajaChica?.localId || usuario?.id_local || 0,
-    nombre: estadoCajaChica?.nombreLocal || "Local no encontrado",
+  const usuarioInfo = {
+    id: estadoCajaChica?.usuarioId || usuario?.usuario_id || 0,
+    email: estadoCajaChica?.email || usuario?.email || "",
+    tieneCajaChica: estadoCajaChica?.tieneCajaChica || false,
   };
   
   /**
    * Estado computado de la caja chica
-   * El backend ya devuelve los datos en el formato correcto, solo los pasamos
    */
-  const estadoComputado = estadoCajaChica || null;
-  
-  // ===== HELPER FUNCTIONS =====
-  
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  function estimarDiasHastaLimite(estado: unknown): number {
-    // El backend ya devuelve los datos en formato flat
-    const estadoTyped = estado as {
-      montoUtilizado?: number;
-      montoActual?: number;
-      limiteMinimo?: number;
-      rendicionActual?: {
-        gastosRegistrados?: number;
-        fechaInicio?: string;
-      };
-    };
-    
-    const montoUtilizado = estadoTyped.montoUtilizado || 0;
-    const montoActual = estadoTyped.montoActual || 0;
-    const limiteMinimo = estadoTyped.limiteMinimo || 0;
-    const gastosRegistrados = estadoTyped.rendicionActual?.gastosRegistrados || 0;
-    
-    if (gastosRegistrados === 0 || montoUtilizado === 0) {
-      return 999; // Sin gastos, no se puede estimar
-    }
-    
-    const fechaInicio = estadoTyped.rendicionActual?.fechaInicio;
-    if (!fechaInicio) return 999;
-    
-    const diasTranscurridos = Math.max(1, 
-      Math.ceil((Date.now() - new Date(fechaInicio).getTime()) / (1000 * 60 * 60 * 24))
-    );
-    
-    const promedioGastoDiario = montoUtilizado / diasTranscurridos;
-    
-    if (promedioGastoDiario <= 0) return 999;
-    
-    const montoDisponible = montoActual - limiteMinimo;
-    return Math.floor(montoDisponible / promedioGastoDiario);
-  }
+  const estadoComputado = estadoCajaChica ? {
+    montoFijo: parseFloat(estadoCajaChica.montoFijo),
+    montoActual: parseFloat(estadoCajaChica.montoActual),
+    limiteMinimo: parseFloat(estadoCajaChica.limiteMinimo),
+    saldoDisponible: saldoDisponible?.saldoDisponible || 0,
+    puedeCrearGasto: parseFloat(estadoCajaChica.montoActual) > parseFloat(estadoCajaChica.limiteMinimo),
+  } : null;
   
   // ===== ACTIONS =====
   
-  const generarNomina = (observaciones?: string) => {
-    generarNominaMutation.mutate(observaciones);
-  };
-  
-  const registrarReembolso = (
-    nominaId: string, 
-    montoReembolso: number, 
-    comprobanteReembolso?: string
-  ) => {
-    registrarReembolsoMutation.mutate({ 
-      nominaId, 
-      montoReembolso, 
-      comprobanteReembolso 
-    });
-  };
-
-  const reiniciarCiclo = (
-    nominaId: string,
-    observaciones?: string
-  ) => {
-    reiniciarCicloMutation.mutate({
-      nominaId,
-      observaciones
-    });
-  };
-
   const reiniciarCicloCompleto = () => {
     reiniciarCicloCompletoMutation.mutate();
   };
   
   const verificarSaldo = (monto: number) => {
-    return verificarSaldoMutation.mutateAsync(monto);
+    const saldo = saldoDisponible?.saldoDisponible || 0;
+    return saldo >= monto;
   };
   
-  const refetchAll = () => {
-    refetchEstadoCaja();
-    refetchHistorial();
-  };
+  // ===== RETURN =====
   
   return {
-    // Data
+    // Estado
     estadoCajaChica: estadoComputado,
-    historialRendiciones,
-    alertaCajaChica,
-    localInfo,
+    historialRendiciones: historialRendiciones?.rendiciones || [],
+    saldoDisponible: saldoDisponible?.saldoDisponible || 0,
+    usuarioInfo,
     
     // Loading states
     loadingEstadoCaja,
     loadingHistorial,
-    loadingAlerta,
-    loadingGenerarNomina: generarNominaMutation.isPending,
-    loadingRegistrarReembolso: registrarReembolsoMutation.isPending,
-    loadingReiniciarCiclo: reiniciarCicloMutation.isPending,
+    loadingSaldo,
     loadingReiniciarCicloCompleto: reiniciarCicloCompletoMutation.isPending,
-    loadingVerificarSaldo: verificarSaldoMutation.isPending,
     
     // Error states
     errorEstadoCaja,
     errorHistorial,
     
     // Actions
-    generarNomina,
-    registrarReembolso,
-    reiniciarCiclo,
     reiniciarCicloCompleto,
     verificarSaldo,
-    refetchAll,
+    
+    // Refetch functions
     refetchEstadoCaja,
     refetchHistorial,
   };

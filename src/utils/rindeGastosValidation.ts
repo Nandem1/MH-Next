@@ -2,7 +2,7 @@
  * Utilidades de validación para el sistema de rinde gastos
  */
 
-import { CrearGastoRequest } from "@/services/rindeGastosService";
+import { CrearGastoRequest } from "@/services/gastosService";
 
 export interface ValidationError {
   field: string;

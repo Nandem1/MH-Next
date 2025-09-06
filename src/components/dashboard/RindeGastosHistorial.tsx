@@ -19,7 +19,7 @@ import {
 } from "@mui/icons-material";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Gasto } from "./RindeGastosContent";
+import { Gasto } from "../../services/gastosService";
 
 interface RindeGastosHistorialProps {
   gastos: Gasto[];
@@ -36,7 +36,16 @@ export function RindeGastosHistorial({
   formatearMonto,
   loadingEliminarGasto = false
 }: RindeGastosHistorialProps) {
+  
+  // Debug logs
+  console.log('🔍 DEBUG RindeGastosHistorial:', { gastos });
   const theme = useTheme();
+  
+  // Función para obtener el nombre de la cuenta contable
+  const obtenerNombreCuenta = (gasto: Gasto) => {
+    // El backend ya envía el nombre de la cuenta contable
+    return gasto.nombreCuentaContable || 'Sin cuenta';
+  };
 
   // Agrupar gastos por fecha
   const gastosAgrupados = gastos.reduce((grupos, gasto) => {
@@ -150,12 +159,12 @@ export function RindeGastosHistorial({
                                   mb: 0.5
                                 }}
                               >
-                                {gasto.descripcion}
+                                {gasto.descripcion.toUpperCase()}
                               </Typography>
-                              <Box sx={{ display: 'flex', gap: 0.5, mb: 0.5 }}>
+                              <Box sx={{ display: 'flex', gap: 0.5, mb: 0.5, flexWrap: 'wrap' }}>
                                 <Chip
                                   size="small"
-                                  label={gasto.nombreCuentaContable}
+                                  label={obtenerNombreCuenta(gasto)}
                                   sx={{
                                     height: 20,
                                     fontSize: "0.75rem",
@@ -175,12 +184,24 @@ export function RindeGastosHistorial({
                                     color: theme.palette.text.secondary,
                                   }}
                                 />
+                                {gasto.nombreLocalAsignado && (
+                                  <Chip
+                                    size="small"
+                                    label={gasto.nombreLocalAsignado}
+                                    sx={{
+                                      height: 20,
+                                      fontSize: "0.75rem",
+                                      backgroundColor: theme.palette.secondary.main + "20",
+                                      color: theme.palette.secondary.main,
+                                    }}
+                                  />
+                                )}
                               </Box>
-                              {(gasto.observaciones || gasto.comprobante) && (
+                              {(gasto.observaciones || gasto.comprobante_url) && (
                                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                  {gasto.observaciones && `💬 ${gasto.observaciones}`}
-                                  {gasto.observaciones && gasto.comprobante && ' • '}
-                                  {gasto.comprobante && '📎 Comprobante'}
+                                  {gasto.observaciones && `💬 ${gasto.observaciones.toUpperCase()}`}
+                                  {gasto.observaciones && gasto.comprobante_url && ' • '}
+                                  {gasto.comprobante_url && '📎 Comprobante'}
                                 </Typography>
                               )}
                             </Box>
@@ -192,7 +213,7 @@ export function RindeGastosHistorial({
                                   fontWeight: 600,
                                 }}
                               >
-                                {formatearMonto(parseFloat(gasto.monto))}
+                                {formatearMonto(parseFloat(gasto.monto.toString()))}
                               </Typography>
                               <IconButton
                                 size="small"
