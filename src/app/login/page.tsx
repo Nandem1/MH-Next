@@ -1,7 +1,8 @@
 "use client";
 
-import { Box, Button, TextField, Typography, Paper, Snackbar, Alert, CircularProgress, Link } from "@mui/material";
-
+import { Box, TextField, Typography, Snackbar, Alert, CircularProgress, Link } from "@mui/material";
+import { AnimatedBox, AnimatedPaper, AnimatedButton } from "@/components/ui/animated/AnimatedComponents";
+import { useAnimations } from "@/hooks/useAnimations";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useSnackbar } from "@/hooks/useSnackbar";
@@ -16,6 +17,11 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const router = useRouter();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // Configuración de animaciones
+  const pageAnimation = useAnimations({ preset: 'fade', delay: 0.1 });
+  const formAnimation = useAnimations({ preset: 'card', delay: 0.3 });
+  const buttonAnimation = useAnimations({ preset: 'card', delay: 0.5 });
 
   // Verificar si hay un token válido al cargar la página
   useEffect(() => {
@@ -49,7 +55,8 @@ export default function LoginPage() {
   }
 
   return (
-    <Box
+    <AnimatedBox
+      {...pageAnimation}
       sx={{
         minHeight: "100vh",
         display: "flex",
@@ -68,7 +75,8 @@ export default function LoginPage() {
           py: 4,
         }}
       >
-        <Paper
+        <AnimatedPaper
+          {...formAnimation}
           elevation={4}
           sx={{
             width: { xs: "100%", sm: "420px", md: "380px" }, // ancho máx. responsive
@@ -103,7 +111,8 @@ export default function LoginPage() {
               required
             />
 
-            <Button
+            <AnimatedButton
+              {...buttonAnimation}
               type="submit"
               fullWidth
               variant="contained"
@@ -115,9 +124,9 @@ export default function LoginPage() {
               ) : (
                 "Entrar"
               )}
-            </Button>
+            </AnimatedButton>
           </Box>
-        </Paper>
+        </AnimatedPaper>
       </Box>
 
       {/* ---------- footer ---------- */}
@@ -156,6 +165,6 @@ export default function LoginPage() {
           {message}
         </Alert>
       </Snackbar>
-    </Box>
+    </AnimatedBox>
   );
 }

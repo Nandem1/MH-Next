@@ -8,9 +8,10 @@ import { FacturaTable } from "./FacturaTable";
 import { useFacturas } from "@/hooks/useFacturas";
 import { MobileImagePreloader } from "@/components/ui/MobileImagePreloader";
 import CircularProgress from "@mui/material/CircularProgress";
-import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Pagination from "@mui/material/Pagination";
+import { AnimatedBox, ListContainer } from "@/components/ui/animated/AnimatedComponents";
+import { useAnimations, useListAnimations } from "@/hooks/useAnimations";
 // Nota: búsqueda por folio se maneja vía React Query (useFacturas)
 
 export function FacturaPageContent() {
@@ -47,6 +48,10 @@ export function FacturaPageContent() {
   );
   const facturas = data?.facturas ?? [];
   const totalFacturas = data?.total ?? 0;
+
+  // Configuración de animaciones
+  const pageAnimation = useAnimations({ preset: 'page', delay: 0.1 });
+  const listAnimation = useListAnimations(facturas.length, { staggerDelay: 0.05 });
 
   const handleSearch = async (
     folio: string,
@@ -121,7 +126,8 @@ export function FacturaPageContent() {
   const imageUrls = facturas.slice(0, 5).map(factura => factura.image_url_cloudinary);
 
   return (
-    <Box
+    <AnimatedBox
+      {...pageAnimation}
       key={mounted ? "mounted" : "init"} // Fuerza remount tras mount inicial
       sx={{
         display: "flex",
@@ -151,32 +157,41 @@ export function FacturaPageContent() {
         />
 
       {isLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+        <AnimatedBox 
+          {...pageAnimation}
+          sx={{ display: "flex", justifyContent: "center", p: 4 }}
+        >
           <CircularProgress />
-        </Box>
+        </AnimatedBox>
       ) : error ? (
-        <Box sx={{ textAlign: "center", p: 4 }}>
+        <AnimatedBox 
+          {...pageAnimation}
+          sx={{ textAlign: "center", p: 4 }}
+        >
           <Typography color="error">Error cargando facturas</Typography>
-        </Box>
+        </AnimatedBox>
       ) : (
-        <>
+        <ListContainer {...listAnimation.container}>
           <FacturaTable
             facturas={facturasParaMostrar}
             isLoading={false}
             error={false}
           />
           {!folioActivo && !chequeCorrelativoActivo && (
-            <Box sx={{ display: "flex", justifyContent: "center" }}>
+            <AnimatedBox 
+              {...pageAnimation}
+              sx={{ display: "flex", justifyContent: "center" }}
+            >
               <Pagination
                 count={Math.ceil(totalFacturas / limit)}
                 page={page}
                 onChange={handlePageChange}
                 color="primary"
               />
-            </Box>
+            </AnimatedBox>
           )}
-        </>
+        </ListContainer>
       )}
-    </Box>
+    </AnimatedBox>
   );
 }

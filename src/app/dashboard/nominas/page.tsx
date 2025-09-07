@@ -5,7 +5,6 @@ import {
   Container,
   Typography,
   Button,
-  Paper,
   Stack,
   Box,
   Chip,
@@ -34,6 +33,8 @@ import {
 import { Add as AddIcon, Assignment as AssignmentIcon } from "@mui/icons-material";
 import { useNominasCheque } from "@/hooks/useNominasCheque";
 import { useUsuarios } from "@/hooks/useUsuarios";
+import { AnimatedBox, AnimatedPaper, AnimatedButton, AnimatedTypography } from "@/components/ui/animated";
+import { useAnimations, useInViewAnimations } from "@/hooks/useAnimations";
 import { FacturasAsignadasView } from "@/components/dashboard/FacturasAsignadasView";
 import { NominaCantera, CrearNominaRequest, AsignarChequeRequest, ActualizarTrackingRequest, TrackingEnvio, FacturaAsignada, AsignarChequeAFacturaRequest, FiltrosNominas } from "@/types/nominaCheque";
 import { CrearChequeRequest } from "@/types/factura";
@@ -52,6 +53,12 @@ export default function NominasPage() {
   const theme = useTheme();
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
+
+  // Animaciones sutiles y profesionales
+  const headerAnimation = useAnimations({ preset: 'fade', delay: 0.1 });
+  const filtersAnimation = useAnimations({ preset: 'fade', delay: 0.2 });
+  const contentAnimation = useAnimations({ preset: 'fade', delay: 0.3 });
+  const footerAnimation = useInViewAnimations({ threshold: 0.1 });
 
   const {
     nominas,
@@ -335,16 +342,33 @@ export default function NominasPage() {
     <Container maxWidth="xl" sx={{ py: 4, mt: 9 }}>
       <Stack spacing={4}>
         {/* Header */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
+        <AnimatedBox 
+          {...headerAnimation}
+          sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}
+        >
           <Box>
-            <Typography variant="h4" fontWeight={700} sx={{ color: "text.primary", mb: 1 }}>
+            <AnimatedTypography 
+              {...headerAnimation}
+              variant="h4" 
+              fontWeight={700} 
+              sx={{ 
+                color: "text.primary", 
+                mb: 1,
+                fontWeight: 600
+              }}
+            >
               Gestión de Nóminas
-            </Typography>
-            <Typography variant="body1" sx={{ color: "text.secondary" }}>
+            </AnimatedTypography>
+            <AnimatedTypography 
+              {...headerAnimation}
+              variant="body1" 
+              sx={{ color: "text.secondary" }}
+            >
               Administra y rastrea las nóminas de cheques
-            </Typography>
+            </AnimatedTypography>
           </Box>
-          <Button
+          <AnimatedButton
+            {...headerAnimation}
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setModalNuevaNominaOpen(true)}
@@ -364,11 +388,12 @@ export default function NominasPage() {
             }}
           >
             Nueva Nómina
-          </Button>
-        </Box>
+          </AnimatedButton>
+        </AnimatedBox>
 
         {/* Filtros */}
-        <Paper
+        <AnimatedPaper
+          {...filtersAnimation}
           elevation={0}
           sx={{
             bgcolor: "background.paper",
@@ -490,10 +515,11 @@ export default function NominasPage() {
               Limpiar Filtros
             </Button>
           </Box>
-        </Paper>
+        </AnimatedPaper>
 
         {/* Content */}
-        <Paper
+        <AnimatedPaper
+          {...contentAnimation}
           elevation={0}
           sx={{
             bgcolor: "background.paper",
@@ -680,7 +706,7 @@ export default function NominasPage() {
                />
              </TableContainer>
           )}
-        </Paper>
+        </AnimatedPaper>
       </Stack>
 
       {/* Modals */}
@@ -976,7 +1002,9 @@ export default function NominasPage() {
         </Alert>
       </Snackbar>
 
-      <Footer />
+      <AnimatedBox {...footerAnimation}>
+        <Footer />
+      </AnimatedBox>
     </Container>
   );
 }

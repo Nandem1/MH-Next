@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import dynamic from "next/dynamic";
 import Footer from "@/components/shared/Footer";
+import { AnimatedBox, AnimatedTypography } from "@/components/ui/animated";
+import { useAnimations, useInViewAnimations } from "@/hooks/useAnimations";
 
 // Lazy load del componente pesado
 const NotaCreditoPageContent = dynamic(
@@ -22,10 +23,18 @@ const NotaCreditoPageContent = dynamic(
 
 export default function NotasCreditoPage() {
   const [mounted, setMounted] = useState(false);
+  
+  // Animaciones sutiles y profesionales
+  const titleAnimation = useAnimations({ preset: 'fade', delay: 0.1 });
+  const contentAnimation = useAnimations({ preset: 'fade', delay: 0.3 });
+  const footerAnimation = useInViewAnimations({ threshold: 0.1 });
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
   if (!mounted) return null;
+
   return (
     <Box
       sx={{
@@ -43,14 +52,27 @@ export default function NotasCreditoPage() {
           px: { xs: 2, md: 3 },
         }}
       >
-        <Typography variant="h4" gutterBottom>
+        <AnimatedTypography 
+          {...titleAnimation}
+          variant="h4" 
+          gutterBottom
+          sx={{
+            fontWeight: 600,
+            color: 'text.primary',
+            mb: 3
+          }}
+        >
           Notas de Crédito
-        </Typography>
+        </AnimatedTypography>
 
-        <NotaCreditoPageContent />
+        <AnimatedBox {...contentAnimation}>
+          <NotaCreditoPageContent />
+        </AnimatedBox>
       </Box>
 
-      <Footer />
+      <AnimatedBox {...footerAnimation}>
+        <Footer />
+      </AnimatedBox>
     </Box>
   );
 } 

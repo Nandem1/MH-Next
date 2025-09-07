@@ -14,6 +14,7 @@ export default function InicioPage() {
   const { open, message, severity, showSnackbar, handleClose } = useSnackbar();
   const { prefetchFacturas, prefetchNotasCredito, prefetchUsuarios, prefetchProveedores } = usePrefetch();
 
+
   useEffect(() => {
     const showLoginMessage = localStorage.getItem("showLoginMessage");
     if (showLoginMessage === "true") {
@@ -51,26 +52,43 @@ export default function InicioPage() {
         minHeight: "100%",
       }}
     >
-      {/* Contenido principal centrado */}
-      <Box
-        sx={{
-          flexGrow: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          textAlign: "center",
-          gap: 2,
-          px: { xs: 2, md: 3 },
-          mt: 12, // ✅ aumentado de 8 a 12 para más separación del Topbar
-        }}
-      >
-        <Typography variant="h4" fontWeight="bold" sx={{ color: "text.primary" }}>
+                  {/* Contenido principal centrado */}
+                  <Box
+                    sx={{
+                      flexGrow: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      textAlign: "center",
+                      gap: 3,
+                      px: { xs: 2, md: 3 },
+                      py: 4,
+                      mt: 8, // Margen superior para evitar que el topbar tape el contenido
+                    }}
+                  >
+        <Typography 
+          variant="h3" 
+          fontWeight="bold" 
+          sx={{ 
+            color: "text.primary",
+            fontWeight: 700,
+            mb: 1
+          }}
+        >
           Dashboard
         </Typography>
 
-        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 400 }}>
-          Monitoreo en tiempo real del sistema y métricas de rendimiento.
+        <Typography 
+          variant="body1" 
+          color="text.secondary" 
+          sx={{ 
+            maxWidth: 500,
+            fontSize: '1.1rem',
+            lineHeight: 1.6
+          }}
+        >
+          Monitoreo en tiempo real del sistema y métricas de rendimiento
         </Typography>
       </Box>
 

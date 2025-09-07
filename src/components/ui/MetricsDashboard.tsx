@@ -1,9 +1,8 @@
 "use client";
 
-import { Box, Paper, Typography, LinearProgress, useTheme, List, ListItem, ListItemText } from "@mui/material";
+import { Box, Typography, LinearProgress, useTheme, List, ListItem, ListItemText, Paper } from "@mui/material";
 import { useMetrics } from "@/hooks/useMetrics";
 import { useGoMetrics } from "@/hooks/useGoMetrics";
-import { useBotMetrics } from "@/hooks/useBotMetrics";
 import type { MetricsData } from "@/types/metrics";
 import SpeedIcon from "@mui/icons-material/Speed";
 import StorageIcon from "@mui/icons-material/Storage";
@@ -12,13 +11,16 @@ import MemoryIcon from "@mui/icons-material/Memory";
 import QueryStatsIcon from "@mui/icons-material/QueryStats";
 import CodeIcon from "@mui/icons-material/Code";
 import LanguageIcon from "@mui/icons-material/Language";
-import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 
 export function MetricsDashboard() {
   const { metrics: nodeMetrics, isLoading: nodeLoading, error: nodeError } = useMetrics();
   const { metrics: goMetrics, isLoading: goLoading, error: goError } = useGoMetrics();
-  const { metrics: botMetrics, isLoading: botLoading, error: botError } = useBotMetrics();
   const theme = useTheme();
+
+  // Esperar a que ambos servidores estén listos para mostrarlos juntos
+  const serversLoading = nodeLoading || goLoading;
+  const serversReady = !serversLoading && (nodeMetrics || goMetrics);
+
 
   // Funciones helper para colores
   const getPerformanceColor = (responseTime: number) => {
@@ -50,11 +52,6 @@ export function MetricsDashboard() {
     return theme.palette.info.main;
   };
 
-  const getWhatsAppColor = (status: string) => {
-    if (status === 'connected') return theme.palette.success.main;
-    if (status === 'connecting') return theme.palette.warning.main;
-    return theme.palette.error.main;
-  };
 
   const formatUptime = (uptime: number) => {
     const hours = Math.floor(uptime / 3600);
@@ -165,10 +162,11 @@ export function MetricsDashboard() {
               border: `1px solid ${theme.palette.divider}`,
               borderRadius: 1,
               bgcolor: "background.paper",
-              transition: "all 0.2s ease",
+              transition: "all 0.3s ease",
               "&:hover": {
                 borderColor: theme.palette.primary.main,
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+                transform: "translateY(-4px)",
               },
             }}
           >
@@ -205,10 +203,11 @@ export function MetricsDashboard() {
               border: `1px solid ${theme.palette.divider}`,
               borderRadius: 1,
               bgcolor: "background.paper",
-              transition: "all 0.2s ease",
+              transition: "all 0.3s ease",
               "&:hover": {
                 borderColor: theme.palette.primary.main,
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+                transform: "translateY(-4px)",
               },
             }}
           >
@@ -237,8 +236,8 @@ export function MetricsDashboard() {
             </Box>
           </Paper>
 
-          {/* Database - Solo para servidores, no para el bot */}
-          {title !== "WhatsApp Bot" && (
+          {/* Database */}
+          {true && (
             <Paper
               elevation={0}
               sx={{
@@ -246,10 +245,11 @@ export function MetricsDashboard() {
                 border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 1,
                 bgcolor: "background.paper",
-                transition: "all 0.2s ease",
+                transition: "all 0.3s ease",
                 "&:hover": {
                   borderColor: theme.palette.primary.main,
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+                  transform: "translateY(-4px)",
                 },
               }}
             >
@@ -279,47 +279,6 @@ export function MetricsDashboard() {
             </Paper>
           )}
 
-          {/* WhatsApp - Solo para el bot */}
-          {title === "WhatsApp Bot" && (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                border: `1px solid ${theme.palette.divider}`,
-                borderRadius: 1,
-                bgcolor: "background.paper",
-                transition: "all 0.2s ease",
-                "&:hover": {
-                  borderColor: theme.palette.primary.main,
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                },
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-                <WhatsAppIcon sx={{ color: getWhatsAppColor(metrics.whatsapp?.status || 'disconnected'), mr: 1, fontSize: "1.2rem" }} />
-                <Typography variant="body2" fontWeight={600} color="text.primary">
-                  WhatsApp
-                </Typography>
-              </Box>
-              
-              <Typography variant="h5" sx={{ color: getWhatsAppColor(metrics.whatsapp?.status || 'disconnected'), mb: 0.5, fontWeight: 700 }}>
-                {metrics.whatsapp?.status === 'connected' ? 'Connected' : 'Disconnected'}
-              </Typography>
-              
-              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
-                Connection status
-              </Typography>
-              
-              <Box sx={{ display: "flex", gap: 2 }}>
-                <Typography variant="caption" color="text.secondary">
-                  {metrics.whatsapp?.clients?.active || 0}/{metrics.whatsapp?.clients?.total || 0} clients
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {metrics.whatsapp?.messages?.total_received || 0} received
-                </Typography>
-              </Box>
-            </Paper>
-          )}
 
           {/* System */}
           <Paper
@@ -329,10 +288,11 @@ export function MetricsDashboard() {
               border: `1px solid ${theme.palette.divider}`,
               borderRadius: 1,
               bgcolor: "background.paper",
-              transition: "all 0.2s ease",
+              transition: "all 0.3s ease",
               "&:hover": {
                 borderColor: theme.palette.primary.main,
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+                transform: "translateY(-4px)",
               },
             }}
           >
@@ -366,10 +326,11 @@ export function MetricsDashboard() {
               border: `1px solid ${theme.palette.divider}`,
               borderRadius: 1,
               bgcolor: "background.paper",
-              transition: "all 0.2s ease",
+              transition: "all 0.3s ease",
               "&:hover": {
                 borderColor: theme.palette.primary.main,
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+                transform: "translateY(-4px)",
               },
             }}
           >
@@ -397,10 +358,11 @@ export function MetricsDashboard() {
               border: `1px solid ${theme.palette.divider}`,
               borderRadius: 1,
               bgcolor: "background.paper",
-              transition: "all 0.2s ease",
+              transition: "all 0.3s ease",
               "&:hover": {
                 borderColor: theme.palette.primary.main,
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+                transform: "translateY(-4px)",
               },
             }}
           >
@@ -430,8 +392,8 @@ export function MetricsDashboard() {
           </Paper>
         </Box>
 
-        {/* Detalles adicionales - Solo para servidores, no para el bot */}
-        {title !== "WhatsApp Bot" && (
+        {/* Detalles adicionales */}
+        {true && (
           <Box sx={{ mt: 3 }}>
             <Typography variant="body1" gutterBottom sx={{ mb: 2, fontWeight: 600, color: "text.primary" }}>
               Details
@@ -450,6 +412,11 @@ export function MetricsDashboard() {
                   border: `1px solid ${theme.palette.divider}`,
                   borderRadius: 1,
                   bgcolor: "background.paper",
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    borderColor: theme.palette.primary.main,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  },
                 }}
               >
                 <Typography variant="body2" fontWeight={600} gutterBottom>
@@ -507,6 +474,11 @@ export function MetricsDashboard() {
                   border: `1px solid ${theme.palette.divider}`,
                   borderRadius: 1,
                   bgcolor: "background.paper",
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    borderColor: theme.palette.primary.main,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  },
                 }}
               >
                 <Typography variant="body2" fontWeight={600} gutterBottom>
@@ -540,6 +512,11 @@ export function MetricsDashboard() {
                   border: `1px solid ${theme.palette.divider}`,
                   borderRadius: 1,
                   bgcolor: "background.paper",
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    borderColor: theme.palette.primary.main,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  },
                 }}
               >
                 <Typography variant="body2" fontWeight={600} gutterBottom>
@@ -564,143 +541,6 @@ export function MetricsDashboard() {
           </Box>
         )}
 
-        {/* Detalles de WhatsApp - Solo para el bot */}
-        {title === "WhatsApp Bot" && (
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="body1" gutterBottom sx={{ mb: 2, fontWeight: 600, color: "text.primary" }}>
-              WhatsApp Details
-            </Typography>
-            
-            <Box sx={{ 
-              display: "grid", 
-              gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
-              gap: 2 
-            }}>
-              {/* Estado de conexión */}
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2,
-                  border: `1px solid ${theme.palette.divider}`,
-                  borderRadius: 1,
-                  bgcolor: "background.paper",
-                }}
-              >
-                <Typography variant="body2" fontWeight={600} gutterBottom>
-                  Connection Status
-                </Typography>
-                <List dense sx={{ py: 0 }}>
-                  <ListItem sx={{ px: 0, py: 0.5 }}>
-                    <ListItemText
-                      primary="State"
-                      secondary={metrics.whatsapp?.connection?.state || 'N/A'}
-                      primaryTypographyProps={{ fontSize: "0.8rem", fontWeight: 500 }}
-                      secondaryTypographyProps={{ fontSize: "0.7rem" }}
-                    />
-                  </ListItem>
-                  <ListItem sx={{ px: 0, py: 0.5 }}>
-                    <ListItemText
-                      primary="Last Seen"
-                      secondary={metrics.whatsapp?.connection?.lastSeen ? new Date(metrics.whatsapp.connection.lastSeen).toLocaleString() : 'N/A'}
-                      primaryTypographyProps={{ fontSize: "0.8rem", fontWeight: 500 }}
-                      secondaryTypographyProps={{ fontSize: "0.7rem" }}
-                    />
-                  </ListItem>
-                  <ListItem sx={{ px: 0, py: 0.5 }}>
-                    <ListItemText
-                      primary="Uptime"
-                      secondary={metrics.whatsapp?.connection?.uptime_hours || 'N/A'}
-                      primaryTypographyProps={{ fontSize: "0.8rem", fontWeight: 500 }}
-                      secondaryTypographyProps={{ fontSize: "0.7rem" }}
-                    />
-                  </ListItem>
-                </List>
-              </Paper>
-
-              {/* Mensajes */}
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2,
-                  border: `1px solid ${theme.palette.divider}`,
-                  borderRadius: 1,
-                  bgcolor: "background.paper",
-                }}
-              >
-                <Typography variant="body2" fontWeight={600} gutterBottom>
-                  Messages
-                </Typography>
-                <List dense sx={{ py: 0 }}>
-                  <ListItem sx={{ px: 0, py: 0.5 }}>
-                    <ListItemText
-                      primary="Total Received"
-                      secondary={metrics.whatsapp?.messages?.total_received || 0}
-                      primaryTypographyProps={{ fontSize: "0.8rem", fontWeight: 500 }}
-                      secondaryTypographyProps={{ fontSize: "0.7rem" }}
-                    />
-                  </ListItem>
-                  <ListItem sx={{ px: 0, py: 0.5 }}>
-                    <ListItemText
-                      primary="Total Sent"
-                      secondary={metrics.whatsapp?.messages?.total_sent || 0}
-                      primaryTypographyProps={{ fontSize: "0.8rem", fontWeight: 500 }}
-                      secondaryTypographyProps={{ fontSize: "0.7rem" }}
-                    />
-                  </ListItem>
-                  <ListItem sx={{ px: 0, py: 0.5 }}>
-                    <ListItemText
-                      primary="Last Message"
-                      secondary={metrics.whatsapp?.messages?.last_message_ago || 'N/A'}
-                      primaryTypographyProps={{ fontSize: "0.8rem", fontWeight: 500 }}
-                      secondaryTypographyProps={{ fontSize: "0.7rem" }}
-                    />
-                  </ListItem>
-                </List>
-              </Paper>
-
-              {/* Clientes y QR */}
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2,
-                  border: `1px solid ${theme.palette.divider}`,
-                  borderRadius: 1,
-                  bgcolor: "background.paper",
-                }}
-              >
-                <Typography variant="body2" fontWeight={600} gutterBottom>
-                  Clients & QR
-                </Typography>
-                <List dense sx={{ py: 0 }}>
-                  <ListItem sx={{ px: 0, py: 0.5 }}>
-                    <ListItemText
-                      primary="Active Clients"
-                      secondary={`${metrics.whatsapp?.clients?.active || 0}/${metrics.whatsapp?.clients?.total || 0}`}
-                      primaryTypographyProps={{ fontSize: "0.8rem", fontWeight: 500 }}
-                      secondaryTypographyProps={{ fontSize: "0.7rem" }}
-                    />
-                  </ListItem>
-                  <ListItem sx={{ px: 0, py: 0.5 }}>
-                    <ListItemText
-                      primary="QR Generated"
-                      secondary={metrics.whatsapp?.qr?.generated ? 'Yes' : 'No'}
-                      primaryTypographyProps={{ fontSize: "0.8rem", fontWeight: 500 }}
-                      secondaryTypographyProps={{ fontSize: "0.7rem" }}
-                    />
-                  </ListItem>
-                  <ListItem sx={{ px: 0, py: 0.5 }}>
-                    <ListItemText
-                      primary="Errors"
-                      secondary={metrics.whatsapp?.errors?.count || 0}
-                      primaryTypographyProps={{ fontSize: "0.8rem", fontWeight: 500 }}
-                      secondaryTypographyProps={{ fontSize: "0.7rem" }}
-                    />
-                  </ListItem>
-                </List>
-              </Paper>
-            </Box>
-          </Box>
-        )}
 
         <Box sx={{ mt: 2, textAlign: "center" }}>
           <Typography variant="caption" color="text.secondary">
@@ -716,41 +556,48 @@ export function MetricsDashboard() {
     );
   };
 
+
   return (
     <Box sx={{ p: 2 }}>
       <Typography variant="h6" gutterBottom sx={{ mb: 2, fontWeight: 600, color: "text.primary" }}>
         System Metrics
       </Typography>
 
-      {/* WhatsApp Bot - Siempre mostrar ya que es crítico */}
-      <ServerMetricsSection
-        title="WhatsApp Bot"
-        icon={<WhatsAppIcon sx={{ color: theme.palette.success.main }} />}
-        metrics={botMetrics}
-        isLoading={botLoading}
-        error={botError}
-      />
+      {/* Mostrar loading hasta que ambos servidores estén listos */}
+      {serversLoading && (
+        <Box sx={{ p: 8, textAlign: "center" }}>
+          <LinearProgress sx={{ mb: 2 }} />
+          <Typography variant="body2" color="text.secondary">
+            Loading server metrics...
+          </Typography>
+        </Box>
+      )}
 
-      {/* Servidor Node/Express */}
-      <ServerMetricsSection
-        title="Node/Express Server"
-        icon={<CodeIcon sx={{ color: theme.palette.primary.main }} />}
-        metrics={nodeMetrics}
-        isLoading={nodeLoading}
-        error={nodeError}
-      />
+      {/* Mostrar servidores juntos cuando estén listos */}
+      {serversReady && (
+        <>
+          {/* Servidor Node/Express */}
+          <ServerMetricsSection
+            title="Node/Express Server"
+            icon={<CodeIcon sx={{ color: theme.palette.primary.main }} />}
+            metrics={nodeMetrics}
+            isLoading={false}
+            error={nodeError}
+          />
 
-      {/* Servidor Go */}
-      <ServerMetricsSection
-        title="Go Server"
-        icon={<LanguageIcon sx={{ color: theme.palette.secondary.main }} />}
-        metrics={goMetrics as unknown as MetricsData}
-        isLoading={goLoading}
-        error={goError}
-      />
+          {/* Servidor Go */}
+          <ServerMetricsSection
+            title="Go Server"
+            icon={<LanguageIcon sx={{ color: theme.palette.secondary.main }} />}
+            metrics={goMetrics as unknown as MetricsData}
+            isLoading={false}
+            error={goError}
+          />
+        </>
+      )}
 
       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2, textAlign: 'center' }}>
-        All services update every 10 seconds | Bot: /health | Node: /api-beta/monitoring/metrics | Go: /monitoring/metrics
+        All services update every 10 seconds | Node: /api-beta/monitoring/metrics | Go: /monitoring/metrics
       </Typography>
     </Box>
   );
