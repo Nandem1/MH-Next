@@ -31,6 +31,7 @@ export function FacturaPageContent() {
   const [proveedorActivo, setProveedorActivo] = useState<string>("");
   const [fechaDesdeActivo, setFechaDesdeActivo] = useState<string>("");
   const [fechaHastaActivo, setFechaHastaActivo] = useState<string>("");
+  const [prontasAPagarActivo, setProntasAPagarActivo] = useState<boolean>(false);
 
   const { data, isLoading, error } = useFacturas(
     page,
@@ -41,7 +42,8 @@ export function FacturaPageContent() {
     folioActivo,
     chequeCorrelativoActivo,
     fechaDesdeActivo,
-    fechaHastaActivo
+    fechaHastaActivo,
+    prontasAPagarActivo
   );
   const facturas = data?.facturas ?? [];
   const totalFacturas = data?.total ?? 0;
@@ -90,6 +92,13 @@ export function FacturaPageContent() {
     setPage(1);
   };
 
+  const handleProntasAPagarChange = (nuevoProntasAPagar: boolean) => {
+    setFolioActivo("");
+    setChequeCorrelativoActivo("");
+    setProntasAPagarActivo(nuevoProntasAPagar);
+    setPage(1);
+  };
+
   const handleClearSearch = () => {
     setFolioActivo("");
     setChequeCorrelativoActivo("");
@@ -98,6 +107,7 @@ export function FacturaPageContent() {
     setProveedorActivo("");
     setFechaDesdeActivo("");
     setFechaHastaActivo("");
+    setProntasAPagarActivo(false);
     setPage(1);
   };
 
@@ -123,20 +133,22 @@ export function FacturaPageContent() {
     >
               {/* Preload de imágenes críticas optimizado para mobile */}
         <MobileImagePreloader images={imageUrls} maxImages={isMobile ? 2 : 5} />
-      <FacturaSearchBar
-        onSearch={handleSearch}
-        onClear={handleClearSearch}
-        onLocalChange={handleLocalChange}
-        onUsuarioChange={handleUsuarioChange}
-        onProveedorChange={handleProveedorChange}
-        onFechaDesdeChange={handleFechaDesdeChange}
-        onFechaHastaChange={handleFechaHastaChange}
-        localActual={localActivo}
-        usuarioActual={usuarioActivo}
-        proveedorActual={proveedorActivo}
-        fechaDesdeActual={fechaDesdeActivo}
-        fechaHastaActual={fechaHastaActivo}
-      />
+        <FacturaSearchBar
+          onSearch={handleSearch}
+          onClear={handleClearSearch}
+          onLocalChange={handleLocalChange}
+          onUsuarioChange={handleUsuarioChange}
+          onProveedorChange={handleProveedorChange}
+          onFechaDesdeChange={handleFechaDesdeChange}
+          onFechaHastaChange={handleFechaHastaChange}
+          onProntasAPagarChange={handleProntasAPagarChange}
+          localActual={localActivo}
+          usuarioActual={usuarioActivo}
+          proveedorActual={proveedorActivo}
+          fechaDesdeActual={fechaDesdeActivo}
+          fechaHastaActual={fechaHastaActivo}
+          prontasAPagarActual={prontasAPagarActivo}
+        />
 
       {isLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>

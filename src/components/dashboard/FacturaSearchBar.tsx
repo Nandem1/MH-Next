@@ -15,6 +15,8 @@ import {
   Paper,
   Typography,
   Popover,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -36,11 +38,13 @@ interface FacturaSearchBarProps {
   onProveedorChange: (proveedor: string) => void;
   onFechaDesdeChange: (fechaDesde: string) => void;
   onFechaHastaChange: (fechaHasta: string) => void;
+  onProntasAPagarChange: (prontasAPagar: boolean) => void;
   localActual: string;
   usuarioActual: string;
   proveedorActual: string;
   fechaDesdeActual: string;
   fechaHastaActual: string;
+  prontasAPagarActual: boolean;
   onGestionCheques?: () => void;
 }
 
@@ -59,11 +63,13 @@ export function FacturaSearchBar({
   onProveedorChange,
   onFechaDesdeChange,
   onFechaHastaChange,
+  onProntasAPagarChange,
   localActual,
   usuarioActual,
   proveedorActual,
   fechaDesdeActual,
   fechaHastaActual,
+  prontasAPagarActual,
   onGestionCheques,
 }: FacturaSearchBarProps) {
   const theme = useTheme();
@@ -110,6 +116,10 @@ export function FacturaSearchBar({
   const handleProveedorChange = (event: React.SyntheticEvent, newValue: { id: number; nombre: string } | null) => {
     const selectedProveedor = newValue ? newValue.id.toString() : "";
     onProveedorChange(selectedProveedor);
+  };
+
+  const handleProntasAPagarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onProntasAPagarChange(event.target.checked);
   };
 
   // Handlers para el calendario de rango
@@ -204,7 +214,7 @@ export function FacturaSearchBar({
   const selectedLocal = locales.find(l => l.id === localActual) || null;
 
   // Verificar si hay filtros activos
-  const hasActiveFilters = folio.trim() || chequeCorrelativo.trim() || localActual || usuarioActual || proveedorActual || fechaDesdeActual || fechaHastaActual;
+  const hasActiveFilters = folio.trim() || chequeCorrelativo.trim() || localActual || usuarioActual || proveedorActual || fechaDesdeActual || fechaHastaActual || prontasAPagarActual;
 
   // Texto para mostrar en el botón del calendario
   const getCalendarButtonText = () => {
@@ -533,7 +543,7 @@ export function FacturaSearchBar({
           />
         </Box>
 
-        {/* Tercera fila: Calendario y botones de acción */}
+        {/* Tercera fila: Calendario, checkbox y botones de acción */}
         <Box
           sx={{
             display: "flex",
@@ -543,26 +553,58 @@ export function FacturaSearchBar({
             justifyContent: "space-between",
           }}
         >
-          <Button
-            variant="outlined"
-            onClick={handleCalendarOpen}
-            startIcon={<CalendarTodayIcon />}
-            fullWidth={isSmall}
-            size="small"
-            sx={{ 
-              minWidth: isSmall ? "100%" : 200,
-              textTransform: "none",
-              borderRadius: "8px",
-              borderColor: theme.palette.divider,
-              color: theme.palette.text.primary,
-              "&:hover": {
-                borderColor: theme.palette.text.primary,
-                bgcolor: theme.palette.action.hover,
-              },
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: isSmall ? "column" : "row",
+              gap: 2,
+              alignItems: "center",
             }}
           >
-            {getCalendarButtonText()}
-          </Button>
+            <Button
+              variant="outlined"
+              onClick={handleCalendarOpen}
+              startIcon={<CalendarTodayIcon />}
+              fullWidth={isSmall}
+              size="small"
+              sx={{ 
+                minWidth: isSmall ? "100%" : 200,
+                textTransform: "none",
+                borderRadius: "8px",
+                borderColor: theme.palette.divider,
+                color: theme.palette.text.primary,
+                "&:hover": {
+                  borderColor: theme.palette.text.primary,
+                  bgcolor: theme.palette.action.hover,
+                },
+              }}
+            >
+              {getCalendarButtonText()}
+            </Button>
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={prontasAPagarActual}
+                  onChange={handleProntasAPagarChange}
+                  sx={{
+                    color: theme.palette.primary.main,
+                    "&.Mui-checked": {
+                      color: theme.palette.primary.main,
+                    },
+                  }}
+                />
+              }
+              label="Prontas a Pagar"
+              sx={{
+                color: theme.palette.text.primary,
+                "& .MuiFormControlLabel-label": {
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                },
+              }}
+            />
+          </Box>
 
           <Stack 
             direction={isSmall ? "column" : "row"} 
@@ -822,6 +864,24 @@ export function FacturaSearchBar({
                  bgcolor: theme.palette.mode === 'light' ? theme.palette.grey[200] : theme.palette.grey[800],
                  color: theme.palette.text.primary,
                  fontWeight: 500,
+               }}
+             />
+           )}
+           {prontasAPagarActual && (
+             <Chip
+               label="Prontas a Pagar"
+               size="small"
+               onDelete={() => {
+                 onProntasAPagarChange(false);
+                 onSearch(folio, chequeCorrelativo, localActual, usuarioActual, proveedorActual);
+               }}
+               sx={{
+                 bgcolor: theme.palette.primary.main,
+                 color: theme.palette.primary.contrastText,
+                 fontWeight: 500,
+                 "& .MuiChip-deleteIcon": {
+                   color: theme.palette.primary.contrastText,
+                 },
                }}
              />
            )}

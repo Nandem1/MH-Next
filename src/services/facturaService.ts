@@ -21,7 +21,8 @@ export const getFacturas = async (
   folio?: string,
   chequeCorrelativo?: string,
   fechaDesde?: string,
-  fechaHasta?: string
+  fechaHasta?: string,
+  prontasAPagar?: boolean
 ): Promise<{ facturas: Factura[]; total: number }> => {
   try {
     const localMapping: Record<string, number> = {
@@ -57,6 +58,7 @@ export const getFacturas = async (
         ...(proveedor ? { id_proveedor: proveedor } : {}),
         ...(fechaDesde ? { fecha_desde: fechaDesde } : {}),
         ...(fechaHasta ? { fecha_hasta: fechaHasta } : {}),
+        ...(prontasAPagar ? { prontas_a_pagar: prontasAPagar } : {}),
       },
     });
 
