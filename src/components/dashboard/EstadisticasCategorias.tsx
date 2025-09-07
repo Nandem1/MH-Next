@@ -20,14 +20,6 @@ interface EstadisticasCategoriasProps {
 export function EstadisticasCategorias({ estadisticas, loading, error }: EstadisticasCategoriasProps) {
   const theme = useTheme();
   
-  // Debug logs
-  console.log('🔍 DEBUG EstadisticasCategorias:', {
-    estadisticas,
-    estadisticasLength: estadisticas?.length,
-    loading,
-    error
-  });
-  
   // Obtener las estadísticas del backend
   const estadisticasData = estadisticas || [];
 

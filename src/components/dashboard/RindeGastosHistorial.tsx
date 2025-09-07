@@ -37,8 +37,6 @@ export function RindeGastosHistorial({
   loadingEliminarGasto = false
 }: RindeGastosHistorialProps) {
   
-  // Debug logs
-  console.log('🔍 DEBUG RindeGastosHistorial:', { gastos });
   const theme = useTheme();
   
   // Función para obtener el nombre de la cuenta contable

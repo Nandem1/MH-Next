@@ -17,7 +17,6 @@ export const useEstadisticasGastos = () => {
     queryKey: ['estadisticas-monetarias', usuario?.usuario_id],
     queryFn: async () => {
       const data: EstadisticasResponse = await gastosService.obtenerEstadisticas();
-      console.log('🔍 DEBUG useEstadisticasGastos - cargarEstadisticas:', { data, categorias: data.data });
       return data.data;
     },
     enabled: !!usuario?.usuario_id,

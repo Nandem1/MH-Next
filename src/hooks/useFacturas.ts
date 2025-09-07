@@ -173,9 +173,7 @@ export const useActualizarMetodoPagoFactura = () => {
     },
     onSuccess: (response, variables) => {
       // Usar la respuesta del backend para actualizar todos los campos
-      console.log('🔄 Respuesta del backend (método de pago):', response);
       const facturaActualizada = adaptFactura(response);
-      console.log('🔄 Factura adaptada:', facturaActualizada);
       const { id } = variables;
       
       const all = queryClient.getQueriesData({ queryKey: ["facturas"] });
@@ -227,7 +225,6 @@ export const useActualizarFechaPagoFactura = () => {
     mutationFn: (data: ActualizarFechaPagoRequest) => 
       actualizarFechaPagoFactura(data),
     onMutate: async (data) => {
-      console.log('📤 Datos enviados al backend:', data);
       // Cancelar queries en curso para evitar que sobrescriban nuestro optimistic update
       await queryClient.cancelQueries({ queryKey: ["facturas"] });
 

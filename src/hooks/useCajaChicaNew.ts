@@ -27,7 +27,6 @@ export const useCajaChicaNew = () => {
     queryKey: ['usuario-caja-chica', usuario?.usuario_id],
     queryFn: async () => {
       const usuarioCajaChica = await gastosService.obtenerEstadoCajaChica();
-      console.log('🔍 DEBUG useCajaChicaNew - fetchEstado:', { usuarioCajaChica });
       
       // Construir el estado con la estructura esperada
       const estadoCajaChica: EstadoCajaChica = {

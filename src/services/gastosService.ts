@@ -149,7 +149,6 @@ class GastosService {
       });
 
       const response = await gastosApi.get(`/gastos?${queryParams.toString()}`);
-      console.log('🔍 DEBUG gastosService - obtenerGastos:', { response: response.data });
       return response.data;
     } catch (error) {
       return handleApiError(error as AxiosError);
@@ -188,7 +187,6 @@ class GastosService {
     try {
       checkAuthentication();
       const response = await gastosApi.get('/estadisticas/categorias-monetarias');
-      console.log('🔍 DEBUG gastosService - obtenerEstadisticas:', { response: response.data });
       return response.data;
     } catch (error) {
       return handleApiError(error as AxiosError);
@@ -215,7 +213,6 @@ class GastosService {
     try {
       checkAuthentication();
       const response = await gastosApi.get('/usuario-caja-chica/estado');
-      console.log('🔍 DEBUG gastosService - obtenerEstadoCajaChica:', { response: response.data });
       return response.data.data;
     } catch (error) {
       return handleApiError(error as AxiosError);

@@ -44,19 +44,6 @@ export function RindeGastosContent({ showSnackbar }: RindeGastosContentProps) {
   const loading = loadingGastos || loadingCajaChicaNew || loadingEstadisticas;
   const error = errorGastos;
 
-  // Debug logs
-  console.log('🔍 DEBUG RindeGastosContent:', {
-    gastos,
-    gastosLength: gastos?.length,
-    estadoCajaChicaNew,
-    saldoActual,
-    totalGastos,
-    estadisticas,
-    estadisticasLength: estadisticas?.length,
-    loading: { loadingGastos, loadingCajaChicaNew, loadingEstadisticas },
-    error: { errorGastos, errorEstadisticas }
-  });
-
   // Mostrar loading mientras verifica autorización
   if (loadingAutorizacion) {
     return (
