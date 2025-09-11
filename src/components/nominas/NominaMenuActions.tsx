@@ -7,7 +7,6 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
-  useTheme,
 } from "@mui/material";
 import {
   MoreVert as MoreVertIcon,
@@ -27,7 +26,6 @@ export function NominaMenuActions({
   onVerDetalles,
   onEliminar,
 }: NominaMenuActionsProps) {
-  const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
