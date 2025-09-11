@@ -32,6 +32,7 @@ export function NominaMenuActions({
   const open = Boolean(anchorEl);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    event.preventDefault();
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
   };
@@ -56,10 +57,10 @@ export function NominaMenuActions({
         onClick={handleClick}
         size="small"
         sx={{
-          color: theme.palette.text.secondary,
+          color: "text.secondary",
           "&:hover": {
-            color: theme.palette.text.primary,
-            bgcolor: theme.palette.action.hover,
+            color: "text.primary",
+            bgcolor: "action.hover",
           },
         }}
       >
@@ -80,7 +81,8 @@ export function NominaMenuActions({
         PaperProps={{
           sx: {
             borderRadius: "12px",
-            border: `1px solid ${theme.palette.divider}`,
+            border: "1px solid",
+            borderColor: "divider",
             boxShadow: "0 8px 32px rgba(0, 0, 0, 0.12)",
             minWidth: 180,
             mt: 1,
@@ -88,13 +90,16 @@ export function NominaMenuActions({
         }}
       >
         <MenuItem
-          onClick={handleVerDetalles}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleVerDetalles();
+          }}
           sx={{
             py: 1.5,
             px: 2,
             "&:hover": {
-              bgcolor: theme.palette.primary.light,
-              color: theme.palette.primary.contrastText,
+              bgcolor: "primary.light",
+              color: "primary.contrastText",
             },
           }}
         >
@@ -110,13 +115,16 @@ export function NominaMenuActions({
           />
         </MenuItem>
         <MenuItem
-          onClick={handleEliminar}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleEliminar();
+          }}
           sx={{
             py: 1.5,
             px: 2,
             "&:hover": {
-              bgcolor: theme.palette.error.light,
-              color: theme.palette.error.contrastText,
+              bgcolor: "error.light",
+              color: "error.contrastText",
             },
           }}
         >

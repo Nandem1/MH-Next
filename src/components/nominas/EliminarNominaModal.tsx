@@ -80,16 +80,6 @@ export function EliminarNominaModal({
         bgcolor: "background.default"
       }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Box
-            sx={{
-              p: 1.5,
-              borderRadius: "12px",
-              bgcolor: theme.palette.error.light,
-              color: theme.palette.error.contrastText,
-            }}
-          >
-            <DeleteIcon />
-          </Box>
           <Box>
             <Typography variant="h6" fontWeight={700} sx={{ color: "text.primary" }}>
               Eliminar Nómina
@@ -103,14 +93,14 @@ export function EliminarNominaModal({
 
       <DialogContent sx={{ p: 4 }}>
         {nomina && (
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: 3, mt: 4 }}>
             <Alert
               severity="warning"
               icon={<WarningIcon />}
               sx={{
                 borderRadius: "12px",
                 border: `1px solid ${theme.palette.warning.light}`,
-                bgcolor: theme.palette.warning.light,
+                bgcolor: theme.palette.warning.light + "30",
                 "& .MuiAlert-icon": {
                   color: theme.palette.warning.dark,
                 },
@@ -208,7 +198,7 @@ export function EliminarNominaModal({
             py: 1,
             boxShadow: "none",
             "&:hover": {
-              boxShadow: "0 4px 12px rgba(211, 47, 47, 0.3)",
+              boxShadow: `0 4px 12px ${theme.palette.error.main}30`,
             },
           }}
         >
