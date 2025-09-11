@@ -418,6 +418,36 @@ export const useNominasCheque = () => {
     }
   }, [selectedNomina?.id, loadNomina, loadNominas, queryClient]);
 
+  // Eliminar nómina
+  const eliminarNomina = useCallback(async (nominaId: string) => {
+    try {
+      setError(null);
+      
+      await nominaChequeService.eliminarNomina(nominaId);
+      
+      // Remover la nómina de la lista local
+      setNominas(prev => prev.filter(n => n.id !== nominaId));
+      
+      // Actualizar el total de paginación
+      setPagination(prev => ({
+        ...prev,
+        total: prev.total - 1
+      }));
+      
+      // Invalidar cache para recargar datos
+      queryClient.invalidateQueries({ queryKey: ["nominas_list"] });
+      queryClient.invalidateQueries({ queryKey: ["nomina:", nominaId] });
+      
+      // Limpiar nómina seleccionada si es la que se eliminó
+      if (selectedNomina?.id === nominaId) {
+        setSelectedNomina(null);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al eliminar nómina");
+      throw err;
+    }
+  }, [selectedNomina?.id, queryClient]);
+
   // Obtener nóminas por estado de tracking
   // const getNominasPorEstadoTracking = useCallback(async (estado: string) => {
   //   try {
@@ -467,6 +497,7 @@ export const useNominasCheque = () => {
     crearYAsignarChequeAFactura,
     actualizarTracking,
     crearTracking,
+    eliminarNomina,
     setSelectedNomina,
   };
 }; 

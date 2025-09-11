@@ -43,6 +43,8 @@ import { AsignarChequeModal } from "@/components/dashboard/AsignarChequeModal";
 import { AsignarChequeAFacturaModal } from "@/components/dashboard/AsignarChequeAFacturaModal";
 import { TrackingEnvioComponent } from "@/components/dashboard/TrackingEnvio";
 import { AsignarFacturasModal } from "@/components/dashboard/AsignarFacturasModal";
+import { NominaMenuActions } from "@/components/nominas/NominaMenuActions";
+import { EliminarNominaModal } from "@/components/nominas/EliminarNominaModal";
 import Footer from "@/components/shared/Footer";
 import { formatearMontoPesos } from "@/utils/formatearMonto";
 import { useRouter } from "next/navigation";
@@ -73,6 +75,7 @@ export default function NominasPage() {
     setSelectedNomina,
     actualizarTracking,
     crearTracking,
+    eliminarNomina,
     aplicarFiltros,
     limpiarFiltros,
     pagination,
@@ -87,6 +90,8 @@ export default function NominasPage() {
   const [modalAsignarFacturasOpen, setModalAsignarFacturasOpen] = useState(false);
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
   const [modalAsignarChequeAFacturaOpen, setModalAsignarChequeAFacturaOpen] = useState(false);
+  const [modalEliminarOpen, setModalEliminarOpen] = useState(false);
+  const [nominaAEliminar, setNominaAEliminar] = useState<NominaCantera | null>(null);
   const [facturaSeleccionada, setFacturaSeleccionada] = useState<FacturaAsignada | null>(null);
   const [loadingModal, setLoadingModal] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -297,6 +302,26 @@ export default function NominasPage() {
       return;
     }
     setModalAsignarFacturasOpen(true);
+  };
+
+  const handleEliminarNomina = (nomina: NominaCantera) => {
+    setNominaAEliminar(nomina);
+    setModalEliminarOpen(true);
+  };
+
+  const handleConfirmarEliminacion = async (nomina: NominaCantera) => {
+    try {
+      await eliminarNomina(nomina.id);
+      setSnackbarMessage("Nómina eliminada exitosamente");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+      setModalEliminarOpen(false);
+      setNominaAEliminar(null);
+    } catch (err) {
+      setSnackbarMessage(err instanceof Error ? err.message : "Error al eliminar nómina");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
   };
 
   const getEstadoColor = (estado: string): "warning" | "success" | "error" | "default" => {
@@ -666,28 +691,11 @@ export default function NominasPage() {
                          )}
                        </TableCell>
                        <TableCell>
-                         <Button
-                           variant="outlined"
-                           size="small"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             handleViewNomina(nomina);
-                           }}
-                           sx={{
-                             borderColor: theme.palette.divider,
-                             color: theme.palette.text.primary,
-                             textTransform: "none",
-                             fontWeight: 600,
-                             borderRadius: "8px",
-                             "&:hover": {
-                               borderColor: theme.palette.primary.main,
-                               bgcolor: theme.palette.primary.light,
-                               color: theme.palette.primary.contrastText,
-                             },
-                           }}
-                         >
-                           Ver Detalles
-                         </Button>
+                         <NominaMenuActions
+                           nomina={nomina}
+                           onVerDetalles={handleViewNomina}
+                           onEliminar={handleEliminarNomina}
+                         />
                        </TableCell>
                      </TableRow>
                    ))}
@@ -980,6 +988,18 @@ export default function NominasPage() {
         onCrearYAsignar={handleCrearYAsignarChequeAFactura}
         factura={facturaSeleccionada}
         nominaId={selectedNomina?.id || ''}
+      />
+
+      {/* Modal Eliminar Nómina */}
+      <EliminarNominaModal
+        open={modalEliminarOpen}
+        onClose={() => {
+          setModalEliminarOpen(false);
+          setNominaAEliminar(null);
+        }}
+        onConfirm={handleConfirmarEliminacion}
+        nomina={nominaAEliminar}
+        loading={loading}
       />
 
       {/* Snackbar */}

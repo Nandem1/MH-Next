@@ -844,6 +844,26 @@ export const nominaChequeService = {
     }
   },
 
+  // Eliminar nómina
+  async eliminarNomina(id: string): Promise<void> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api-beta/nominas/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Error response:", errorText);
+        throw new Error("Error al eliminar nómina");
+      }
+    } catch (error) {
+      console.error("Error deleting nomina:", error);
+      throw error;
+    }
+  },
+
   // Obtener nóminas con filtro por tipo
   async getNominasPorTipo(tipo: string, filtros: FiltrosNominas = {}): Promise<{ nominas: NominaCantera[], pagination: PaginationInfo, filtros: FiltrosNominas }> {
     try {
