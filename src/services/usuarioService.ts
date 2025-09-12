@@ -19,6 +19,18 @@ export interface Usuario {
   nombre_local: string;
 }
 
+export interface UsuarioDisponible {
+  id: number;
+  nombre: string;
+  whatsapp_id: string;
+  nombre_local: string;
+}
+
+export interface UsuariosDisponiblesResponse {
+  success: boolean;
+  data: UsuarioDisponible[];
+}
+
 export interface Proveedor {
   id: number;
   nombre: string;
@@ -50,5 +62,17 @@ export const getProveedores = async (): Promise<Proveedor[]> => {
   } catch (error) {
     console.error("Error obteniendo proveedores:", error);
     throw new Error("No se pudieron cargar los proveedores");
+  }
+};
+
+export const getUsuariosDisponibles = async (): Promise<UsuarioDisponible[]> => {
+  try {
+    const response = await axios.get<UsuariosDisponiblesResponse>(`${API_URL}/usuarios/disponibles`, {
+      withCredentials: true,
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error("Error obteniendo usuarios disponibles:", error);
+    throw new Error("No se pudieron cargar los usuarios disponibles");
   }
 };

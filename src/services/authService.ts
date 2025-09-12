@@ -41,3 +41,57 @@ export const getUsuarioAutenticado = async () => {
   );
   return data;
 };
+
+export interface RegisterResponse {
+  message: string;
+  authUserId: number;
+}
+
+export const register = async (
+  email: string,
+  password: string
+): Promise<RegisterResponse> => {
+  const { data } = await axios.post<RegisterResponse>(
+    `${API_URL}/api-beta/register`,
+    { email, password }
+  );
+  return data;
+};
+
+export interface RelacionarUsuarioRequest {
+  authUserId: number;
+  usuarioId: number;
+}
+
+export interface RelacionarUsuarioResponse {
+  success: boolean;
+  message: string;
+  data: {
+    auth_user: {
+      id: number;
+      email: string;
+      usuario_id: number;
+      rol_id: number;
+      created_at: string;
+      updated_at: string;
+    };
+    usuario: {
+      id: number;
+      nombre: string;
+      whatsapp_id: string;
+      id_local: number;
+    };
+    mensaje: string;
+  };
+}
+
+export const relacionarUsuario = async (
+  request: RelacionarUsuarioRequest
+): Promise<RelacionarUsuarioResponse> => {
+  const { data } = await axios.post<RelacionarUsuarioResponse>(
+    `${API_URL}/auth/relacionar-usuario`,
+    request,
+    { withCredentials: true }
+  );
+  return data;
+};

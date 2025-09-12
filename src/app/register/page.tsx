@@ -1,74 +1,98 @@
 "use client";
 
 import { TextField, Button, Typography, Box, Snackbar, Alert, CircularProgress, Paper, Link } from "@mui/material";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { useInViewAnimations } from "@/hooks/useAnimations";
 
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
+import { register } from "@/services/authService";
+import SeleccionarUsuarioModal from "@/components/usuarios/SeleccionarUsuarioModal";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mensaje, setMensaje] = useState("");
-  const [emailError, setEmailError] = useState(false);
-  const [passwordError, setPasswordError] = useState(false);
+  const [errorEmail, setErrorEmail] = useState("");
+  const [errorPassword, setErrorPassword] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [modalSeleccionarOpen, setModalSeleccionarOpen] = useState(false);
+  const [authUserId, setAuthUserId] = useState<number | null>(null);
+
+  // Animaciones individuales por elemento cuando entran en vista
+  const { ref: logoRef, ...logoInView } = useInViewAnimations({ threshold: 0.3 });
+  const { ref: titleRef, ...titleInView } = useInViewAnimations({ threshold: 0.3 });
+  const { ref: formRef, ...formInView } = useInViewAnimations({ threshold: 0.2 });
+  const { ref: footerRef, ...footerInView } = useInViewAnimations({ threshold: 0.3 });
 
   /* helpers */
-  const isEmailValid = (em: string) =>
-    /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(em);
+  const isEmailValid = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  /* change handlers */
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setEmail(value);
-    setEmailError(!isEmailValid(value));
-    setMensaje("");
-  };
+  // Validación en tiempo real como en el modal
+  useEffect(() => {
+    if (email && !isEmailValid(email)) {
+      setErrorEmail("El correo electrónico no es válido.");
+    } else {
+      setErrorEmail("");
+    }
+  }, [email]);
 
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setPassword(value);
-    setPasswordError(value.length < 6);
-    setMensaje("");
-  };
+  useEffect(() => {
+    if (password && password.length < 6) {
+      setErrorPassword("La contraseña debe tener al menos 6 caracteres.");
+    } else {
+      setErrorPassword("");
+    }
+  }, [password]);
 
   /* submit */
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!isEmailValid(email)) {
-      setEmailError(true);
-      setMensaje("El correo electrónico no es válido.");
-      return;
-    }
-    if (password.length < 6) {
-      setPasswordError(true);
-      setMensaje("La contraseña debe tener al menos 6 caracteres.");
-      return;
-    }
+
+    if (errorEmail || errorPassword || !email || !password) return;
 
     try {
       setLoading(true);
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api-beta/register`, {
-        email,
-        password,
-      });
-      setSnackbarOpen(true);
-      setTimeout(() => router.push("/login"), 2000);
-    } catch (err) {
-      const error = err as AxiosError<{ message?: string }>;
-      setMensaje(error.response?.data?.message ?? "❌ Error al registrar.");
+      const response = await register(email, password);
+
+      // Guardar el authUserId y abrir modal de selección
+      setAuthUserId(response.authUserId);
+      setModalSeleccionarOpen(true);
+      
+      // Limpiar formulario
+      setEmail("");
+      setPassword("");
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      const message = axiosError.response?.data?.message || "❌ Error al registrar.";
+
+      if (message?.toLowerCase().includes("correo")) setErrorEmail(message);
+      else if (message?.toLowerCase().includes("contraseña")) setErrorPassword(message);
     } finally {
       setLoading(false);
     }
   };
 
   const disabled =
-    loading || !email || !password || emailError || passwordError;
+    loading || !email || !password || !!errorEmail || !!errorPassword;
+
+  const handleSeleccionarUsuarioSuccess = () => {
+    setModalSeleccionarOpen(false);
+    setAuthUserId(null);
+    // Redirigir a login después de completar el registro
+    setTimeout(() => router.push("/login"), 1000);
+  };
+
+  const handleSeleccionarUsuarioError = (message: string) => {
+    // En caso de error, mostrar mensaje y permitir reintentar
+    console.error("Error en selección de usuario:", message);
+    // El modal maneja sus propios errores internamente
+  };
 
   /* layout */
   return (
@@ -85,102 +109,174 @@ export default function RegisterPage() {
         sx={{
           flexGrow: 1,
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           px: 2,
           py: 4,
+          marginBottom: '32px',
         }}
       >
-        <Paper
-          elevation={4}
-          sx={{
-            width: { xs: "100%", sm: "420px", md: "380px" },
-            maxWidth: "100%",
-            p: { xs: 3, sm: 4 }, // igual que login
-            borderRadius: 3,
+        {/* Logo fuera del formulario */}
+        <motion.div
+          ref={logoRef}
+          {...logoInView}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          style={{ 
+            textAlign: 'center', 
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
           }}
         >
-          <Typography variant="h5" fontWeight={700} textAlign="center" mb={3}>
-            Crear nuevo usuario
-          </Typography>
+          <Image
+            src="/assets/multihouse-logo-black.png"
+            alt="Multihouse Logo"
+            width={340}
+            height={210}
+            style={{
+              filter: 'invert(1)',
+              objectFit: 'contain'
+            }}
+            priority
+          />
+        </motion.div>
 
-          <Box component="form" onSubmit={handleSubmit} noValidate>
-            <TextField
-              label="Correo electrónico"
-              fullWidth
-              margin="normal" // mismo espaciado login
-              value={email}
-              onChange={handleEmailChange}
-              error={emailError}
-              helperText={
-                emailError ? "El correo electrónico no es válido." : " "
-              }
-            />
-
-            <TextField
-              label="Contraseña"
-              type="password"
-              fullWidth
-              margin="normal"
-              value={password}
-              onChange={handlePasswordChange}
-              error={passwordError}
-              helperText={passwordError ? "Mínimo 6 caracteres." : " "}
-            />
-
-            <Button
-              type="submit"
-              variant="contained"
-              fullWidth
-              sx={{ mt: 3, py: 1.25, fontWeight: 600 }}
-              disabled={disabled}
-            >
-              {loading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                "Crear usuario"
-              )}
-            </Button>
-          </Box>
-
-          {mensaje && (
-            <Typography color="error" sx={{ mt: 2 }}>
-              {mensaje}
-            </Typography>
-          )}
-
-          <Snackbar
-            open={snackbarOpen}
-            autoHideDuration={3000}
-            onClose={() => setSnackbarOpen(false)}
-            anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        <motion.div
+          ref={formRef}
+          {...formInView}
+          transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+        >
+          <Paper
+            component={motion.div}
+            whileHover={{ 
+              y: -4,
+              transition: { duration: 0.2, ease: "easeOut" }
+            }}
+            elevation={4}
+            sx={{
+              width: { xs: "100%", sm: "420px", md: "380px" },
+              maxWidth: "100%",
+              p: { xs: 3, sm: 4 },
+              borderRadius: 3,
+            }}
           >
-            <Alert severity="success" sx={{ width: "100%" }}>
-              Cuenta registrada exitosamente
-            </Alert>
-          </Snackbar>
-        </Paper>
+            {/* Título */}
+            <motion.div
+              ref={titleRef}
+              {...titleInView}
+              transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
+            >
+              <Typography variant="h5" fontWeight={700} textAlign="center" mb={3}>
+                Crear nuevo usuario
+              </Typography>
+            </motion.div>
+
+            <Box component="form" onSubmit={handleSubmit} noValidate>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut", delay: 0.6 }}
+              >
+                <TextField
+                  label="Correo electrónico"
+                  fullWidth
+                  margin="normal"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  error={!!errorEmail}
+                  helperText={errorEmail}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut", delay: 0.7 }}
+              >
+                <TextField
+                  label="Contraseña"
+                  type="password"
+                  fullWidth
+                  margin="normal"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  error={!!errorPassword}
+                  helperText={errorPassword}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut", delay: 0.8 }}
+              >
+                <Button
+                  type="submit"
+                  variant="contained"
+                  fullWidth
+                  sx={{ mt: 3, py: 1.25, fontWeight: 600 }}
+                  disabled={disabled}
+                >
+                  {loading ? (
+                    <CircularProgress size={24} color="inherit" />
+                  ) : (
+                    "Crear usuario"
+                  )}
+                </Button>
+              </motion.div>
+            </Box>
+
+
+            <Snackbar
+              open={snackbarOpen}
+              autoHideDuration={3000}
+              onClose={() => setSnackbarOpen(false)}
+              anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            >
+              <Alert severity="success" sx={{ width: "100%" }}>
+                Cuenta registrada exitosamente
+              </Alert>
+            </Snackbar>
+          </Paper>
+        </motion.div>
       </Box>
 
       {/* footer ---------------------------------------------------------- */}
-      <Box
-        component="footer"
-        sx={{
-          py: 2,
-          textAlign: "center",
-          fontSize: "0.8rem",
-          color: "text.secondary",
-        }}
+      <motion.div
+        ref={footerRef}
+        {...footerInView}
+        transition={{ duration: 0.6, ease: "easeOut" }}
       >
-        © 2025 Mercado House SPA · Desarrollado por{" "}
-        <Link
-          href="https://github.com/Nandem1"
-          target="_blank"
-          underline="hover"
+        <Box
+          component="footer"
+          sx={{
+            py: 2,
+            textAlign: "center",
+            fontSize: "0.8rem",
+            color: "text.secondary",
+          }}
         >
-          Nandev
-        </Link>
-      </Box>
+          © 2025 Mercado House SPA · Desarrollado por{" "}
+          <Link
+            href="https://github.com/Nandem1"
+            target="_blank"
+            underline="hover"
+          >
+            Nandev
+          </Link>
+        </Box>
+      </motion.div>
+
+      {/* Modal de selección de usuario */}
+      {authUserId && (
+        <SeleccionarUsuarioModal
+          open={modalSeleccionarOpen}
+          authUserId={authUserId}
+          onSuccess={handleSeleccionarUsuarioSuccess}
+          onError={handleSeleccionarUsuarioError}
+        />
+      )}
     </Box>
   );
 }

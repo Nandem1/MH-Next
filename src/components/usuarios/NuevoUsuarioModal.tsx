@@ -5,7 +5,8 @@ import { Box, Typography, TextField, Button, CircularProgress, Snackbar, Alert, 
 
 
 import { useState, useEffect } from "react";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
+import { register } from "@/services/authService";
 
 export interface NuevoUsuarioModalProps {
   open: boolean;
@@ -51,10 +52,7 @@ export default function NuevoUsuarioModal({
 
     try {
       setLoading(true);
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api-beta/register`, {
-        email,
-        password,
-      });
+      await register(email, password);
 
       setSnackbarOpen(true);
       setEmail("");
