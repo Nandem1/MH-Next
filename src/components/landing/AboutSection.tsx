@@ -13,9 +13,25 @@ import {
   LocalShipping, 
   Favorite
 } from "@mui/icons-material";
+import { motion } from "framer-motion";
+import { useInViewAnimations } from "@/hooks/useAnimations";
 
 export default function AboutSection() {
   const theme = useTheme();
+
+  // Animaciones individuales por elemento cuando entran en vista
+  const { ref: headerRef, ...headerInView } = useInViewAnimations({ threshold: 0.3 });
+  
+  // Hooks para los valores (llamados al inicio del componente)
+  const { ref: valor1Ref, ...valor1InView } = useInViewAnimations({ threshold: 0.2 });
+  const { ref: valor2Ref, ...valor2InView } = useInViewAnimations({ threshold: 0.2 });
+  const { ref: valor3Ref, ...valor3InView } = useInViewAnimations({ threshold: 0.2 });
+  const { ref: valor4Ref, ...valor4InView } = useInViewAnimations({ threshold: 0.2 });
+  
+  // Hooks para las estadísticas (llamados al inicio del componente)
+  const { ref: stat1Ref, ...stat1InView } = useInViewAnimations({ threshold: 0.3 });
+  const { ref: stat2Ref, ...stat2InView } = useInViewAnimations({ threshold: 0.3 });
+  const { ref: stat3Ref, ...stat3InView } = useInViewAnimations({ threshold: 0.3 });
 
   const valores = [
     {
@@ -52,95 +68,118 @@ export default function AboutSection() {
     >
       <Container maxWidth="lg" sx={{ px: { xs: 2, md: 4 } }}>
         {/* Header */}
-        <Box sx={{ 
-          textAlign: 'center', 
-          mb: { xs: 8, md: 12 },
-          maxWidth: '800px',
-          mx: 'auto'
-        }}>
-          <Typography
-            variant="h2"
-            component="h2"
-            sx={{
-              fontWeight: 700,
-              mb: 3,
-              color: 'text.primary',
-              fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
-              letterSpacing: '-0.02em'
-            }}
-          >
-            Quiénes somos
-          </Typography>
-          <Typography
-            variant="h3"
-            sx={{
-              color: 'text.secondary',
-              maxWidth: '600px',
-              mx: 'auto',
-              fontWeight: 400,
-              lineHeight: 1.6,
-              fontSize: { xs: '1rem', md: '1.125rem' }
-            }}
-          >
-            Somos Mercadohouse, una empresa familiar que nació con la misión de ofrecer productos de calidad 
-            a precios justos en La Serena y Coquimbo. Durante más de una década hemos crecido junto a nuestras comunidades, 
-            convirtiéndonos en el supermercado de confianza de miles de familias de la región.
-          </Typography>
-        </Box>
+        <motion.div
+          ref={headerRef}
+          {...headerInView}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <Box sx={{ 
+            textAlign: 'center', 
+            mb: { xs: 8, md: 12 },
+            maxWidth: '800px',
+            mx: 'auto'
+          }}>
+            <Typography
+              variant="h2"
+              component="h2"
+              sx={{
+                fontWeight: 700,
+                mb: 3,
+                color: 'text.primary',
+                fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
+                letterSpacing: '-0.02em'
+              }}
+            >
+              Quiénes somos
+            </Typography>
+            <Typography
+              variant="h3"
+              sx={{
+                color: 'text.secondary',
+                maxWidth: '600px',
+                mx: 'auto',
+                fontWeight: 400,
+                lineHeight: 1.6,
+                fontSize: { xs: '1rem', md: '1.125rem' }
+              }}
+            >
+              Somos Mercadohouse, una empresa familiar que nació con la misión de ofrecer productos de calidad 
+              a precios justos en La Serena y Coquimbo. Durante más de una década hemos crecido junto a nuestras comunidades, 
+              convirtiéndonos en el supermercado de confianza de miles de familias de la región.
+            </Typography>
+          </Box>
+        </motion.div>
 
         {/* Valores Grid */}
         <Grid container spacing={4} sx={{ mb: { xs: 8, md: 12 }, justifyContent: 'center' }}>
-          {valores.map((valor) => (
-            <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={valor.titulo}>
-              <Box sx={{ textAlign: 'center', px: 2 }}>
-                <Box
-                  sx={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 64,
-                    height: 64,
-                    borderRadius: 2,
-                    backgroundColor: 'primary.main',
-                    mb: 3,
-                    '&:hover': {
-                      transform: 'scale(1.05)',
-                      transition: 'transform 0.2s ease'
-                    }
-                  }}
+          {valores.map((valor, index) => {
+            // Usar los hooks predefinidos según el índice
+            const valorRefs = [valor1Ref, valor2Ref, valor3Ref, valor4Ref];
+            const valorInViews = [valor1InView, valor2InView, valor3InView, valor4InView];
+            
+            return (
+              <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={valor.titulo}>
+                <motion.div
+                  ref={valorRefs[index]}
+                  {...valorInViews[index]}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
                 >
-                  <valor.icon 
-                    sx={{ 
-                      fontSize: 28,
-                      color: 'primary.contrastText'
-                    }} 
-                  />
-                </Box>
-                <Typography
-                  variant="h3"
-                  component="h3"
-                  sx={{
-                    fontWeight: 600,
-                    mb: 2,
-                    color: 'text.primary',
-                    fontSize: '1.125rem'
-                  }}
-                >
-                  {valor.titulo}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: 'text.secondary',
-                    lineHeight: 1.6,
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  {valor.descripcion}
-                </Typography>
-              </Box>
-            </Grid>
-          ))}
+                  <Box sx={{ textAlign: 'center', px: 2 }}>
+                    <motion.div
+                      whileHover={{ 
+                        scale: 1.1,
+                        rotate: 5,
+                        transition: { duration: 0.2, ease: "easeOut" }
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 64,
+                          height: 64,
+                          borderRadius: 2,
+                          backgroundColor: 'primary.main',
+                          mb: 3,
+                          transition: 'transform 0.2s ease'
+                        }}
+                      >
+                        <valor.icon 
+                          sx={{ 
+                            fontSize: 28,
+                            color: 'primary.contrastText'
+                          }} 
+                        />
+                      </Box>
+                    </motion.div>
+                    <Typography
+                      variant="h3"
+                      component="h3"
+                      sx={{
+                        fontWeight: 600,
+                        mb: 2,
+                        color: 'text.primary',
+                        fontSize: '1.125rem'
+                      }}
+                    >
+                      {valor.titulo}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: 'text.secondary',
+                        lineHeight: 1.6,
+                        fontSize: '0.875rem'
+                      }}
+                    >
+                      {valor.descripcion}
+                    </Typography>
+                  </Box>
+                </motion.div>
+              </Grid>
+            );
+          })}
         </Grid>
 
         {/* Stats */}
@@ -156,99 +195,137 @@ export default function AboutSection() {
               mx: 'auto'
             }}
           >
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography
-                variant="h2"
-                sx={{
-                  fontWeight: 700,
-                  mb: 1,
-                  color: 'primary.main',
-                  fontSize: { xs: '2.5rem', md: '3rem' }
-                }}
+            <>
+              <motion.div
+                ref={stat1Ref}
+                {...stat1InView}
+                transition={{ duration: 0.6, ease: "easeOut" }}
               >
-                15+
-              </Typography>
-              <Typography
-                variant="body2"
+                    <Box sx={{ textAlign: 'center' }}>
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                      >
+                    <Typography
+                      variant="h2"
+                      sx={{
+                        fontWeight: 700,
+                        mb: 1,
+                        color: 'primary.main',
+                        fontSize: { xs: '2.5rem', md: '3rem' }
+                      }}
+                    >
+                      15+
+                    </Typography>
+                  </motion.div>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'text.secondary',
+                      textTransform: 'uppercase',
+                      fontWeight: 500,
+                      letterSpacing: 1,
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    Años de experiencia
+                  </Typography>
+                </Box>
+              </motion.div>
+              
+              <Box
                 sx={{
-                  color: 'text.secondary',
-                  textTransform: 'uppercase',
-                  fontWeight: 500,
-                  letterSpacing: 1,
-                  fontSize: '0.75rem'
+                  width: { xs: '40px', md: '1px' },
+                  height: { xs: '1px', md: '40px' },
+                  backgroundColor: 'divider'
                 }}
-              >
-                Años de experiencia
-              </Typography>
-            </Box>
-            
-            <Box
-              sx={{
-                width: { xs: '40px', md: '1px' },
-                height: { xs: '1px', md: '40px' },
-                backgroundColor: 'divider'
-              }}
-            />
-            
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography
-                variant="h2"
+              />
+              
+                  <motion.div
+                    ref={stat2Ref}
+                    {...stat2InView}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                  >
+                    <Box sx={{ textAlign: 'center' }}>
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                      >
+                    <Typography
+                      variant="h2"
+                      sx={{
+                        fontWeight: 700,
+                        mb: 1,
+                        color: 'primary.main',
+                        fontSize: { xs: '2.5rem', md: '3rem' }
+                      }}
+                    >
+                      3
+                    </Typography>
+                  </motion.div>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'text.secondary',
+                      textTransform: 'uppercase',
+                      fontWeight: 500,
+                      letterSpacing: 1,
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    Locales en la región
+                  </Typography>
+                </Box>
+              </motion.div>
+              
+              <Box
                 sx={{
-                  fontWeight: 700,
-                  mb: 1,
-                  color: 'primary.main',
-                  fontSize: { xs: '2.5rem', md: '3rem' }
+                  width: { xs: '40px', md: '1px' },
+                  height: { xs: '1px', md: '40px' },
+                  backgroundColor: 'divider'
                 }}
-              >
-                3
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: 'text.secondary',
-                  textTransform: 'uppercase',
-                  fontWeight: 500,
-                  letterSpacing: 1,
-                  fontSize: '0.75rem'
-                }}
-              >
-                Locales en la región
-              </Typography>
-            </Box>
-            
-            <Box
-              sx={{
-                width: { xs: '40px', md: '1px' },
-                height: { xs: '1px', md: '40px' },
-                backgroundColor: 'divider'
-              }}
-            />
-            
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography
-                variant="h2"
-                sx={{
-                  fontWeight: 700,
-                  mb: 1,
-                  color: 'primary.main',
-                  fontSize: { xs: '2.5rem', md: '3rem' }
-                }}
-              >
-                5000+
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: 'text.secondary',
-                  textTransform: 'uppercase',
-                  fontWeight: 500,
-                  letterSpacing: 1,
-                  fontSize: '0.75rem'
-                }}
-              >
-                Familias atendidas
-              </Typography>
-            </Box>
+              />
+              
+                  <motion.div
+                    ref={stat3Ref}
+                    {...stat3InView}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                  >
+                    <Box sx={{ textAlign: 'center' }}>
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                      >
+                    <Typography
+                      variant="h2"
+                      sx={{
+                        fontWeight: 700,
+                        mb: 1,
+                        color: 'primary.main',
+                        fontSize: { xs: '2.5rem', md: '3rem' }
+                      }}
+                    >
+                      5000+
+                    </Typography>
+                  </motion.div>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'text.secondary',
+                      textTransform: 'uppercase',
+                      fontWeight: 500,
+                      letterSpacing: 1,
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    Familias atendidas
+                  </Typography>
+                </Box>
+              </motion.div>
+            </>
           </Box>
         </Box>
       </Container>

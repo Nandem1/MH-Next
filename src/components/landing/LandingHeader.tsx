@@ -22,11 +22,17 @@ import {
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion";
+import { useAnimations, useListAnimations } from "@/hooks/useAnimations";
 
 export default function LandingHeader() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Animaciones con efecto cascada más pronunciado
+  const logoAnimation = useAnimations({ preset: 'fade', delay: 0.2 });
+  const { container: navContainer, item: navItem } = useListAnimations(4, { staggerDelay: 0.2 });
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -91,27 +97,35 @@ export default function LandingHeader() {
               px: 0
             }}>
                              {/* Logo */}
-               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                 <Box sx={{ position: 'relative', width: 120, height: 40 }}>
-                   <Image
-                     src="/assets/multihouse-logo-black.png"
-                     alt="Mercadohouse"
-                     fill
-                     style={{
-                       objectFit: "contain",
-                       objectPosition: "center",
-                       filter: "brightness(0) invert(1)", // Hace el logo blanco
+               <motion.div {...logoAnimation}>
+                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                   <Box sx={{ position: 'relative', width: 120, height: 40 }}>
+                     <Image
+                       src="/assets/multihouse-logo-black.png"
+                       alt="Mercadohouse"
+                       fill
+                       style={{
+                         objectFit: "contain",
+                         objectPosition: "center",
+                         filter: "brightness(0) invert(1)", // Hace el logo blanco
                        transform: "scale(1.3)", // Hace zoom a la imagen
                      }}
                      priority
                    />
                  </Box>
                </Box>
+               </motion.div>
 
               {/* Desktop Navigation */}
               {!isMobile && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  {navItems.map((item) => (
+                <motion.div {...navContainer}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {navItems.map((item, index) => (
+                      <motion.div
+                        key={item.label}
+                        {...navItem}
+                        transition={{ delay: 0.4 + (index * 0.2) }}
+                      >
                     <Button
                       key={item.label}
                       component="a"
@@ -130,8 +144,10 @@ export default function LandingHeader() {
                     >
                       {item.label}
                     </Button>
-                  ))}
-                </Box>
+                      </motion.div>
+                    ))}
+                  </Box>
+                </motion.div>
               )}
 
               {/* Desktop Actions */}

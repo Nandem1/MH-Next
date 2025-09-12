@@ -16,9 +16,21 @@ import {
   Phone,
   Visibility
 } from "@mui/icons-material";
+import { motion } from "framer-motion";
+import { useInViewAnimations } from "@/hooks/useAnimations";
 
 export default function HeroSection() {
   const theme = useTheme();
+
+  // Animaciones individuales por elemento cuando entran en vista
+  const { ref: titleRef, ...titleInView } = useInViewAnimations({ threshold: 0.3 });
+  const { ref: subtitleRef, ...subtitleInView } = useInViewAnimations({ threshold: 0.3 });
+  const { ref: buttonRef, ...buttonInView } = useInViewAnimations({ threshold: 0.3 });
+  
+  // Hooks para las cards de locales (llamados al inicio del componente)
+  const { ref: card1Ref, ...card1InView } = useInViewAnimations({ threshold: 0.2 });
+  const { ref: card2Ref, ...card2InView } = useInViewAnimations({ threshold: 0.2 });
+  const { ref: card3Ref, ...card3InView } = useInViewAnimations({ threshold: 0.2 });
 
   const locales = [
     {
@@ -60,75 +72,109 @@ export default function HeroSection() {
           maxWidth: '900px',
           mx: 'auto'
         }}>
-          <Typography
-            variant="h1"
-            component="h1"
-            sx={{
-              fontWeight: 700,
-              mb: 3,
-              fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem', lg: '4rem' },
-              lineHeight: 1.1,
-              color: 'text.primary',
-              letterSpacing: '-0.02em'
-            }}
+          <motion.div
+            ref={titleRef}
+            {...titleInView}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            Tu Supermercado de confianza
-          </Typography>
-          <Typography
-            variant="h3"
-            sx={{
-              color: 'text.secondary',
-              mb: 4,
-              maxWidth: '700px',
-              mx: 'auto',
-              fontWeight: 400,
-              lineHeight: 1.5,
-              fontSize: { xs: '1.125rem', md: '1.25rem' }
-            }}
+            <Typography
+              variant="h1"
+              component="h1"
+              sx={{
+                fontWeight: 700,
+                mb: 3,
+                fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem', lg: '4rem' },
+                lineHeight: 1.1,
+                color: 'text.primary',
+                letterSpacing: '-0.02em'
+              }}
+            >
+              Tu Supermercado de confianza
+            </Typography>
+          </motion.div>
+          
+          <motion.div
+            ref={subtitleRef}
+            {...subtitleInView}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            Encuentra todo lo que necesitas en nuestros 3 locales estratégicamente ubicados en La Serena y Coquimbo. Productos frescos, calidad y el mejor servicio.
-          </Typography>
-          <Button
-            variant="contained"
-            size="large"
-            sx={{
-              px: 4,
-              py: 1.5,
-              fontSize: '1rem',
-              fontWeight: 600,
-              borderRadius: 2,
-              textTransform: 'none',
-              boxShadow: 'none',
-              '&:hover': {
+            <Typography
+              variant="h3"
+              sx={{
+                color: 'text.secondary',
+                mb: 4,
+                maxWidth: '700px',
+                mx: 'auto',
+                fontWeight: 400,
+                lineHeight: 1.5,
+                fontSize: { xs: '1.125rem', md: '1.25rem' }
+              }}
+            >
+              Encuentra todo lo que necesitas en nuestros 3 locales estratégicamente ubicados en La Serena y Coquimbo. Productos frescos, calidad y el mejor servicio.
+            </Typography>
+          </motion.div>
+          
+          <motion.div
+            ref={buttonRef}
+            {...buttonInView}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
+            <Button
+              variant="contained"
+              size="large"
+              sx={{
+                px: 4,
+                py: 1.5,
+                fontSize: '1rem',
+                fontWeight: 600,
+                borderRadius: 2,
+                textTransform: 'none',
                 boxShadow: 'none',
-                transform: 'translateY(-1px)'
-              },
-              transition: 'all 0.2s ease'
-            }}
-          >
-            Ver catálogo
-          </Button>
+                '&:hover': {
+                  boxShadow: 'none',
+                  transform: 'translateY(-1px)'
+                },
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Ver catálogo
+            </Button>
+          </motion.div>
         </Box>
 
         {/* Locales Grid */}
         <Box sx={{ maxWidth: '1600px', mx: 'auto' }}>
           <Grid container spacing={5} sx={{ justifyContent: 'center' }}>
-            {locales.map((local) => (
-              <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={local.nombre}>
-                <Card
-                  sx={{
-                    height: '100%',
-                    transition: 'all 0.2s ease',
-                    border: `1px solid ${theme.palette.divider}`,
-                    borderRadius: 2,
-                    backgroundColor: 'background.paper',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      borderColor: 'primary.main',
-                      boxShadow: `0 8px 32px rgba(0, 0, 0, 0.1)`
-                    }
-                  }}
-                >
+            {locales.map((local, index) => {
+              // Usar los hooks predefinidos según el índice
+              const cardRefs = [card1Ref, card2Ref, card3Ref];
+              const cardInViews = [card1InView, card2InView, card3InView];
+              
+              return (
+                <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={local.nombre}>
+                  <motion.div
+                    ref={cardRefs[index]}
+                    {...cardInViews[index]}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                  >
+                  <Card
+                    component={motion.div}
+                    whileHover={{ 
+                      y: -8,
+                      transition: { duration: 0.2, ease: "easeOut" }
+                    }}
+                    sx={{
+                      height: '100%',
+                      transition: 'all 0.2s ease',
+                      border: `1px solid ${theme.palette.divider}`,
+                      borderRadius: 2,
+                      backgroundColor: 'background.paper',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        boxShadow: `0 12px 40px rgba(0, 0, 0, 0.15)`
+                      }
+                    }}
+                  >
                   <CardContent sx={{ p: 4 }}>
                     <Typography
                       variant="h3"
@@ -188,9 +234,11 @@ export default function HeroSection() {
                       Ver ubicación
                     </Button>
                   </CardContent>
-                </Card>
-              </Grid>
-            ))}
+                  </Card>
+                  </motion.div>
+                </Grid>
+              );
+            })}
           </Grid>
         </Box>
       </Container>

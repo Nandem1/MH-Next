@@ -155,7 +155,7 @@ export const useInViewAnimations = (options: UseInViewAnimationOptions = {}) => 
     triggerOnce = true
   } = options;
 
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
   
   const isInView = useInView(ref, {
     once: triggerOnce

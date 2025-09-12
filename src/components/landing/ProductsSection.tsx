@@ -19,9 +19,27 @@ import {
   AccessTime,
   Email
 } from "@mui/icons-material";
+import { motion } from "framer-motion";
+import { useInViewAnimations } from "@/hooks/useAnimations";
 
 export default function ProductsSection() {
   const theme = useTheme();
+
+  // Animaciones individuales por elemento cuando entran en vista
+  const { ref: headerRef, ...headerInView } = useInViewAnimations({ threshold: 0.3 });
+  
+  // Hooks para cada local (llamados al inicio del componente)
+  const { ref: local1Ref, ...local1InView } = useInViewAnimations({ threshold: 0.2 });
+  const { ref: local2Ref, ...local2InView } = useInViewAnimations({ threshold: 0.2 });
+  const { ref: local3Ref, ...local3InView } = useInViewAnimations({ threshold: 0.2 });
+  
+  // Hooks para cada fila de productos (llamados al inicio del componente)
+  const { ref: productos1Ref, ...productos1InView } = useInViewAnimations({ threshold: 0.2 });
+  const { ref: productos2Ref, ...productos2InView } = useInViewAnimations({ threshold: 0.2 });
+  const { ref: productos3Ref, ...productos3InView } = useInViewAnimations({ threshold: 0.2 });
+  
+  // Hooks para el newsletter (llamado al inicio del componente)
+  const { ref: newsletterRef, ...newsletterInView } = useInViewAnimations({ threshold: 0.3 });
 
   const ofertasPorLocal = [
     {
@@ -190,7 +208,12 @@ export default function ProductsSection() {
     >
       <Container maxWidth="lg" sx={{ px: { xs: 2, md: 4 } }}>
         {/* Header */}
-        <Box sx={{ 
+        <motion.div
+          ref={headerRef}
+          {...headerInView}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+            <Box sx={{ 
           textAlign: 'center', 
           mb: { xs: 8, md: 12 },
           maxWidth: '800px',
@@ -228,53 +251,74 @@ export default function ProductsSection() {
               Ofertas válidas hasta fin de mes
             </Typography>
           </Box>
-        </Box>
+            </Box>
+        </motion.div>
 
         {/* Ofertas por Local */}
         <Box sx={{ space: 3 }}>
-          {ofertasPorLocal.map((localData) => (
-            <Box key={localData.local} sx={{ mb: { xs: 8, md: 12 } }}>
-              {/* Local Header */}
-              <Box sx={{ textAlign: 'center', mb: 6 }}>
-                <Typography
-                  variant="h3"
-                  component="h3"
-                  sx={{
-                    fontWeight: 600,
-                    mb: 1,
-                    color: 'primary.main',
-                    fontSize: { xs: '1.5rem', md: '2rem' }
-                  }}
-                >
-                  {localData.local}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                  <LocationOn sx={{ color: 'text.secondary', fontSize: 18 }} />
-                  <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                    {localData.ubicacion}
-                  </Typography>
-                </Box>
-              </Box>
-
-              {/* Productos Grid */}
-              <Grid container spacing={3} sx={{ justifyContent: 'center' }}>
-                {localData.ofertas.map((oferta, index) => (
-                  <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={index}>
-                    <Card
+          {ofertasPorLocal.map((localData, localIndex) => {
+            // Usar los hooks predefinidos según el índice
+            const localRefs = [local1Ref, local2Ref, local3Ref];
+            const localInViews = [local1InView, local2InView, local3InView];
+            
+            return (
+              <motion.div
+                key={localData.local}
+                ref={localRefs[localIndex]}
+                {...localInViews[localIndex]}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              >
+                <Box sx={{ mb: { xs: 8, md: 12 } }}>
+                  {/* Local Header */}
+                  <Box sx={{ textAlign: 'center', mb: 6 }}>
+                    <Typography
+                      variant="h3"
+                      component="h3"
                       sx={{
-                        height: '100%',
-                        transition: 'all 0.2s ease',
-                        border: `1px solid ${theme.palette.divider}`,
-                        borderRadius: 2,
-                        backgroundColor: 'background.paper',
-                        overflow: 'hidden',
-                        '&:hover': {
-                          transform: 'translateY(-4px)',
-                          borderColor: 'primary.main',
-                          boxShadow: `0 8px 32px rgba(0, 0, 0, 0.1)`
-                        }
+                        fontWeight: 600,
+                        mb: 1,
+                        color: 'primary.main',
+                        fontSize: { xs: '1.5rem', md: '2rem' }
                       }}
                     >
+                      {localData.local}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                      <LocationOn sx={{ color: 'text.secondary', fontSize: 18 }} />
+                      <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                        {localData.ubicacion}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  {/* Productos Grid */}
+                  <motion.div
+                    ref={[productos1Ref, productos2Ref, productos3Ref][localIndex]}
+                    {...[productos1InView, productos2InView, productos3InView][localIndex]}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                  >
+                    <Grid container spacing={3} sx={{ justifyContent: 'center' }}>
+                      {localData.ofertas.map((oferta, index) => (
+                        <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={index}>
+                            <Card
+                              component={motion.div}
+                              whileHover={{ 
+                                y: -8,
+                                transition: { duration: 0.2, ease: "easeOut" }
+                              }}
+                              sx={{
+                                height: '100%',
+                                transition: 'all 0.2s ease',
+                                border: `1px solid ${theme.palette.divider}`,
+                                borderRadius: 2,
+                                backgroundColor: 'background.paper',
+                                overflow: 'hidden',
+                                '&:hover': {
+                                  borderColor: 'primary.main',
+                                  boxShadow: `0 12px 40px rgba(0, 0, 0, 0.15)`
+                                }
+                              }}
+                            >
                       <Box sx={{ position: 'relative', height: 200 }}>
                         <Image
                           src={oferta.imagen}
@@ -366,17 +410,25 @@ export default function ProductsSection() {
                           </Typography>
                         </Box>
                       </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
-          ))}
+                            </Card>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </motion.div>
+                </Box>
+              </motion.div>
+            );
+          })}
         </Box>
 
         {/* Newsletter */}
-        <Box sx={{ mt: { xs: 8, md: 12 }, textAlign: 'center' }}>
-          <Card
+        <motion.div
+          ref={newsletterRef}
+          {...newsletterInView}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <Box sx={{ mt: { xs: 8, md: 12 }, textAlign: 'center' }}>
+            <Card
             sx={{
               maxWidth: '600px',
               mx: 'auto',
@@ -443,7 +495,8 @@ export default function ProductsSection() {
               </Button>
             </Box>
           </Card>
-        </Box>
+          </Box>
+        </motion.div>
       </Container>
     </Box>
   );

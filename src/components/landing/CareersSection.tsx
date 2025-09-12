@@ -19,9 +19,17 @@ import {
   CardGiftcard, 
   School
 } from "@mui/icons-material";
+import { motion } from "framer-motion";
+import { useAnimations, useListAnimations, useInViewAnimations } from "@/hooks/useAnimations";
 
 export default function CareersSection() {
   const theme = useTheme();
+
+  // Animaciones con efecto cascada más pronunciado
+  const headerAnimation = useAnimations({ preset: 'fade', delay: 0.6 });
+  const { container: beneficiosContainer, item: beneficioItem } = useListAnimations(4, { staggerDelay: 0.3 });
+  const { container: posicionesContainer, item: posicionItem } = useListAnimations(3, { staggerDelay: 0.4 });
+  const { ref: careersRef, ...careersInView } = useInViewAnimations({ threshold: 0.1 });
 
   const beneficios = [
     {
@@ -76,6 +84,7 @@ export default function CareersSection() {
   return (
     <Box
       id="trabajo"
+      ref={careersRef}
       sx={{
         py: { xs: 12, md: 16 },
         backgroundColor: 'background.paper',
@@ -84,6 +93,11 @@ export default function CareersSection() {
     >
       <Container maxWidth="lg" sx={{ px: { xs: 2, md: 4 } }}>
         {/* Header */}
+        <motion.div
+          {...careersInView}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <motion.div {...headerAnimation}>
         <Box sx={{ 
           textAlign: 'center', 
           mb: { xs: 8, md: 12 },
@@ -116,11 +130,14 @@ export default function CareersSection() {
             Únete a nuestra familia y forma parte de un equipo comprometido con la excelencia en el servicio
           </Typography>
         </Box>
+          </motion.div>
+        </motion.div>
 
         {/* Content Grid */}
         <Grid container spacing={6} sx={{ mb: { xs: 8, md: 12 }, justifyContent: 'center' }}>
           {/* Beneficios */}
           <Grid size={{ xs: 12, lg: 6 }}>
+            <motion.div {...beneficiosContainer}>
             <Typography
               variant="h3"
               component="h3"
@@ -137,55 +154,70 @@ export default function CareersSection() {
               Nuestros beneficios
             </Typography>
             <Grid container spacing={3}>
-              {beneficios.map((beneficio) => (
+              {beneficios.map((beneficio, index) => (
                 <Grid size={{ xs: 12, sm: 6 }} key={beneficio.titulo}>
-                  <Box sx={{ display: 'flex', gap: 3, p: 2 }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 40,
-                        height: 40,
-                        borderRadius: 1,
-                        backgroundColor: 'primary.main',
-                        flexShrink: 0
-                      }}
-                    >
-                      <beneficio.icon sx={{ color: 'primary.contrastText', fontSize: 20 }} />
-                    </Box>
-                    <Box>
-                      <Typography
-                        variant="h4"
-                        component="h4"
-                        sx={{
-                          fontWeight: 600,
-                          mb: 1,
-                          color: 'text.primary',
-                          fontSize: '1rem'
+                  <motion.div
+                    {...beneficioItem}
+                    transition={{ delay: 1.2 + (index * 0.3) }}
+                  >
+                    <Box sx={{ display: 'flex', gap: 3, p: 2 }}>
+                      <motion.div
+                        whileHover={{ 
+                          scale: 1.1,
+                          rotate: 5,
+                          transition: { duration: 0.2, ease: "easeOut" }
                         }}
                       >
-                        {beneficio.titulo}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: 'text.secondary',
-                          lineHeight: 1.6,
-                          fontSize: '0.875rem'
-                        }}
-                      >
-                        {beneficio.descripcion}
-                      </Typography>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 40,
+                            height: 40,
+                            borderRadius: 1,
+                            backgroundColor: 'primary.main',
+                            flexShrink: 0
+                          }}
+                        >
+                          <beneficio.icon sx={{ color: 'primary.contrastText', fontSize: 20 }} />
+                        </Box>
+                      </motion.div>
+                      <Box>
+                        <Typography
+                          variant="h4"
+                          component="h4"
+                          sx={{
+                            fontWeight: 600,
+                            mb: 1,
+                            color: 'text.primary',
+                            fontSize: '1rem'
+                          }}
+                        >
+                          {beneficio.titulo}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: 'text.secondary',
+                            lineHeight: 1.6,
+                            fontSize: '0.875rem'
+                          }}
+                        >
+                          {beneficio.descripcion}
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
+                  </motion.div>
                 </Grid>
               ))}
             </Grid>
+            </motion.div>
           </Grid>
 
           {/* Posiciones */}
           <Grid size={{ xs: 12, lg: 6 }}>
+            <motion.div {...posicionesContainer}>
             <Typography
               variant="h3"
               component="h3"
@@ -202,21 +234,30 @@ export default function CareersSection() {
               Posiciones disponibles
             </Typography>
             <Box sx={{ space: 2 }}>
-              {posiciones.map((posicion) => (
-                <Card
+              {posiciones.map((posicion, index) => (
+                <motion.div
                   key={posicion.titulo}
-                  sx={{
-                    mb: 2,
-                    border: `1px solid ${theme.palette.divider}`,
-                    backgroundColor: 'background.default',
-                    transition: 'all 0.2s ease',
-                    borderRadius: 2,
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      transform: 'translateX(2px)'
-                    }
-                  }}
+                  {...posicionItem}
+                  transition={{ delay: 2.4 + (index * 0.4) }}
                 >
+                  <Card
+                    component={motion.div}
+                    whileHover={{ 
+                      x: 8,
+                      transition: { duration: 0.2, ease: "easeOut" }
+                    }}
+                    sx={{
+                      mb: 2,
+                      border: `1px solid ${theme.palette.divider}`,
+                      backgroundColor: 'background.default',
+                      transition: 'all 0.2s ease',
+                      borderRadius: 2,
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        boxShadow: `0 8px 32px rgba(0, 0, 0, 0.1)`
+                      }
+                    }}
+                  >
                   <CardHeader
                     title={
                       <Typography variant="h4" sx={{ fontWeight: 600, color: 'text.primary', fontSize: '1rem' }}>
@@ -266,9 +307,11 @@ export default function CareersSection() {
                       Postular
                     </Button>
                   </CardContent>
-                </Card>
+                  </Card>
+                </motion.div>
               ))}
             </Box>
+            </motion.div>
           </Grid>
         </Grid>
 
