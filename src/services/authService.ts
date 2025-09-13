@@ -44,7 +44,13 @@ export const getUsuarioAutenticado = async () => {
 
 export interface RegisterResponse {
   message: string;
-  authUserId: number;
+  user: {
+    id: number;
+    email: string;
+    rol_id: number;
+    usuario_id: number | null;
+    created_at: string;
+  };
 }
 
 export const register = async (
@@ -89,7 +95,7 @@ export const relacionarUsuario = async (
   request: RelacionarUsuarioRequest
 ): Promise<RelacionarUsuarioResponse> => {
   const { data } = await axios.post<RelacionarUsuarioResponse>(
-    `${API_URL}/auth/relacionar-usuario`,
+    `${API_URL}/api-beta/auth/relacionar-usuario`,
     request,
     { withCredentials: true }
   );

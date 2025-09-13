@@ -22,6 +22,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [modalSeleccionarOpen, setModalSeleccionarOpen] = useState(false);
   const [authUserId, setAuthUserId] = useState<number | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Animaciones individuales por elemento cuando entran en vista
   const { ref: logoRef, ...logoInView } = useInViewAnimations({ threshold: 0.3 });
@@ -61,8 +62,11 @@ export default function RegisterPage() {
       const response = await register(email, password);
 
       // Guardar el authUserId y abrir modal de selección
-      setAuthUserId(response.authUserId);
+      setAuthUserId(response.user.id);
       setModalSeleccionarOpen(true);
+      
+      // Mostrar mensaje de éxito
+      setSnackbarOpen(true);
       
       // Limpiar formulario
       setEmail("");
@@ -84,8 +88,12 @@ export default function RegisterPage() {
   const handleSeleccionarUsuarioSuccess = () => {
     setModalSeleccionarOpen(false);
     setAuthUserId(null);
-    // Redirigir a login después de completar el registro
-    setTimeout(() => router.push("/login"), 1000);
+    setIsRedirecting(true);
+    
+    // Redirigir a login después de completar el registro con transición suave
+    setTimeout(() => {
+      router.push("/login");
+    }, 600);
   };
 
   const handleSeleccionarUsuarioError = (message: string) => {
@@ -102,6 +110,9 @@ export default function RegisterPage() {
         display: "flex",
         flexDirection: "column",
         backgroundColor: "background.default",
+        position: "relative",
+        opacity: isRedirecting ? 0.7 : 1,
+        transition: "opacity 0.3s ease-in-out",
       }}
     >
       {/* centro ---------------------------------------------------------- */}
@@ -242,6 +253,40 @@ export default function RegisterPage() {
         </motion.div>
       </Box>
 
+      {/* Indicador de redirección */}
+      {isRedirecting && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(0, 0, 0, 0.3)",
+            zIndex: 9999,
+          }}
+        >
+          <Box
+            sx={{
+              backgroundColor: "background.paper",
+              p: 3,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <CircularProgress size={24} />
+            <Typography variant="body1">
+              Redirigiendo al login...
+            </Typography>
+          </Box>
+        </Box>
+      )}
+
       {/* footer ---------------------------------------------------------- */}
       <motion.div
         ref={footerRef}
@@ -269,7 +314,7 @@ export default function RegisterPage() {
       </motion.div>
 
       {/* Modal de selección de usuario */}
-      {authUserId && (
+      {modalSeleccionarOpen && authUserId && (
         <SeleccionarUsuarioModal
           open={modalSeleccionarOpen}
           authUserId={authUserId}

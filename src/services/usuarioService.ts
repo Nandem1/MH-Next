@@ -67,7 +67,7 @@ export const getProveedores = async (): Promise<Proveedor[]> => {
 
 export const getUsuariosDisponibles = async (): Promise<UsuarioDisponible[]> => {
   try {
-    const response = await axios.get<UsuariosDisponiblesResponse>(`${API_URL}/usuarios/disponibles`, {
+    const response = await axios.get<UsuariosDisponiblesResponse>(`${API_URL}/api-beta/usuarios/disponibles`, {
       withCredentials: true,
     });
     return response.data.data;

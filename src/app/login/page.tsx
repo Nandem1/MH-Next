@@ -1,8 +1,9 @@
 "use client";
 
-import { Box, TextField, Typography, Snackbar, Alert, CircularProgress, Link } from "@mui/material";
-import { AnimatedBox, AnimatedPaper, AnimatedButton } from "@/components/ui/animated/AnimatedComponents";
-import { useAnimations } from "@/hooks/useAnimations";
+import { TextField, Button, Typography, Box, Snackbar, Alert, CircularProgress, Paper, Link } from "@mui/material";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { useInViewAnimations } from "@/hooks/useAnimations";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useSnackbar } from "@/hooks/useSnackbar";
@@ -16,23 +17,25 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  // Animaciones individuales por elemento cuando entran en vista
+  const { ref: logoRef, ...logoInView } = useInViewAnimations({ threshold: 0.3 });
+  const { ref: titleRef, ...titleInView } = useInViewAnimations({ threshold: 0.3 });
+  const { ref: formRef, ...formInView } = useInViewAnimations({ threshold: 0.2 });
+  const { ref: footerRef, ...footerInView } = useInViewAnimations({ threshold: 0.3 });
 
-  // Configuración de animaciones
-  const pageAnimation = useAnimations({ preset: 'fade', delay: 0.1 });
-  const formAnimation = useAnimations({ preset: 'card', delay: 0.3 });
-  const buttonAnimation = useAnimations({ preset: 'card', delay: 0.5 });
-
-  // Verificar si hay un token válido al cargar la página
+  // Verificar si hay un token válido al cargar la página (sin bloquear el render)
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    const user = localStorage.getItem("usuario");
-    
-    if (token && user) {
-      router.push("/dashboard/inicio");
-    } else {
-      setIsCheckingAuth(false);
-    }
+    // Pequeño delay para permitir que las animaciones se inicialicen
+    const timer = setTimeout(() => {
+      const token = localStorage.getItem("authToken");
+      const user = localStorage.getItem("usuario");
+      
+      if (token && user) {
+        router.push("/dashboard/inicio");
+      }
+    }, 100); // Delay mínimo para evitar parpadeos
+
+    return () => clearTimeout(timer);
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,14 +52,9 @@ export default function LoginPage() {
     }
   }, [showSnackbar]);
 
-  // Si estamos verificando la autenticación, no mostrar nada
-  if (isCheckingAuth) {
-    return null;
-  }
 
   return (
-    <AnimatedBox
-      {...pageAnimation}
+    <Box
       sx={{
         minHeight: "100vh",
         display: "flex",
@@ -64,92 +62,160 @@ export default function LoginPage() {
         backgroundColor: "background.default",
       }}
     >
-      {/* ---------- main (centro) ---------- */}
+      {/* centro ---------------------------------------------------------- */}
       <Box
         sx={{
-          flexGrow: 1, // ocupa todo lo disponible
+          flexGrow: 1,
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           px: 2,
           py: 4,
+          marginBottom: '32px',
         }}
       >
-        <AnimatedPaper
-          {...formAnimation}
-          elevation={4}
-          sx={{
-            width: { xs: "100%", sm: "420px", md: "380px" }, // ancho máx. responsive
-            maxWidth: "100%",
-            p: { xs: 3, sm: 4 },
-            borderRadius: 3,
+        {/* Logo fuera del formulario */}
+        <motion.div
+          ref={logoRef}
+          {...logoInView}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          style={{ 
+            textAlign: 'center', 
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
           }}
         >
-          <Typography variant="h5" fontWeight={700} textAlign="center" mb={3}>
-            Iniciar Sesión
-          </Typography>
+          <Image
+            src="/assets/multihouse-logo-black.png"
+            alt="Multihouse Logo"
+            width={340}
+            height={210}
+            style={{
+              filter: 'invert(1)',
+              objectFit: 'contain'
+            }}
+            priority
+          />
+        </motion.div>
 
-          <Box component="form" onSubmit={handleSubmit} noValidate>
-            <TextField
-              label="Correo electrónico"
-              type="email"
-              fullWidth
-              margin="normal"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-              required
-            />
-            <TextField
-              label="Contraseña"
-              type="password"
-              fullWidth
-              margin="normal"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-              required
-            />
-
-            <AnimatedButton
-              {...buttonAnimation}
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, py: 1.25, fontWeight: 600 }}
-              disabled={loading}
-            >
-              {loading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                "Entrar"
-              )}
-            </AnimatedButton>
-          </Box>
-        </AnimatedPaper>
-      </Box>
-
-      {/* ---------- footer ---------- */}
-      <Box
-        component="footer"
-        sx={{
-          py: 2,
-          textAlign: "center",
-          fontSize: "0.8rem",
-          color: "text.secondary",
-        }}
-      >
-        © 2025 Mercado House SPA · Desarrollado por{" "}
-        <Link
-          href="https://github.com/Nandem1"
-          target="_blank"
-          underline="hover"
+        <motion.div
+          ref={formRef}
+          {...formInView}
+          transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
         >
-          Nandev
-        </Link>
+          <Paper
+            component={motion.div}
+            whileHover={{ 
+              y: -4,
+              transition: { duration: 0.2, ease: "easeOut" }
+            }}
+            elevation={4}
+            sx={{
+              width: { xs: "100%", sm: "420px", md: "380px" },
+              maxWidth: "100%",
+              p: { xs: 3, sm: 4 },
+              borderRadius: 3,
+            }}
+          >
+            {/* Título */}
+            <motion.div
+              ref={titleRef}
+              {...titleInView}
+              transition={{ duration: 0.6, ease: "easeOut", delay: 0.4 }}
+            >
+              <Typography variant="h5" fontWeight={700} textAlign="center" mb={3}>
+                Iniciar Sesión
+              </Typography>
+            </motion.div>
+
+            <Box component="form" onSubmit={handleSubmit} noValidate>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut", delay: 0.6 }}
+              >
+                <TextField
+                  label="Correo electrónico"
+                  type="email"
+                  fullWidth
+                  margin="normal"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                  required
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut", delay: 0.7 }}
+              >
+                <TextField
+                  label="Contraseña"
+                  type="password"
+                  fullWidth
+                  margin="normal"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                  required
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut", delay: 0.8 }}
+              >
+                <Button
+                  type="submit"
+                  variant="contained"
+                  fullWidth
+                  sx={{ mt: 3, py: 1.25, fontWeight: 600 }}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <CircularProgress size={24} color="inherit" />
+                  ) : (
+                    "Entrar"
+                  )}
+                </Button>
+              </motion.div>
+            </Box>
+          </Paper>
+        </motion.div>
       </Box>
 
-      {/* ---------- snackbar ---------- */}
+      {/* footer ---------------------------------------------------------- */}
+      <motion.div
+        ref={footerRef}
+        {...footerInView}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
+        <Box
+          component="footer"
+          sx={{
+            py: 2,
+            textAlign: "center",
+            fontSize: "0.8rem",
+            color: "text.secondary",
+          }}
+        >
+          © 2025 Mercado House SPA · Desarrollado por{" "}
+          <Link
+            href="https://github.com/Nandem1"
+            target="_blank"
+            underline="hover"
+          >
+            Nandev
+          </Link>
+        </Box>
+      </motion.div>
+
+      {/* snackbar ---------------------------------------------------------- */}
       <Snackbar
         open={open}
         autoHideDuration={3000}
@@ -165,6 +231,6 @@ export default function LoginPage() {
           {message}
         </Alert>
       </Snackbar>
-    </AnimatedBox>
+    </Box>
   );
 }
