@@ -2,8 +2,6 @@
 
 import { TextField, Button, Typography, Box, Snackbar, Alert, CircularProgress, Paper, Link } from "@mui/material";
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { useInViewAnimations } from "@/hooks/useAnimations";
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -28,11 +26,7 @@ function ResetPasswordContent() {
   const [userEmail, setUserEmail] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // Animaciones individuales por elemento cuando entran en vista
-  const { ref: logoRef, ...logoInView } = useInViewAnimations({ threshold: 0.3 });
-  const { ref: titleRef, ...titleInView } = useInViewAnimations({ threshold: 0.3 });
-  const { ref: formRef, ...formInView } = useInViewAnimations({ threshold: 0.2 });
-  const { ref: footerRef, ...footerInView } = useInViewAnimations({ threshold: 0.3 });
+  // Sin animaciones por ahora para simplificar
 
   // Obtener token de la URL
   useEffect(() => {
@@ -164,10 +158,7 @@ function ResetPasswordContent() {
           px: 2,
         }}
       >
-        <motion.div
-          ref={logoRef}
-          {...logoInView}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+        <div
           style={{ 
             textAlign: 'center', 
             display: 'flex',
@@ -187,12 +178,9 @@ function ResetPasswordContent() {
             }}
             priority
           />
-        </motion.div>
+        </div>
 
-        <motion.div
-          ref={formRef}
-          {...formInView}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+        <div
           style={{ width: "100%", maxWidth: "400px" }}
         >
           <Paper
@@ -226,7 +214,7 @@ function ResetPasswordContent() {
               Volver al Login
             </Button>
           </Paper>
-        </motion.div>
+        </div>
       </Box>
     );
   }
@@ -255,10 +243,7 @@ function ResetPasswordContent() {
         }}
       >
         {/* Logo fuera del formulario */}
-        <motion.div
-          ref={logoRef}
-          {...logoInView}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+        <div
           style={{ 
             textAlign: 'center', 
             display: 'flex',
@@ -277,12 +262,9 @@ function ResetPasswordContent() {
             }}
             priority
           />
-        </motion.div>
+        </div>
 
-        <motion.div
-          ref={formRef}
-          {...formInView}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+        <div
           style={{ width: "100%", maxWidth: "400px" }}
         >
           <Paper
@@ -293,10 +275,7 @@ function ResetPasswordContent() {
               backgroundColor: "background.paper",
             }}
           >
-            <motion.div
-              ref={titleRef}
-              {...titleInView}
-              transition={{ duration: 0.6, ease: "easeOut" }}
+            <div
             >
               <Typography
                 variant="h4"
@@ -319,7 +298,7 @@ function ResetPasswordContent() {
                   : `Ingresa tu nueva contraseña para: ${userEmail}`
                 }
               </Typography>
-            </motion.div>
+            </div>
 
             {!success ? (
               <Box component="form" onSubmit={handleSubmit}>
@@ -382,14 +361,11 @@ function ResetPasswordContent() {
               Volver al Login
             </Button>
           </Paper>
-        </motion.div>
+        </div>
       </Box>
 
       {/* footer ---------------------------------------------------------- */}
       <motion.div
-        ref={footerRef}
-        {...footerInView}
-        transition={{ duration: 0.6, ease: "easeOut" }}
       >
         <Box
           component="footer"
