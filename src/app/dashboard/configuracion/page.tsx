@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Footer from "@/components/shared/Footer";
 import { ListaPreciosImporter } from "@/components/configuracion/ListaPreciosImporter";
+import { ChangePasswordModal } from "@/components/usuarios/ChangePasswordModal";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -38,6 +39,7 @@ export default function ConfiguracionPage() {
     useAuthStatus();
   const router = useRouter();
   const [tabValue, setTabValue] = useState(0);
+  const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -102,8 +104,13 @@ export default function ConfiguracionPage() {
           <Typography variant="h6" gutterBottom>
             Acciones Disponibles
           </Typography>
-          <Button variant="outlined" fullWidth sx={{ mb: 2 }} disabled>
-            Cambiar contraseña (próximamente)
+          <Button 
+            variant="outlined" 
+            fullWidth 
+            sx={{ mb: 2 }}
+            onClick={() => setChangePasswordModalOpen(true)}
+          >
+            Cambiar contraseña
           </Button>
           <Button variant="outlined" fullWidth disabled>
             Cambiar local asignado (próximamente)
@@ -115,6 +122,16 @@ export default function ConfiguracionPage() {
         </TabPanel>
       </Box>
       <Footer />
+
+      {/* Modal de cambio de contraseña */}
+      <ChangePasswordModal
+        open={changePasswordModalOpen}
+        onClose={() => setChangePasswordModalOpen(false)}
+        onSuccess={() => {
+          // Opcional: mostrar mensaje de éxito o actualizar datos
+          console.log("Contraseña cambiada exitosamente");
+        }}
+      />
     </Box>
   );
 }

@@ -184,6 +184,26 @@ export default function LoginPage() {
                   )}
                 </Button>
               </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut", delay: 0.9 }}
+              >
+                <Button
+                  fullWidth
+                  variant="text"
+                  onClick={() => router.push("/forgot-password")}
+                  disabled={loading}
+                  sx={{ 
+                    mt: 2,
+                    color: "text.secondary",
+                    fontSize: "0.875rem"
+                  }}
+                >
+                  ¿Olvidaste tu contraseña?
+                </Button>
+              </motion.div>
             </Box>
           </Paper>
         </motion.div>

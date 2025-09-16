@@ -101,3 +101,84 @@ export const relacionarUsuario = async (
   );
   return data;
 };
+
+// Password Reset Interfaces
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface VerifyResetTokenResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    email: string;
+  };
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
+export interface ResetPasswordResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ChangePasswordResponse {
+  success: boolean;
+  message: string;
+}
+
+// Password Reset Services
+export const forgotPassword = async (
+  email: string
+): Promise<ForgotPasswordResponse> => {
+  const { data } = await axios.post<ForgotPasswordResponse>(
+    `${API_URL}/api-beta/auth/forgot-password`,
+    { email }
+  );
+  return data;
+};
+
+export const verifyResetToken = async (
+  token: string
+): Promise<VerifyResetTokenResponse> => {
+  const { data } = await axios.get<VerifyResetTokenResponse>(
+    `${API_URL}/api-beta/auth/verify-reset-token/${token}`
+  );
+  return data;
+};
+
+export const resetPassword = async (
+  token: string,
+  newPassword: string
+): Promise<ResetPasswordResponse> => {
+  const { data } = await axios.post<ResetPasswordResponse>(
+    `${API_URL}/api-beta/auth/reset-password`,
+    { token, newPassword }
+  );
+  return data;
+};
+
+export const changePassword = async (
+  currentPassword: string,
+  newPassword: string
+): Promise<ChangePasswordResponse> => {
+  const { data } = await axios.post<ChangePasswordResponse>(
+    `${API_URL}/api-beta/auth/change-password`,
+    { currentPassword, newPassword },
+    { withCredentials: true }
+  );
+  return data;
+};
