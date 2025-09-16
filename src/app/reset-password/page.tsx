@@ -365,8 +365,7 @@ function ResetPasswordContent() {
       </Box>
 
       {/* footer ---------------------------------------------------------- */}
-      <motion.div
-      >
+      <div>
         <Box
           component="footer"
           sx={{
@@ -385,7 +384,7 @@ function ResetPasswordContent() {
             Nandev
           </Link>
         </Box>
-      </motion.div>
+      </div>
 
       {/* snackbar ---------------------------------------------------------- */}
       <Snackbar
