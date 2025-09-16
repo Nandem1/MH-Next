@@ -187,3 +187,28 @@ export const getFacturasAsignadas = async (nominaId: string): Promise<Factura[]>
     throw new Error("No se pudieron cargar las facturas asignadas");
   }
 };
+
+// Eliminar factura
+export interface DeleteFacturaResponse {
+  success: boolean;
+  message: string;
+  data: {
+    id: number;
+    folio: string;
+    rut: string;
+    nombre_proveedor: string;
+    monto: number;
+    estado: string;
+    fecha_eliminacion: string;
+  };
+}
+
+export const deleteFactura = async (id: string): Promise<DeleteFacturaResponse> => {
+  try {
+    const response = await axios.delete<DeleteFacturaResponse>(`${API_URL}/api-beta/facturas/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error eliminando factura:", error);
+    throw new Error("No se pudo eliminar la factura");
+  }
+};

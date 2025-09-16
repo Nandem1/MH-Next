@@ -82,12 +82,14 @@ interface FacturaTableProps {
   facturas: Factura[];
   isLoading: boolean;
   error: boolean;
+  onDelete?: (factura: Factura) => void;
 }
 
 export function FacturaTable({
   facturas,
   isLoading,
   error,
+  onDelete,
 }: FacturaTableProps) {
   const isMobile = useResponsive("(max-width:600px)");
   const actualizarMontoMutation = useActualizarMontoFactura();
@@ -374,6 +376,7 @@ export function FacturaTable({
           onEditarPago={handleOpenEditarMetodoPagoModal}
           onEditarFechaPago={handleOpenEditarFechaPagoModal}
           onEditarCamposBasicos={handleOpenEditarCamposBasicosModal}
+          onDelete={onDelete}
         />
       )}
 

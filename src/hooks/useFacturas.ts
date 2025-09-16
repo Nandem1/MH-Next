@@ -1,6 +1,6 @@
 // src/hooks/useFacturas.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getFacturas, actualizarMontoFactura, actualizarMetodoPagoFactura, actualizarFechaPagoFactura, actualizarCamposBasicosFactura } from "@/services/facturaService";
+import { getFacturas, actualizarMontoFactura, actualizarMetodoPagoFactura, actualizarFechaPagoFactura, actualizarCamposBasicosFactura, deleteFactura } from "@/services/facturaService";
 import { Factura, ActualizarMetodoPagoRequest, ActualizarFechaPagoRequest, ActualizarCamposBasicosRequest } from "@/types/factura";
 import { adaptFactura } from "@/utils/adaptFactura";
 
@@ -389,6 +389,52 @@ export const useActualizarCamposBasicosFactura = () => {
       }
       
       // Invalidar queries para asegurar que los datos estén sincronizados
+      queryClient.invalidateQueries({ queryKey: ["facturas"] });
+    },
+  });
+};
+
+// Hook para eliminar facturas con optimistic update
+export const useDeleteFactura = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => deleteFactura(id),
+    onMutate: async (id) => {
+      // Cancelar queries en curso para evitar que sobrescriban nuestro optimistic update
+      await queryClient.cancelQueries({ queryKey: ["facturas"] });
+
+      // Guardar el estado anterior para poder revertir si es necesario
+      const previousFacturas = queryClient.getQueriesData({ queryKey: ["facturas"] });
+
+      // Optimistic update: remover la factura de todas las listas
+      previousFacturas.forEach(([queryKey, old]) => {
+        const current = old as FacturasQueryResult | undefined;
+        if (!current?.facturas) return;
+        queryClient.setQueryData(queryKey, {
+          ...current,
+          facturas: current.facturas.filter((factura: Factura) => factura.id !== id),
+          total: current.total - 1,
+        });
+      });
+
+      // Remover entidad individual del cache
+      queryClient.removeQueries({ queryKey: ["factura", id] });
+
+      // Retornar el contexto para poder revertir si es necesario
+      return { previousFacturas };
+    },
+    onError: (err, _variables, context) => {
+      // Si hay error, revertir al estado anterior
+      if (context?.previousFacturas) {
+        context.previousFacturas.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      console.error("Error en mutación de eliminación de factura:", err);
+    },
+    onSuccess: () => {
+      // Invalidar todas las queries de facturas para asegurar sincronización
       queryClient.invalidateQueries({ queryKey: ["facturas"] });
     },
   });

@@ -5,13 +5,15 @@ import { useResponsive } from "@/hooks/useResponsive";
 import { useMobileOptimization } from "@/hooks/useMobileOptimization";
 import { FacturaSearchBar } from "./FacturaSearchBar";
 import { FacturaTable } from "./FacturaTable";
-import { useFacturas } from "@/hooks/useFacturas";
+import { useFacturas, useDeleteFactura } from "@/hooks/useFacturas";
 import { MobileImagePreloader } from "@/components/ui/MobileImagePreloader";
 import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
 import Pagination from "@mui/material/Pagination";
 import { AnimatedBox, ListContainer } from "@/components/ui/animated/AnimatedComponents";
 import { useAnimations, useListAnimations } from "@/hooks/useAnimations";
+import { Factura } from "@/types/factura";
+import { DeleteFacturaModal } from "./DeleteFacturaModal";
 // Nota: búsqueda por folio se maneja vía React Query (useFacturas)
 
 export function FacturaPageContent() {
@@ -34,6 +36,10 @@ export function FacturaPageContent() {
   const [fechaHastaActivo, setFechaHastaActivo] = useState<string>("");
   const [prontasAPagarActivo, setProntasAPagarActivo] = useState<boolean>(false);
 
+  // Estados para el modal de eliminación
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [facturaToDelete, setFacturaToDelete] = useState<Factura | null>(null);
+
   const { data, isLoading, error } = useFacturas(
     page,
     limit,
@@ -46,6 +52,9 @@ export function FacturaPageContent() {
     fechaHastaActivo,
     prontasAPagarActivo
   );
+
+  // Hook para eliminar factura
+  const deleteFacturaMutation = useDeleteFactura();
   const facturas = data?.facturas ?? [];
   const totalFacturas = data?.total ?? 0;
 
@@ -120,6 +129,21 @@ export function FacturaPageContent() {
     setPage(newPage);
   };
 
+  // Funciones para manejar la eliminación de facturas
+  const handleDeleteFactura = (factura: Factura) => {
+    setFacturaToDelete(factura);
+    setOpenDeleteModal(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setOpenDeleteModal(false);
+    setFacturaToDelete(null);
+  };
+
+  const handleConfirmDelete = async (factura: Factura) => {
+    await deleteFacturaMutation.mutateAsync(factura.id);
+  };
+
   const facturasParaMostrar = facturas;
 
   // Extraer URLs de imágenes para preloading
@@ -176,6 +200,7 @@ export function FacturaPageContent() {
             facturas={facturasParaMostrar}
             isLoading={false}
             error={false}
+            onDelete={handleDeleteFactura}
           />
           {!folioActivo && !chequeCorrelativoActivo && (
             <AnimatedBox 
@@ -192,6 +217,15 @@ export function FacturaPageContent() {
           )}
         </ListContainer>
       )}
+
+      {/* Modal de confirmación para eliminar factura */}
+      <DeleteFacturaModal
+        open={openDeleteModal}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
+        factura={facturaToDelete}
+        loading={deleteFacturaMutation.isPending}
+      />
     </AnimatedBox>
   );
 }
