@@ -157,7 +157,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
             >
               <Grow in={open} timeout={600}>
                 <Typography variant="h6" gutterBottom sx={{ mb: 3, textAlign: "center", fontWeight: 600, color: "text.primary" }}>
-                  🔒 Cambiar Contraseña
+                  Cambiar Contraseña
                 </Typography>
               </Grow>
 

@@ -192,9 +192,9 @@ function ResetPasswordContent() {
               textAlign: "center",
             }}
           >
-            <Typography variant="h5" color="error" gutterBottom sx={{ mb: 2 }}>
-              ❌ Token Inválido
-            </Typography>
+          <Typography variant="h5" color="error" gutterBottom sx={{ mb: 2 }}>
+            Token Inválido
+          </Typography>
             <Typography variant="body1" sx={{ mb: 3 }}>
               El enlace de restablecimiento no es válido o ha expirado.
             </Typography>
@@ -284,7 +284,7 @@ function ResetPasswordContent() {
                 align="center"
                 sx={{ mb: 2, fontWeight: 600 }}
               >
-                🔑 Nueva Contraseña
+                Nueva Contraseña
               </Typography>
               
               <Typography
@@ -342,7 +342,7 @@ function ResetPasswordContent() {
             ) : (
               <Box sx={{ textAlign: "center" }}>
                 <Typography variant="h6" color="success.main" sx={{ mb: 2 }}>
-                  ✅ Contraseña Restablecida
+                  Contraseña Restablecida
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                   Te redirigiremos al login en unos segundos...

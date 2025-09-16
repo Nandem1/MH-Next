@@ -153,7 +153,7 @@ export default function ForgotPasswordPage() {
                 align="center"
                 sx={{ mb: 2, fontWeight: 600 }}
               >
-                🔐 Restablecer Contraseña
+                Restablecer Contraseña
               </Typography>
               
               <Typography
@@ -198,7 +198,7 @@ export default function ForgotPasswordPage() {
             ) : (
               <Box sx={{ textAlign: "center" }}>
                 <Typography variant="h6" color="success.main" sx={{ mb: 2 }}>
-                  ✅ Enlace Enviado
+                  Enlace Enviado
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                   Te redirigiremos al login en unos segundos...
