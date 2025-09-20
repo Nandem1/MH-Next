@@ -22,11 +22,16 @@ export const useFacturas = (
   prontasAPagar?: boolean
 ) => {
   const queryClient = useQueryClient();
+  
+  // Deshabilitar retry para búsquedas específicas por folio o correlativo de cheque
+  // Si no encuentra a la primera, es porque no existe en la DB
+  const isSearchByFolioOrCorrelativo = Boolean(folio || chequeCorrelativo);
+  
   const result = useQuery<{ facturas: Factura[]; total: number }>({
     queryKey: ["facturas", page, limit, local ?? "", usuario ?? "", proveedor ?? "", folio ?? "", chequeCorrelativo ?? "", fechaDesde ?? "", fechaHasta ?? "", prontasAPagar ?? false],
     queryFn: () => getFacturas(page, limit, local, usuario, proveedor, folio, chequeCorrelativo, fechaDesde, fechaHasta, prontasAPagar),
-    // Usar configuración global del QueryClient
-    // staleTime, retry, refetchOnWindowFocus, etc. se manejan globalmente
+    // Deshabilitar retry para búsquedas específicas
+    retry: isSearchByFolioOrCorrelativo ? false : undefined,
   });
 
   // Normalizar por id cuando lleguen datos

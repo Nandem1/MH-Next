@@ -936,4 +936,44 @@ export const nominaChequeService = {
       throw error;
     }
   },
+
+  // Desasignar cheque de nómina
+  async desasignarCheque(nominaId: string, chequeId: number): Promise<void> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api-beta/nominas/${nominaId}/cheques/${chequeId}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Error response:", errorText);
+        throw new Error("Error al desasignar cheque de la nómina");
+      }
+    } catch (error) {
+      console.error("Error unassigning cheque from nomina:", error);
+      throw error;
+    }
+  },
+
+  // Desasignar factura de nómina
+  async desasignarFactura(nominaId: string, facturaId: number): Promise<void> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api-beta/nominas/${nominaId}/facturas/${facturaId}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Error response:", errorText);
+        throw new Error("Error al desasignar factura de la nómina");
+      }
+    } catch (error) {
+      console.error("Error unassigning factura from nomina:", error);
+      throw error;
+    }
+  },
 }; 

@@ -448,6 +448,54 @@ export const useNominasCheque = () => {
     }
   }, [selectedNomina?.id, queryClient]);
 
+  // Desasignar cheque de nómina
+  const desasignarCheque = useCallback(async (nominaId: string, chequeId: number) => {
+    try {
+      setError(null);
+      
+      await nominaChequeService.desasignarCheque(nominaId, chequeId);
+      
+      // Invalidar cache para recargar datos
+      queryClient.invalidateQueries({ queryKey: ["nominas_list"] });
+      queryClient.invalidateQueries({ queryKey: ["nomina:", nominaId] });
+      
+      // Actualizar la nómina seleccionada si es la misma
+      if (selectedNomina?.id === nominaId) {
+        await loadNomina(nominaId);
+      }
+      
+      // Refrescar la lista con los filtros actuales
+      await loadNominas();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al desasignar cheque");
+      throw err;
+    }
+  }, [selectedNomina?.id, loadNomina, loadNominas, queryClient]);
+
+  // Desasignar factura de nómina
+  const desasignarFactura = useCallback(async (nominaId: string, facturaId: number) => {
+    try {
+      setError(null);
+      
+      await nominaChequeService.desasignarFactura(nominaId, facturaId);
+      
+      // Invalidar cache para recargar datos
+      queryClient.invalidateQueries({ queryKey: ["nominas_list"] });
+      queryClient.invalidateQueries({ queryKey: ["nomina:", nominaId] });
+      
+      // Actualizar la nómina seleccionada si es la misma
+      if (selectedNomina?.id === nominaId) {
+        await loadNomina(nominaId);
+      }
+      
+      // Refrescar la lista con los filtros actuales
+      await loadNominas();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al desasignar factura");
+      throw err;
+    }
+  }, [selectedNomina?.id, loadNomina, loadNominas, queryClient]);
+
   // Obtener nóminas por estado de tracking
   // const getNominasPorEstadoTracking = useCallback(async (estado: string) => {
   //   try {
@@ -498,6 +546,8 @@ export const useNominasCheque = () => {
     actualizarTracking,
     crearTracking,
     eliminarNomina,
+    desasignarCheque,
+    desasignarFactura,
     setSelectedNomina,
   };
 }; 

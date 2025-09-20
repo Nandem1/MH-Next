@@ -36,7 +36,7 @@ import { useUsuarios } from "@/hooks/useUsuarios";
 import { AnimatedBox, AnimatedPaper, AnimatedButton, AnimatedTypography } from "@/components/ui/animated";
 import { useAnimations, useInViewAnimations } from "@/hooks/useAnimations";
 import { FacturasAsignadasView } from "@/components/dashboard/FacturasAsignadasView";
-import { NominaCantera, CrearNominaRequest, AsignarChequeRequest, ActualizarTrackingRequest, TrackingEnvio, FacturaAsignada, AsignarChequeAFacturaRequest, FiltrosNominas } from "@/types/nominaCheque";
+import { NominaCantera, CrearNominaRequest, AsignarChequeRequest, ActualizarTrackingRequest, TrackingEnvio, FacturaAsignada, AsignarChequeAFacturaRequest, FiltrosNominas, ChequeAsignado } from "@/types/nominaCheque";
 import { CrearChequeRequest } from "@/types/factura";
 import { NuevaNominaModal } from "@/components/dashboard/NuevaNominaChequeModal";
 import { AsignarChequeModal } from "@/components/dashboard/AsignarChequeModal";
@@ -76,6 +76,8 @@ export default function NominasPage() {
     actualizarTracking,
     crearTracking,
     eliminarNomina,
+    desasignarCheque,
+    desasignarFactura,
     aplicarFiltros,
     limpiarFiltros,
     pagination,
@@ -322,6 +324,41 @@ export default function NominasPage() {
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
     }
+  };
+
+  const handleDesasignarFactura = async (factura: FacturaAsignada) => {
+    if (!selectedNomina) return;
+    
+    try {
+      await desasignarFactura(selectedNomina.id, parseInt(factura.id));
+      setSnackbarMessage("Factura desasignada exitosamente");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+    } catch (err) {
+      setSnackbarMessage(err instanceof Error ? err.message : "Error al desasignar factura");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
+  };
+
+  const handleDesasignarCheque = async (cheque: ChequeAsignado) => {
+    if (!selectedNomina) return;
+    
+    try {
+      await desasignarCheque(selectedNomina.id, parseInt(cheque.id));
+      setSnackbarMessage("Cheque desasignado exitosamente");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+    } catch (err) {
+      setSnackbarMessage(err instanceof Error ? err.message : "Error al desasignar cheque");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
+  };
+
+  const handleAbrirModalAsignarCheque = (factura: FacturaAsignada) => {
+    setFacturaSeleccionada(factura);
+    setModalAsignarChequeAFacturaOpen(true);
   };
 
   const getEstadoColor = (estado: string): "warning" | "success" | "error" | "default" => {
@@ -899,10 +936,10 @@ export default function NominasPage() {
                  <Box sx={{ p: 4 }}>
                    <FacturasAsignadasView
                      facturas={selectedNomina.facturas || []}
-                     onFacturaClick={(factura) => {
-                       setFacturaSeleccionada(factura);
-                       setModalAsignarChequeAFacturaOpen(true);
-                     }}
+                     tipoNomina={selectedNomina.tipoNomina}
+                     onDesasignarFactura={handleDesasignarFactura}
+                     onDesasignarCheque={handleDesasignarCheque}
+                     onAsignarCheque={handleAbrirModalAsignarCheque}
                    />
                  </Box>
             </Box>

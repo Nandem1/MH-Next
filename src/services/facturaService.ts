@@ -68,6 +68,18 @@ export const getFacturas = async (
     return { facturas, total: total_registros };
   } catch (error) {
     console.error("Error obteniendo facturas:", error);
+    
+    // Manejar específicamente errores 404 para búsquedas por folio o correlativo
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      if (folio) {
+        throw new Error(`No se encontró ninguna factura con el folio "${folio}"`);
+      }
+      if (chequeCorrelativo) {
+        throw new Error(`No se encontró ninguna factura con el correlativo de cheque "${chequeCorrelativo}"`);
+      }
+      throw new Error("No se encontraron facturas con los criterios especificados");
+    }
+    
     throw new Error("No se pudieron cargar las facturas");
   }
 };

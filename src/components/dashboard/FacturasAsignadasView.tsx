@@ -17,15 +17,25 @@ import {
   ViewList as ViewListIcon,
   ViewModule as ViewModuleIcon,
 } from '@mui/icons-material';
-import { FacturaAsignada } from '@/types/nominaCheque';
+import { FacturaAsignada, ChequeAsignado } from '@/types/nominaCheque';
 import { formatearMontoPesos } from '@/utils/formatearMonto';
+import { NominaItemMenuActions } from '@/components/nominas/NominaItemMenuActions';
 
 interface FacturasAsignadasViewProps {
   facturas: FacturaAsignada[];
-  onFacturaClick: (factura: FacturaAsignada) => void;
+  tipoNomina: "cheques" | "facturas" | "mixta";
+  onDesasignarFactura?: (factura: FacturaAsignada) => void;
+  onDesasignarCheque?: (cheque: ChequeAsignado) => void;
+  onAsignarCheque?: (factura: FacturaAsignada) => void;
 }
 
-export function FacturasAsignadasView({ facturas, onFacturaClick }: FacturasAsignadasViewProps) {
+export function FacturasAsignadasView({ 
+  facturas, 
+  tipoNomina,
+  onDesasignarFactura, 
+  onDesasignarCheque,
+  onAsignarCheque
+}: FacturasAsignadasViewProps) {
   const theme = useTheme();
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
@@ -109,6 +119,7 @@ export function FacturasAsignadasView({ facturas, onFacturaClick }: FacturasAsig
                  <TableCell sx={{ fontWeight: 600, color: 'text.primary' }}>Estado Cheque</TableCell>
                  <TableCell sx={{ fontWeight: 600, color: 'text.primary' }}>Correlativo Cheque</TableCell>
                  <TableCell sx={{ fontWeight: 600, color: 'text.primary' }}>Monto</TableCell>
+                 <TableCell sx={{ fontWeight: 600, color: 'text.primary' }}>Acciones</TableCell>
                </TableRow>
              </TableHead>
              <TableBody>
@@ -130,11 +141,9 @@ export function FacturasAsignadasView({ facturas, onFacturaClick }: FacturasAsig
                        key={factura.id}
                        sx={{ 
                          '&:hover': { 
-                           bgcolor: 'action.hover',
-                           cursor: 'pointer'
+                           bgcolor: 'action.hover'
                          } 
                        }}
-                       onClick={() => onFacturaClick(factura)}
                      >
                        <TableCell sx={{ fontWeight: 500, color: 'text.primary' }}>
                          #{factura.folio}
@@ -162,6 +171,15 @@ export function FacturasAsignadasView({ facturas, onFacturaClick }: FacturasAsig
                        </TableCell>
                        <TableCell sx={{ fontWeight: 600, color: 'text.primary' }}>
                          {formatearMontoPesos(factura.montoAsignado)}
+                       </TableCell>
+                       <TableCell>
+                         <NominaItemMenuActions
+                           factura={factura}
+                           tipoNomina={tipoNomina}
+                           onDesasignarFactura={onDesasignarFactura}
+                           onDesasignarCheque={onDesasignarCheque}
+                           onAsignarCheque={onAsignarCheque}
+                         />
                        </TableCell>
                      </TableRow>
                    );
@@ -192,22 +210,21 @@ export function FacturasAsignadasView({ facturas, onFacturaClick }: FacturasAsig
               return (
                 <Box
                   key={factura.id}
-                                     sx={{
-                     p: 3,
-                     bgcolor: "background.default",
-                     borderRadius: "12px",
-                     border: `1px solid ${theme.palette.divider}`,
-                     transition: "all 0.3s ease-in-out",
-                     cursor: "pointer",
-                     position: "relative",
-                     overflow: "hidden",
-                     "&:hover": {
-                       borderColor: theme.palette.primary.main,
-                       bgcolor: "background.paper",
-                       transform: "translateY(-2px)",
-                       boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-                     },
-                   }}
+                  sx={{
+                    p: 3,
+                    bgcolor: "background.default",
+                    borderRadius: "12px",
+                    border: `1px solid ${theme.palette.divider}`,
+                    transition: "all 0.3s ease-in-out",
+                    position: "relative",
+                    overflow: "hidden",
+                    "&:hover": {
+                      borderColor: theme.palette.primary.main,
+                      bgcolor: "background.paper",
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+                    },
+                  }}
                   onMouseEnter={(e) => {
                     const target = e.currentTarget;
                     const content = target.querySelector('.factura-content') as HTMLElement;
@@ -225,9 +242,8 @@ export function FacturasAsignadasView({ facturas, onFacturaClick }: FacturasAsig
                       content.style.opacity = '1';
                       chequeContent.style.opacity = '0';
                     }
-                                     }}
-                   onClick={() => onFacturaClick(factura)}
-                 >
+                  }}
+                >
                   {/* Contenido de la factura (visible por defecto) */}
                   <Box className="factura-content" sx={{ transition: "opacity 0.3s ease-in-out" }}>
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>

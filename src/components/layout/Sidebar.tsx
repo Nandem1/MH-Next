@@ -1,6 +1,6 @@
 "use client";
 
-import { Divider, Box, Typography, Button, useMediaQuery, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Collapse, Drawer } from "@mui/material";
+import { Divider, Box, Typography, Button, useMediaQuery, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Collapse, Drawer, Link } from "@mui/material";
 
 
 
@@ -414,22 +414,13 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
         }}
       >
         Desarrollado por{" "}
-        <Typography
-          component="a"
+        <Link
           href="https://github.com/Nandem1"
           target="_blank"
-          rel="noopener noreferrer"
-          sx={{ 
-            color: "primary.main", 
-            fontWeight: 500,
-            textDecoration: "none",
-            "&:hover": {
-              textDecoration: "underline"
-            }
-          }}
+          underline="hover"
         >
           Nandev
-        </Typography>
+        </Link>
       </Box>
     </Box>
   );

@@ -192,7 +192,9 @@ export function FacturaPageContent() {
           {...pageAnimation}
           sx={{ textAlign: "center", p: 4 }}
         >
-          <Typography color="error">Error cargando facturas</Typography>
+          <Typography color="error">
+            {error.message || "Error cargando facturas"}
+          </Typography>
         </AnimatedBox>
       ) : (
         <ListContainer {...listAnimation.container}>
