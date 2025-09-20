@@ -20,6 +20,8 @@ import AddIcon from "@mui/icons-material/Add";
 import HomeIcon from "@mui/icons-material/Home";
 import StorageIcon from "@mui/icons-material/Storage";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import HistoryIcon from "@mui/icons-material/History";
 import Image from "next/image";
 
 import { useRouter, usePathname } from "next/navigation";
@@ -41,9 +43,11 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
   const { logout, usuario } = useAuth();
   const [openDTE, setOpenDTE] = useState(false);
   const [openBodega, setOpenBodega] = useState(false);
+  const [openCajaChica, setOpenCajaChica] = useState(false);
 
   const handleSubmenuClick = () => setOpenDTE(!openDTE);
   const handleBodegaClick = () => setOpenBodega(!openBodega);
+  const handleCajaChicaClick = () => setOpenCajaChica(!openCajaChica);
 
   const goTo = (path: string) => {
     router.push(path);
@@ -218,19 +222,41 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
             </List>
           </Collapse>
 
-          {/* Rinde Gastos */}
+          {/* CAJA CHICA (submenu) */}
           <ListItem disablePadding>
-            <ListItemButton
-              selected={pathname === "/dashboard/rinde-gastos"}
-              onClick={() => goTo("/dashboard/rinde-gastos")}
-              sx={navButtonStyle()}
-            >
+            <ListItemButton onClick={handleCajaChicaClick}>
               <ListItemIcon sx={{ minWidth: 40 }}>
                 <AccountBalanceWalletIcon />
               </ListItemIcon>
-              <ListItemText primary="Rinde Gastos" />
+              <ListItemText primary="Caja Chica" />
+              {openCajaChica ? <ExpandLess /> : <ExpandMore />}
             </ListItemButton>
           </ListItem>
+          <Collapse in={openCajaChica} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={pathname === "/dashboard/caja-chica"}
+                onClick={() => goTo("/dashboard/caja-chica")}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <AttachMoneyIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Nóminas de Gastos" />
+              </ListItemButton>
+
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={pathname === "/dashboard/rinde-gastos"}
+                onClick={() => goTo("/dashboard/rinde-gastos")}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <HistoryIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Rinde Gastos" />
+              </ListItemButton>
+            </List>
+          </Collapse>
 
           {/* BODEGA (submenu) */}
           {canSeeBodega && (
