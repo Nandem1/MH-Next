@@ -29,6 +29,7 @@ import {
   useTheme,
   TablePagination,
   Button,
+  Backdrop,
 } from "@mui/material";
 import { useNominasGastos } from "@/hooks/useNominasGastos";
 import { useUsuarios } from "@/hooks/useUsuarios";
@@ -40,6 +41,8 @@ import { formatearMontoPesos } from "@/utils/formatearMonto";
 import { useRouter } from "next/navigation";
 import { useAuthStatus } from "@/hooks/useAuthStatus";
 import { locales } from "@/hooks/useAuthStatus";
+import { NominaGastoMenuActions } from "@/components/nominas/NominaGastoMenuActions";
+import { usePrintNominaGasto } from "@/hooks/usePrintNominaGasto";
 
 export default function CajaChicaPage() {
   const theme = useTheme();
@@ -67,6 +70,7 @@ export default function CajaChicaPage() {
   } = useNominasGastos();
 
   const { data: usuarios, isLoading: isLoadingUsuarios } = useUsuarios();
+  const { printNominaGasto, loading: printLoading } = usePrintNominaGasto();
 
   const [modalDetalleOpen, setModalDetalleOpen] = useState(false);
   const [selectedNomina, setSelectedNomina] = useState<NominaGasto | null>(null);
@@ -147,6 +151,31 @@ export default function CajaChicaPage() {
     setModalDetalleOpen(false);
     setSelectedNomina(null);
   }, []);
+
+  // Funciones para el menú de acciones
+  const handleVerDetalles = (nomina: NominaGasto) => {
+    handleViewNomina(nomina);
+  };
+
+  const handleImprimir = async (nomina: NominaGasto) => {
+    try {
+      await printNominaGasto(nomina, {
+        formato: 'A4',
+        orientacion: 'portrait',
+        incluirLogo: true,
+        incluirFirma: false
+      });
+    } catch (err) {
+      setSnackbarMessage(err instanceof Error ? err.message : "Error al preparar impresión");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
+  };
+
+  const handleEliminar = (nomina: NominaGasto) => {
+    // TODO: Implementar funcionalidad de eliminación en otro sprint
+    console.log("Eliminar nómina:", nomina);
+  };
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -428,12 +457,10 @@ export default function CajaChicaPage() {
                     <TableRow
                       key={nomina.id}
                       sx={{
-                        cursor: "pointer",
                         "&:hover": {
                           bgcolor: "background.default",
                         },
                       }}
-                      onClick={() => handleViewNomina(nomina)}
                     >
                       <TableCell>
                         <Typography variant="body2" fontWeight={600}>
@@ -500,16 +527,12 @@ export default function CajaChicaPage() {
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewNomina(nomina);
-                          }}
-                        >
-                          Ver Detalle
-                        </Button>
+                        <NominaGastoMenuActions
+                          nomina={nomina}
+                          onVerDetalles={handleVerDetalles}
+                          onImprimir={handleImprimir}
+                          onEliminar={handleEliminar}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
@@ -631,8 +654,40 @@ export default function CajaChicaPage() {
                       {selectedNomina.fecha_reembolso ? new Date(selectedNomina.fecha_reembolso).toLocaleDateString('es-CL') : 'No reembolsada'}
                     </Typography>
                   </Box>
+                  <Box>
+                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
+                      Fecha de Reinicio de Ciclo
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 500, mt: 0.5 }}>
+                      {new Date(selectedNomina.fecha_reinicio_ciclo).toLocaleDateString('es-CL')}
+                    </Typography>
+                  </Box>
                 </Box>
               </Box>
+
+              {/* Observaciones */}
+              {selectedNomina.observaciones && (
+                <Box sx={{ mb: 4, p: 3, bgcolor: "background.default", borderRadius: "8px" }}>
+                  <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                    Observaciones
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: "text.primary" }}>
+                    {selectedNomina.observaciones}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Observaciones de Reinicio de Ciclo */}
+              {selectedNomina.observaciones_reinicio && (
+                <Box sx={{ mb: 4, p: 3, bgcolor: "background.default", borderRadius: "8px" }}>
+                  <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                    Observaciones de Reinicio de Ciclo
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: "text.primary" }}>
+                    {selectedNomina.observaciones_reinicio}
+                  </Typography>
+                </Box>
+              )}
 
               {/* Locales Afectados con Montos */}
               {selectedNomina.locales_afectados && selectedNomina.locales_afectados.length > 0 && (
@@ -720,6 +775,25 @@ export default function CajaChicaPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Backdrop de Loading para Impresión */}
+      <Backdrop
+        sx={{ 
+          color: '#fff', 
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          flexDirection: 'column',
+          gap: 2
+        }}
+        open={printLoading}
+      >
+        <CircularProgress color="inherit" size={60} />
+        <Typography variant="h6" sx={{ fontWeight: 500 }}>
+          Procesando PDF...
+        </Typography>
+        <Typography variant="body2" sx={{ opacity: 0.8 }}>
+          Preparando documento para impresión
+        </Typography>
+      </Backdrop>
 
       {/* Snackbar */}
       <Snackbar
