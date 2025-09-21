@@ -1,3 +1,333 @@
-<img width="1872" height="926" alt="{470BD557-5F11-4756-B20B-4248FE7BF4F4}" src="https://github.com/user-attachments/assets/cf1f3ae5-6322-426f-897f-ff70b5dc2b7d" />
+# 🏪 MH-Next - Sistema de Gestión Mercadohouse
 
-<img width="1875" height="926" alt="{2B0E6A77-A648-42F9-9DE6-2601E0F8D836}" src="https://github.com/user-attachments/assets/2374aca7-0a55-489c-9c56-b602faa602f2" />
+![Next.js](https://img.shields.io/badge/Next.js-15.2.4-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-19.0.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Material-UI](https://img.shields.io/badge/Material--UI-7.0.2-0081CB?style=for-the-badge&logo=mui&logoColor=white)
+
+## 📋 **Descripción General**
+
+**MH-Next** es el sistema de gestión integral para **Mercadohouse**. El sistema maneja operaciones completas de retail incluyendo gestión de nóminas, control de facturas, caja chica, inventarios y administración de usuarios.
+
+### 🏢 **Acerca de Mercadohouse**
+- **Empresa**: Mercado House SPA
+- **Ubicaciones**: 3 locales (La Cantera, Las Compañías, Balmaceda)
+- **Región**: La Serena/Coquimbo, Chile
+
+---
+
+## 🚀 **Stack Tecnológico**
+
+### **Frontend Core**
+- **Framework**: Next.js 15.2.4 (App Router)
+- **Runtime**: React 19.0.0
+- **Lenguaje**: TypeScript 5.8.3
+- **Bundler**: Turbopack (desarrollo)
+
+### **UI/UX**
+- **Design System**: Material-UI (MUI) v7.0.2
+- **Iconografía**: @mui/icons-material + Lucide React
+- **Animaciones**: Framer Motion 12.6.3
+- **Styling**: Emotion (CSS-in-JS)
+
+### **Estado y Datos**
+- **Server State**: TanStack Query 5.71.10
+- **Client State**: React Context API + useState/useReducer
+- **HTTP Client**: Axios 1.8.4
+- **Fecha/Hora**: date-fns 4.1.0
+
+### **Herramientas de Desarrollo**
+- **Linting**: ESLint 9 + Next.js config
+- **Análisis**: Bundle Analyzer
+- **Optimización**: Scripts personalizados para imports
+- **Monitoreo**: Vercel Analytics + Speed Insights
+
+### **Funcionalidades Especiales**
+- **Escaneo**: Quagga2 (códigos de barras)
+- **PDF Generation**: html2canvas
+- **Date Pickers**: MUI X Date Pickers
+
+---
+
+## 📊 **Módulos del Sistema**
+
+### 🏠 **Dashboard Principal**
+- Panel de métricas y KPIs
+- Navegación centralizada
+- Prefetch inteligente de datos
+- Sistema de notificaciones
+
+### 💰 **Gestión de Nóminas**
+- Creación y asignación de cheques
+- Gestión de facturas asignadas
+- Tracking de envíos
+- Sistema de desasignación
+- Filtros avanzados y paginación
+
+### 🏦 **Caja Chica**
+- Control de gastos menores
+- Rendición de gastos
+- Autorización por roles
+- Integración con usuarios
+
+### 📄 **Facturas y DTE**
+- Procesamiento de documentos tributarios
+- Integración con servicios externos
+- Gestión de notas de crédito
+- Lector automático de DTE
+
+### 📦 **Bodega e Inventario**
+- Control de stock general
+- Movimientos de inventario
+- Gestión de productos
+- Sistema de códigos de barras
+
+### 👥 **Gestión de Usuarios**
+- Sistema de roles y permisos
+- Autenticación multi-nivel
+- Cambio de contraseñas
+- Asignación por locales
+
+### ⚙️ **Configuración**
+- Importación de listas de precios
+- Configuración por usuario
+- Ajustes del sistema
+
+### 📋 **Módulos Adicionales**
+- **Control de Vencimientos**: Gestión de fechas críticas
+- **Auditoría de Cartelería**: Control de material promocional
+- **Zebra Integration**: Impresión especializada
+- **Rinde de Gastos**: Rendición de gastos empresariales
+
+---
+
+## 🛠️ **Comandos de Desarrollo**
+
+### **Desarrollo**
+```bash
+# Instalar dependencias
+npm install
+
+# Servidor de desarrollo (con Turbopack)
+npm run dev
+
+# Servidor de desarrollo estándar
+npm run dev:standard
+```
+
+### **Build y Producción**
+```bash
+# Build de desarrollo
+npm run build
+
+# Build de producción
+npm run build:prod
+
+# Iniciar servidor de producción
+npm start
+
+# Iniciar servidor de producción (con variables)
+npm run start:prod
+```
+
+### **Calidad de Código**
+```bash
+# Linting
+npm run lint
+
+# Linting con corrección automática
+npm run lint:fix
+
+# Verificación de tipos
+npm run type-check
+```
+
+### **Análisis y Optimización**
+```bash
+# Análisis de bundle
+npm run analyze
+
+# Optimización de imports
+npm run optimize
+
+# Corrección de imports
+npm run fix
+
+# Limpieza de duplicados
+npm run clean
+
+# Corrección de directivas client
+npm run fix-client
+```
+
+---
+
+## 📁 **Estructura del Proyecto**
+
+```
+src/
+├── app/                    # App Router (Next.js 15)
+│   ├── dashboard/         # Módulos del dashboard
+│   │   ├── inicio/       # Panel principal
+│   │   ├── nominas/      # Gestión de nóminas
+│   │   ├── caja-chica/   # Control de caja chica
+│   │   ├── facturas/     # Gestión de facturas
+│   │   ├── usuarios/     # Administración de usuarios
+│   │   ├── bodega/       # Control de inventario
+│   │   └── configuracion/ # Ajustes del sistema
+│   ├── login/            # Autenticación
+│   ├── api/              # API Routes
+│   └── globals.css       # Estilos globales
+├── components/            # Componentes reutilizables
+│   ├── dashboard/        # Componentes del dashboard
+│   ├── ui/               # Componentes base de UI
+│   ├── landing/          # Página de aterrizaje
+│   ├── layout/           # Componentes de layout
+│   └── shared/           # Componentes compartidos
+├── hooks/                # Custom hooks
+├── services/             # Servicios de API
+├── types/                # Definiciones TypeScript
+├── utils/                # Utilidades y helpers
+├── context/              # Contextos de React
+├── providers/            # Providers globales
+├── constants/            # Constantes del sistema
+└── theme/                # Configuración de tema MUI
+```
+
+---
+
+## 🔐 **Autenticación y Seguridad**
+
+### ⚠️ **Estado Actual (Requiere Refactorización)**
+El sistema actualmente implementa **autenticación mixta** con múltiples patrones:
+
+- **Context API** (`AuthContext.tsx`)
+- **Custom Hooks** (`useAuth.ts`, `useAuthStatus.ts`)
+- **Middleware personalizado** (`middleware.ts`)
+- **Servicios distribuidos** (`authService.ts`)
+
+### 🎯 **Refactorización Planificada**
+- **Migración a NextAuth.js**: Centralización de autenticación
+- **Unificación frontend/backend**: Sistema coherente
+- **Mejora de seguridad**: Tokens JWT centralizados
+- **Simplificación de código**: Reducción de complejidad
+
+---
+
+## 🌐 **Variables de Entorno**
+
+```env
+# API Configuration
+NEXT_PUBLIC_API_URL=https://your-api-url.com
+NEXT_PUBLIC_SITE_URL=https://your-site-url.com
+
+# Authentication (Pendiente NextAuth)
+NEXTAUTH_URL=https://your-site-url.com
+NEXTAUTH_SECRET=your-secret-key
+
+# External Services
+NEXT_PUBLIC_GOOGLE_VERIFICATION=your-google-code
+```
+
+---
+
+## 🚦 **Inicio Rápido**
+
+### **1. Clonar el Repositorio**
+```bash
+git clone [repository-url]
+cd MH-Next
+```
+
+### **2. Instalar Dependencias**
+```bash
+npm install
+```
+
+### **3. Configurar Variables de Entorno**
+```bash
+cp .env.example .env.local
+# Editar .env.local con tus valores
+```
+
+### **4. Iniciar Desarrollo**
+```bash
+npm run dev
+```
+
+### **5. Abrir en Navegador**
+```
+http://localhost:3000
+```
+
+---
+
+## 📚 **Documentación Adicional**
+
+- 📖 **[Guía de Inicio](docs/getting-started.md)** - Setup detallado
+- 🏗️ **[Arquitectura](docs/architecture/overview.md)** - Diseño del sistema
+- 🔧 **[Módulos](docs/modules/)** - Documentación por módulo
+- 🧩 **[Componentes](docs/components/)** - Guía de componentes
+- 🔗 **[APIs](docs/services/)** - Integración con backend
+- 🧪 **[Testing](docs/testing/)** - Estrategias de pruebas
+
+---
+
+## 🤝 **Contribución**
+
+### **Flujo de Desarrollo**
+1. Fork del repositorio
+2. Crear rama feature (`git checkout -b feature/nueva-funcionalidad`)
+3. Commit cambios (`git commit -am 'Agregar nueva funcionalidad'`)
+4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
+5. Crear Pull Request
+
+### **Estándares de Código**
+- **TypeScript strict mode**
+- **ESLint + Prettier**
+- **Convenciones de naming**
+- **Documentación JSDoc**
+
+---
+
+## 📞 **Soporte**
+
+### **Empresa**
+- **Nombre**: Mercado House SPA
+- **Ubicación**: La Serena/Coquimbo, Chile
+- **Locales**: La Cantera, Las Compañías, Balmaceda
+
+### **Desarrollo**
+- **Framework**: Next.js 15 + React 19
+- **UI Library**: Material-UI v7
+- **Estado**: TanStack Query + Context API
+- **Deployment**: Vercel (recomendado)
+
+---
+
+## 📄 **Licencia**
+
+Proyecto privado - © 2024 Mercado House SPA. Todos los derechos reservados.
+
+---
+
+## 🔄 **Changelog**
+
+### **v0.1.0 - Desarrollo Inicial**
+- ✅ Sistema de autenticación
+- ✅ Dashboard principal con métricas
+- ✅ Módulo de nóminas completo
+- ✅ Gestión de caja chica
+- ✅ Sistema de facturas y DTE
+- ✅ Control de inventario
+- ✅ Gestión de usuarios y roles
+
+### **Próximas Versiones**
+- 🔄 Migración a NextAuth.js
+- 🚀 Optimización de performance
+- 📱 Mejoras mobile-first
+- 🧪 Suite de testing completa
+
+---
+
+*Última actualización: Septiembre 2024*
