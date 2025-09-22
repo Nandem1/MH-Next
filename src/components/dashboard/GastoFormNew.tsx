@@ -34,7 +34,8 @@ export const GastoFormNew: React.FC<GastoFormNewProps> = ({ onGastoCreado }) => 
   // Estado del formulario
   const [descripcion, setDescripcion] = useState("");
   const [monto, setMonto] = useState<number | "">("");
-  const [fecha, setFecha] = useState<Date>(new Date());
+  const [, setFecha] = useState<Date>(new Date());
+  const [fechaInput, setFechaInput] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [cuentaSeleccionada, setCuentaSeleccionada] = useState<CuentaContable | null>(null);
   const [localSeleccionado, setLocalSeleccionado] = useState<{id: number; nombre: string} | null>(null);
   const [observaciones, setObservaciones] = useState("");
@@ -47,6 +48,28 @@ export const GastoFormNew: React.FC<GastoFormNewProps> = ({ onGastoCreado }) => 
   const { cuentas, cuentasMasUsadas, loading: loadingCuentas } = useCuentasContables();
   const { locales, loading: loadingLocales } = useLocales();
   const { autorizacion, errorAutorizacion } = useCajaChicaAuth();
+
+  // Función para validar y manejar fechas de forma segura
+  const isValidDate = (dateString: string): boolean => {
+    if (!dateString) return false;
+    
+    // Validar formato básico (YYYY-MM-DD)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(dateString)) return false;
+    
+    const date = new Date(dateString);
+    return date instanceof Date && !isNaN(date.getTime());
+  };
+
+  const handleFechaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFechaInput(value);
+    
+    // Solo actualizar la fecha si es válida
+    if (isValidDate(value)) {
+      setFecha(new Date(value));
+    }
+  };
 
   // Verificar autorización
   if (!autorizacion?.tieneCajaChica || errorAutorizacion) {
@@ -116,14 +139,23 @@ export const GastoFormNew: React.FC<GastoFormNewProps> = ({ onGastoCreado }) => 
       return false;
     }
     
-    if (!fecha) {
-      setError("La fecha es obligatoria");
+    // Validar fecha de forma segura
+    if (!isValidDate(fechaInput)) {
+      setError("La fecha ingresada no es válida. Use el formato YYYY-MM-DD");
       return false;
     }
+
+    const fechaGasto = new Date(fechaInput);
     const hoy = new Date();
     hoy.setHours(23, 59, 59, 999);
-    if (fecha > hoy) {
+    if (fechaGasto > hoy) {
       setError("La fecha no puede ser futura");
+      return false;
+    }
+    const hace30Dias = new Date();
+    hace30Dias.setDate(hoy.getDate() - 30);
+    if (fechaGasto < hace30Dias) {
+      setError("La fecha no puede ser anterior a 30 días");
       return false;
     }
     
@@ -155,7 +187,7 @@ export const GastoFormNew: React.FC<GastoFormNewProps> = ({ onGastoCreado }) => 
       const gastoData = {
         descripcion: descripcion.trim().toUpperCase(),
         monto: Number(monto),
-        fecha: format(fecha, "yyyy-MM-dd"),
+        fecha: fechaInput, // Usar directamente el string de fecha validado
         categoria: cuentaSeleccionada?.categoria || "GASTOS_OPERACIONALES",
         cuenta_contable_id: cuentaSeleccionada?.id || "",
         local_asignado_id: localSeleccionado?.id || 0,
@@ -167,7 +199,9 @@ export const GastoFormNew: React.FC<GastoFormNewProps> = ({ onGastoCreado }) => 
       // Limpiar formulario
       setDescripcion("");
       setMonto("");
-      setFecha(new Date());
+      const fechaHoy = new Date();
+      setFecha(fechaHoy);
+      setFechaInput(format(fechaHoy, "yyyy-MM-dd"));
       setCuentaSeleccionada(null);
       setLocalSeleccionado(null);
       setObservaciones("");
@@ -417,14 +451,16 @@ export const GastoFormNew: React.FC<GastoFormNewProps> = ({ onGastoCreado }) => 
                 fullWidth
                 label="Fecha"
                 type="date"
-                value={format(fecha, "yyyy-MM-dd")}
-                onChange={(e) => setFecha(new Date(e.target.value))}
+                value={fechaInput}
+                onChange={handleFechaChange}
                 required
                 variant="outlined"
                 size="small"
                 InputLabelProps={{
                   shrink: true,
                 }}
+                error={!!(fechaInput && !isValidDate(fechaInput))}
+                helperText={fechaInput && !isValidDate(fechaInput) ? "Formato de fecha inválido" : ""}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 1.5,
