@@ -130,6 +130,7 @@ export const actualizarCamposBasicosFactura = async (id: string, datos: {
   id_local?: number;
   id_usuario?: number;
   id_proveedor?: number;
+  cheque_correlativo?: string;
 }): Promise<FacturaResponse> => {
   try {
     const response = await axios.put(`${API_URL}/api-beta/facturas/${id}/basica`, datos);

@@ -320,6 +320,7 @@ export const useActualizarCamposBasicosFactura = () => {
         id_local: data.id_local,
         id_usuario: data.id_usuario,
         id_proveedor: data.id_proveedor,
+        cheque_correlativo: data.cheque_correlativo,
       }),
     onMutate: async (data) => {
       // Cancelar queries en curso para evitar que sobrescriban nuestro optimistic update
@@ -328,7 +329,7 @@ export const useActualizarCamposBasicosFactura = () => {
       // Guardar el estado anterior para poder revertir si es necesario
       const previousFacturas = queryClient.getQueriesData({ queryKey: ["facturas"] });
 
-      // Optimistic update: marcar la factura como "updating"
+      // Optimistic update: marcar la factura como "updating" y actualizar campos
       previousFacturas.forEach(([queryKey, old]) => {
         const current = old as FacturasQueryResult | undefined;
         if (!current?.facturas) return;
@@ -336,7 +337,11 @@ export const useActualizarCamposBasicosFactura = () => {
           ...current,
           facturas: current.facturas.map((factura: Factura) =>
             factura.id === data.id
-              ? { ...factura, isUpdating: true }
+              ? { 
+                  ...factura, 
+                  isUpdating: true,
+                  ...(data.cheque_correlativo && { cheque_correlativo: data.cheque_correlativo })
+                }
               : factura
           ),
         });
@@ -345,7 +350,11 @@ export const useActualizarCamposBasicosFactura = () => {
       // Optimistic también para la entidad individual
       const currentEntity = queryClient.getQueryData<Factura>(["factura", data.id]);
       if (currentEntity) {
-        queryClient.setQueryData(["factura", data.id], { ...currentEntity, isUpdating: true });
+        queryClient.setQueryData(["factura", data.id], { 
+          ...currentEntity, 
+          isUpdating: true,
+          ...(data.cheque_correlativo && { cheque_correlativo: data.cheque_correlativo })
+        });
       }
 
       // Retornar el contexto para poder revertir si es necesario

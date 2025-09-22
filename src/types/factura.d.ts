@@ -163,6 +163,7 @@ export interface ActualizarCamposBasicosRequest {
   id_local?: number;
   id_usuario?: number;
   id_proveedor?: number;
+  cheque_correlativo?: string;
 }
 
 // Nuevos requests para gestión de cheques

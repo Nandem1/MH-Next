@@ -58,6 +58,7 @@ export function EditarCamposBasicosModal({
   const [selectedUsuario, setSelectedUsuario] = useState<Usuario | null>(null);
   const [selectedLocal, setSelectedLocal] = useState<LocalOption | null>(null);
   const [selectedProveedor, setSelectedProveedor] = useState<Proveedor | null>(null);
+  const [chequeCorrelativo, setChequeCorrelativo] = useState("");
 
   // Cargar datos cuando se abre el modal
   useEffect(() => {
@@ -79,6 +80,8 @@ export function EditarCamposBasicosModal({
       // Buscar proveedor actual
       const proveedorActual = proveedores.find(p => p.nombre === factura.proveedor);
       setSelectedProveedor(proveedorActual || null);
+      // Inicializar correlativo de cheque
+      setChequeCorrelativo(factura.cheque_correlativo || "");
     }
   }, [factura, usuarios, proveedores]);
 
@@ -109,6 +112,7 @@ export function EditarCamposBasicosModal({
       ...(selectedLocal && selectedLocal.nombre !== factura.local && { id_local: selectedLocal.id }),
       ...(selectedUsuario && selectedUsuario.nombre !== factura.nombre_usuario && { id_usuario: selectedUsuario.id }),
       ...(selectedProveedor && selectedProveedor.nombre !== factura.proveedor && { id_proveedor: selectedProveedor.id }),
+      ...(factura.metodo_pago === "CHEQUE" && chequeCorrelativo !== (factura.cheque_correlativo || "") && { cheque_correlativo: chequeCorrelativo }),
     };
 
     // Verificar que al menos un campo haya cambiado
@@ -131,6 +135,7 @@ export function EditarCamposBasicosModal({
     setSelectedUsuario(null);
     setSelectedLocal(null);
     setSelectedProveedor(null);
+    setChequeCorrelativo("");
     onClose();
   };
 
@@ -455,6 +460,43 @@ export function EditarCamposBasicosModal({
                  ))
                }
              />
+
+             {/* Correlativo de Cheque - Solo mostrar si el método de pago es CHEQUE */}
+             {factura.metodo_pago === "CHEQUE" && (
+               <TextField
+                 label="Correlativo de Cheque"
+                 value={chequeCorrelativo}
+                 onChange={(e) => setChequeCorrelativo(e.target.value)}
+                 fullWidth
+                 size="small"
+                 variant="outlined"
+                 placeholder="Ingrese el correlativo del cheque"
+                 sx={{
+                   "& .MuiOutlinedInput-root": {
+                     borderRadius: "8px",
+                     color: theme.palette.text.primary,
+                     "& fieldset": {
+                       borderColor: theme.palette.divider,
+                     },
+                     "&:hover fieldset": {
+                       borderColor: theme.palette.text.primary,
+                     },
+                     "&.Mui-focused fieldset": {
+                       borderColor: theme.palette.primary.main,
+                     },
+                   },
+                   "& .MuiInputLabel-root": {
+                     color: theme.palette.text.secondary,
+                     "&.Mui-focused": {
+                       color: theme.palette.primary.main,
+                     },
+                   },
+                   input: {
+                     color: theme.palette.text.primary,
+                   },
+                 }}
+               />
+             )}
           </Box>
         )}
       </DialogContent>
