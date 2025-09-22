@@ -677,17 +677,6 @@ export default function CajaChicaPage() {
                 </Box>
               )}
 
-              {/* Observaciones de Reinicio de Ciclo */}
-              {selectedNomina.observaciones_reinicio && (
-                <Box sx={{ mb: 4, p: 3, bgcolor: "background.default", borderRadius: "8px" }}>
-                  <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
-                    Observaciones de Reinicio de Ciclo
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: "text.primary" }}>
-                    {selectedNomina.observaciones_reinicio}
-                  </Typography>
-                </Box>
-              )}
 
               {/* Locales Afectados con Montos */}
               {selectedNomina.locales_afectados && selectedNomina.locales_afectados.length > 0 && (
