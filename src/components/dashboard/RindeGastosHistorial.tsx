@@ -20,12 +20,12 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Gasto } from "../../services/gastosService";
+import { useState } from "react";
 
 interface RindeGastosHistorialProps {
   gastos: Gasto[];
-  onEliminarGasto: (id: string) => void;
+  onEliminarGasto: (id: string) => Promise<void>;
   formatearMonto: (monto: number) => string;
-  loadingEliminarGasto?: boolean;
 }
 
 
@@ -33,11 +33,25 @@ interface RindeGastosHistorialProps {
 export function RindeGastosHistorial({ 
   gastos, 
   onEliminarGasto, 
-  formatearMonto,
-  loadingEliminarGasto = false
+  formatearMonto
 }: RindeGastosHistorialProps) {
   
   const theme = useTheme();
+  
+  // Estado para manejar el loading individual de cada gasto
+  const [loadingEliminar, setLoadingEliminar] = useState<Record<string, boolean>>({});
+  
+  // Función para manejar la eliminación con loading individual
+  const handleEliminarGasto = async (gastoId: string) => {
+    try {
+      setLoadingEliminar(prev => ({ ...prev, [gastoId]: true }));
+      await onEliminarGasto(gastoId);
+    } catch (error) {
+      console.error('Error eliminando gasto:', error);
+    } finally {
+      setLoadingEliminar(prev => ({ ...prev, [gastoId]: false }));
+    }
+  };
   
   // Función para obtener el nombre de la cuenta contable
   const obtenerNombreCuenta = (gasto: Gasto) => {
@@ -216,8 +230,8 @@ export function RindeGastosHistorial({
                               <IconButton
                                 size="small"
                                 aria-label="eliminar"
-                                onClick={() => onEliminarGasto(gasto.id)}
-                                disabled={loadingEliminarGasto}
+                                onClick={() => handleEliminarGasto(gasto.id)}
+                                disabled={loadingEliminar[gasto.id]}
                                 sx={{
                                   color: theme.palette.text.secondary,
                                   "&:hover": {
@@ -229,7 +243,7 @@ export function RindeGastosHistorial({
                                   },
                                 }}
                               >
-                                {loadingEliminarGasto ? (
+                                {loadingEliminar[gasto.id] ? (
                                   <CircularProgress size={16} sx={{ color: "inherit" }} />
                                 ) : (
                                   <Delete fontSize="small" />

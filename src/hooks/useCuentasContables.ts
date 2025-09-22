@@ -16,7 +16,6 @@ export interface UseCuentasContablesReturn {
   // Acciones
   cargarCuentas: () => Promise<void>;
   buscarCuentas: (texto: string) => Promise<CuentaContable[]>;
-  registrarUso: (cuentaId: string) => Promise<void>;
   obtenerCuentaPorId: (id: string) => CuentaContable | null;
   limpiarError: () => void;
   
@@ -70,14 +69,6 @@ export function useCuentasContables(options: UseCuentasContablesOptions = {}): U
     }
   }, []);
   
-  // Registrar uso de cuenta (simplificado)
-  const registrarUso = useCallback(async (cuentaId: string) => {
-    try {
-      await cuentasContablesService.registrarUsoCuenta(cuentaId);
-    } catch (err) {
-      console.error('Error registrando uso de cuenta:', err);
-    }
-  }, []);
   
   // Obtener cuenta por ID
   const obtenerCuentaPorId = useCallback((id: string): CuentaContable | null => {
@@ -127,7 +118,6 @@ export function useCuentasContables(options: UseCuentasContablesOptions = {}): U
     // Acciones
     cargarCuentas,
     buscarCuentas,
-    registrarUso,
     obtenerCuentaPorId,
     limpiarError,
     

@@ -292,7 +292,6 @@ export function RindeGastosContent({ showSnackbar }: RindeGastosContentProps) {
               }
             }}
             formatearMonto={formatearMonto}
-            loadingEliminarGasto={loadingGastos}
           />
         </Grid>
       </Grid>
