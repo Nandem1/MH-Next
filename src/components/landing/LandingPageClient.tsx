@@ -3,7 +3,7 @@
 import LandingHeader from "@/components/landing/LandingHeader";
 import HeroSection from "@/components/landing/HeroSection";
 import AboutSection from "@/components/landing/AboutSection";
-import ProductsSection from "@/components/landing/ProductsSection";
+// import ProductsSection from "@/components/landing/ProductsSection";
 import CareersSection from "@/components/landing/CareersSection";
 import LandingFooter from "@/components/landing/LandingFooter";
 import ClientOnly from "@/components/landing/ClientOnly";
@@ -17,7 +17,7 @@ export default function LandingPageClient() {
         <main>
           <HeroSection />
           <AboutSection />
-          <ProductsSection />
+          {/* <ProductsSection /> */}
           <CareersSection />
         </main>
         <LandingFooter />

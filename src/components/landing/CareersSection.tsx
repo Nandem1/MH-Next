@@ -87,7 +87,7 @@ export default function CareersSection() {
       ref={careersRef}
       sx={{
         py: { xs: 12, md: 16 },
-        backgroundColor: 'background.paper',
+        backgroundColor: 'background.default',
         borderTop: `1px solid ${theme.palette.divider}`
       }}
     >
