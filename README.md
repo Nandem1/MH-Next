@@ -267,20 +267,11 @@ http://localhost:3000
 - 📖 **[Guía de Inicio](docs/getting-started.md)** - Setup detallado
 - 🏗️ **[Arquitectura](docs/architecture/overview.md)** - Diseño del sistema
 - 🔧 **[Módulos](docs/modules/)** - Documentación por módulo
-- 🧩 **[Componentes](docs/components/)** - Guía de componentes
-- 🔗 **[APIs](docs/services/)** - Integración con backend
-- 🧪 **[Testing](docs/testing/)** - Estrategias de pruebas
+- 🧩 **[Componentes](docs/components/)** - Guía de componentes (WIP)
+- 🔗 **[APIs](docs/services/)** - Integración con backend (WIP)
+- 🧪 **[Testing](docs/testing/)** - Estrategias de pruebas (WIP)
 
 ---
-
-## 🤝 **Contribución**
-
-### **Flujo de Desarrollo**
-1. Fork del repositorio
-2. Crear rama feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit cambios (`git commit -am 'Agregar nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Crear Pull Request
 
 ### **Estándares de Código**
 - **TypeScript strict mode**
@@ -289,13 +280,6 @@ http://localhost:3000
 - **Documentación JSDoc**
 
 ---
-
-## 📞 **Soporte**
-
-### **Empresa**
-- **Nombre**: Mercado House SPA
-- **Ubicación**: La Serena/Coquimbo, Chile
-- **Locales**: La Cantera, Las Compañías, Balmaceda
 
 ### **Desarrollo**
 - **Framework**: Next.js 15 + React 19
@@ -307,7 +291,7 @@ http://localhost:3000
 
 ## 📄 **Licencia**
 
-Proyecto privado - © 2024 Mercado House SPA. Todos los derechos reservados.
+Proyecto privado - © 2025 Mercado House SPA. Todos los derechos reservados.
 
 ---
 
@@ -330,4 +314,4 @@ Proyecto privado - © 2024 Mercado House SPA. Todos los derechos reservados.
 
 ---
 
-*Última actualización: Septiembre 2024*
+*Última actualización: Septiembre 2025*

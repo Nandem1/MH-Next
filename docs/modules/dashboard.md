@@ -704,5 +704,4 @@ const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
 ---
 
-*Documentación actualizada: Septiembre 2024*  
-*Próxima revisión: Diciembre 2024*
+*Documentación actualizada: Septiembre 2025*  

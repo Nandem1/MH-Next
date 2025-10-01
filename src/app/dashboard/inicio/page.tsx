@@ -9,6 +9,7 @@ import { useSnackbar } from "@/hooks/useSnackbar";
 import { usePrefetch } from "@/hooks/usePrefetch";
 import Footer from "@/components/shared/Footer";
 import { MetricsDashboard } from "@/components/ui/MetricsDashboard";
+import { EstadisticasFacturasDashboard } from "@/components/dashboard/EstadisticasFacturasDashboard";
 
 export default function InicioPage() {
   const { open, message, severity, showSnackbar, handleClose } = useSnackbar();
@@ -91,6 +92,9 @@ export default function InicioPage() {
           Monitoreo en tiempo real del sistema y métricas de rendimiento
         </Typography>
       </Box>
+
+      {/* Estadísticas de Facturas */}
+      <EstadisticasFacturasDashboard />
 
       {/* Dashboard de Métricas */}
       <MetricsDashboard />

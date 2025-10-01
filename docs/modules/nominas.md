@@ -1218,6 +1218,5 @@ const verificarConsistencia = (nomina: NominaCantera) => {
 
 ---
 
-*Documentación actualizada: Septiembre 2024*  
-*Próxima revisión: Diciembre 2024*  
+*Documentación actualizada: Septiembre 2025*   
 *Módulo más complejo: 1,067 líneas de código en página principal*

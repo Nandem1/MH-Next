@@ -2246,6 +2246,5 @@ const checkCacheSize = () => {
 
 ---
 
-*Documentación actualizada: Septiembre 2024*  
-*Próxima revisión: Diciembre 2024*  
+*Documentación actualizada: Septiembre 2025*   
 *Especialidad: Gestión de DTE, optimistic updates y procesamiento de documentos tributarios electrónicos*

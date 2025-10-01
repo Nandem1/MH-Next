@@ -565,12 +565,5 @@ declare module 'next-auth/jwt' {
 - **Milestone 2**: Migración core (2 semanas)
 - **Deployment**: 3-4 semanas
 
----
-
-**⚠️ NOTA CRÍTICA**: Esta migración es **ESENCIAL** para la estabilidad y mantenibilidad del sistema. Debe priorizarse sobre nuevas features hasta completarse.
-
----
-
-*Documento creado: Septiembre 2024*  
+*Documento creado: Septiembre 2025*  
 *Estado: **PENDIENTE DE IMPLEMENTACIÓN***  
-*Prioridad: **CRÍTICA***

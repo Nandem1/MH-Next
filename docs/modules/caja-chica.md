@@ -1416,6 +1416,5 @@ console.log('Filtros después:', nuevosFiltros);
 
 ---
 
-*Documentación actualizada: Septiembre 2024*  
-*Próxima revisión: Diciembre 2024*  
+*Documentación actualizada: Septiembre 2025*   
 *Especialidad: Control financiero de gastos menores con estadísticas avanzadas*

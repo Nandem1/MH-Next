@@ -580,5 +580,4 @@ export function GlobalErrorBoundary({ children }) {
 
 ---
 
-*Documento actualizado: Septiembre 2024*
-*Próxima revisión: Diciembre 2024*
+*Documento actualizado: Septiembre 2025*

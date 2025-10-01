@@ -90,7 +90,7 @@ code .env.local
 # ==============================================
 
 # API Backend Configuration
-NEXT_PUBLIC_API_URL=https://mh-backend-production.up.railway.app
+NEXT_PUBLIC_API_URL=https://apidemercadohouse.app
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 # Development Configuration
@@ -181,7 +181,7 @@ El sistema usa **autenticación personalizada** que se conecta al backend de Rai
 
 ```typescript
 // Variables importantes para autenticación
-NEXT_PUBLIC_API_URL=https://mh-backend-production.up.railway.app
+NEXT_PUBLIC_API_URL=https://apidemercadohouse.app
 
 // Endpoints de autenticación disponibles:
 // POST /api-beta/login
@@ -453,5 +453,4 @@ Si has completado todos los pasos, deberías tener:
 
 ---
 
-*Guía actualizada: Septiembre 2024*  
-*Próxima revisión: Diciembre 2024*
+*Guía actualizada: Septiembre 2025*

@@ -1229,6 +1229,5 @@ try {
 
 ---
 
-*Documentación actualizada: Septiembre 2024*  
-*Próxima revisión: Diciembre 2024*  
+*Documentación actualizada: Septiembre 2025*  
 *Especialidad: Configuración de sistema, importación de datos y gestión de ajustes generales*

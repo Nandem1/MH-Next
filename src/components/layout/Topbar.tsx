@@ -5,12 +5,14 @@ import { IconButton, Typography, Box, Button, AppBar, Toolbar } from "@mui/mater
 
 
 import MenuIcon from "@mui/icons-material/Menu";
+import { Receipt as ReceiptIcon, CreditCard as CreditCardIcon } from "@mui/icons-material";
 import { useThemeContext } from "@/context/ThemeContext";
 import { Sun, Moon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { drawerWidth } from "@/constants/layout";
 import { useCallback, useEffect } from "react";
 import { MetricsIndicator } from "@/components/ui/MetricsIndicator";
+import { useEstadisticasFacturas } from "@/hooks/useEstadisticasFacturas";
 
 interface TopbarProps {
   handleDrawerToggle: () => void;
@@ -20,6 +22,7 @@ interface TopbarProps {
 export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
   const { toggleTheme, mode } = useThemeContext();
   const { logout, usuario, loadUsuario } = useAuth();
+  const { estadisticas } = useEstadisticasFacturas();
 
   const handleLogout = useCallback(() => {
     logout();
@@ -68,9 +71,40 @@ export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
               <MenuIcon />
             </IconButton>
           )}
-          <Typography variant="h6" noWrap component="div">
-            Workspace
-          </Typography>
+          {/* Estadísticas de Hoy */}
+          {estadisticas?.data?.diario ? (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              {/* Hoy elevado */}
+              <Typography variant="caption" color="text.secondary" sx={{ 
+                fontWeight: 500, 
+                fontSize: "0.65rem",
+                lineHeight: 1,
+                transform: "translateY(-2px)"
+              }}>
+                Hoy
+              </Typography>
+              
+              {/* Iconos con números */}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <ReceiptIcon sx={{ fontSize: "1rem", color: "text.secondary" }} />
+                  <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600, fontSize: "0.85rem" }}>
+                    {estadisticas.data.diario.facturas_hoy}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <CreditCardIcon sx={{ fontSize: "1rem", color: "text.secondary" }} />
+                  <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600, fontSize: "0.85rem" }}>
+                    {estadisticas.data.diario.notas_credito_hoy}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          ) : (
+            <Typography variant="h6" noWrap component="div">
+              Workspace
+            </Typography>
+          )}
         </Box>
 
         {/* CENTRO - Métricas */}

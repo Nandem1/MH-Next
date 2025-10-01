@@ -1978,6 +1978,5 @@ Los patrones actuales funcionan pero generan:
 
 ---
 
-*Documentación actualizada: Septiembre 2024*  
-*Próxima revisión: Octubre 2024 (Crítico)*  
+*Documentación actualizada: Septiembre 2025* 
 *Especialidad: Autenticación mixta, roles jerárquicos y gestión de usuarios con integración de caja chica*
