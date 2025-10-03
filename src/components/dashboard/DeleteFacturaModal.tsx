@@ -40,7 +40,7 @@ export const DeleteFacturaModal: React.FC<DeleteFacturaModalProps> = ({
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("error");
 
   const requiredText = "BORRAR";
-  const isConfirmationValid = confirmationText === requiredText;
+  const isConfirmationValid = confirmationText.toUpperCase() === requiredText;
 
   // Resetear estado cuando se cierra el modal
   useEffect(() => {
@@ -97,7 +97,7 @@ export const DeleteFacturaModal: React.FC<DeleteFacturaModalProps> = ({
     const value = e.target.value;
     setConfirmationText(value);
     
-    if (value && value !== requiredText) {
+    if (value && value.toUpperCase() !== requiredText) {
       setError(`Debe escribir exactamente '${requiredText}' para confirmar`);
     } else {
       setError("");
