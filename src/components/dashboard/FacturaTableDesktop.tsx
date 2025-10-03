@@ -223,9 +223,22 @@ export function FacturaTableDesktop({
                       />
                                              {/* Mostrar número de cheque cuando el método de pago es CHEQUE */}
                        {factura.metodo_pago === "CHEQUE" && factura.cheque_correlativo && (
-                         <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: '0.7rem' }}>
-                           #{factura.cheque_correlativo}
-                         </Typography>
+                         <Tooltip 
+                           title={factura.cheque_monto ? `Monto: ${formatearMonto(factura.cheque_monto)}` : 'Monto no disponible'}
+                           arrow
+                           placement="bottom"
+                         >
+                           <Typography 
+                             variant="caption" 
+                             color="text.secondary" 
+                             sx={{ 
+                               fontWeight: 500, 
+                               fontSize: '0.7rem'
+                             }}
+                           >
+                             #{factura.cheque_correlativo}
+                           </Typography>
+                         </Tooltip>
                        )}
                     </Box>
                   )}
