@@ -41,14 +41,15 @@ export interface RouteRule {
 }
 
 export const ROUTE_RULES: Record<string, RouteRule> = {
-	"/dashboard/auditoria-carteleria": { allowedRoles: [ROLES.SUPERVISOR], allowedLocales: [LOCALES.LOCAL_1] },
-	"/dashboard/vencimientos": { allowedRoles: [ROLES.SUPERVISOR], allowedLocales: [LOCALES.LOCAL_1] },
-	"/dashboard/control-vencimientos": { allowedRoles: [ROLES.SUPERVISOR], allowedLocales: [LOCALES.LOCAL_1] },
-	"/dashboard/zebrai": { allowedRoles: [ROLES.SUPERVISOR], allowedLocales: [LOCALES.LOCAL_1] },
-	"/dashboard/lector-dte": { allowedRoles: [ROLES.SUPERVISOR], allowedLocales: [LOCALES.LOCAL_1] },
-  "/dashboard/bodega/inicio": { allowedRoles: [ROLES.SUPERVISOR], allowedLocales: [LOCALES.LOCAL_1] },
-  "/dashboard/bodega/nuevo-movimiento": { allowedRoles: [ROLES.SUPERVISOR], allowedLocales: [LOCALES.LOCAL_1] },
-  "/dashboard/bodega/stock-general": { allowedRoles: [ROLES.SUPERVISOR], allowedLocales: [LOCALES.LOCAL_1] },
+	// Todas las rutas legacy ahora son públicas
+	"/dashboard/auditoria-carteleria": {}, // Acceso público
+	"/dashboard/vencimientos": {}, // Acceso público
+	"/dashboard/control-vencimientos": {}, // Acceso público
+	"/dashboard/zebrai": {}, // Acceso público
+	"/dashboard/lector-dte": {}, // Acceso público
+  "/dashboard/bodega/inicio": {}, // Acceso público
+  "/dashboard/bodega/nuevo-movimiento": {}, // Acceso público
+  "/dashboard/bodega/stock-general": {}, // Acceso público
   "/dashboard/rinde-gastos": {}, // Acceso permitido para todos los usuarios
 };
 

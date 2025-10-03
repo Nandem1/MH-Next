@@ -3,6 +3,7 @@
 import Box from "@mui/material/Box";
 import Footer from "@/components/shared/Footer";
 import { ZebrAIGenerator } from "@/components/zebra/ZebrAIGenerator";
+import { LegacyBanner } from "@/components/shared/LegacyBanner";
 
 export default function ZebrAIPage() {
   return (
@@ -15,6 +16,7 @@ export default function ZebrAIPage() {
       }}
     >
       <Box sx={{ flexGrow: 1, mt: 8, px: { xs: 2, md: 3 } }}>
+        <LegacyBanner />
         <ZebrAIGenerator />
       </Box>
 

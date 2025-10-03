@@ -2,6 +2,7 @@
 
 import { Box, Paper } from "@mui/material";
 import { StockGeneralContent } from "@/components/bodega/StockGeneralContent";
+import { LegacyBanner } from "@/components/shared/LegacyBanner";
 
 export default function StockGeneralPage() {
 
@@ -14,7 +15,9 @@ export default function StockGeneralPage() {
         minHeight: "100%",
       }}
     >
-      <Box sx={{ flexGrow: 1, mt: 12, px: { xs: 3, md: 4 }, pb: 3 }}>
+      <Box sx={{ flexGrow: 1, mt: 8, px: { xs: 3, md: 4 }, pb: 3 }}>
+        <LegacyBanner />
+        
         <Paper 
           elevation={0} 
           sx={{ 
@@ -22,7 +25,7 @@ export default function StockGeneralPage() {
             borderColor: "divider",
             borderRadius: 1.5,
             overflow: "hidden",
-            height: "calc(100vh - 140px)",
+            height: "calc(100vh - 200px)",
             display: "flex",
             flexDirection: "column"
           }}

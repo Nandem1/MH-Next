@@ -1,6 +1,6 @@
 "use client";
 
-import { Divider, Box, Typography, Button, useMediaQuery, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Collapse, Drawer, Link } from "@mui/material";
+import { Divider, Box, Typography, Button, useMediaQuery, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Collapse, Drawer, Link, Chip } from "@mui/material";
 
 
 
@@ -28,7 +28,7 @@ import { useRouter, usePathname } from "next/navigation";
 
 import { drawerWidth } from "@/constants/layout";
 import { useAuth } from "@/hooks/useAuth";
-import { canAccessRoute } from "@/utils/permissions";
+// import { canAccessRoute } from "@/utils/permissions";
 import { useState } from "react";
 
 interface SidebarProps {
@@ -68,11 +68,11 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
   };
 
   // Acceso a rutas condicionado por reglas por ruta
-  const canSeeBodega = [
-    "/dashboard/bodega/inicio",
-    "/dashboard/bodega/nuevo-movimiento",
-    "/dashboard/bodega/stock-general",
-  ].some((path) => canAccessRoute(path, usuario || undefined));
+  // const canSeeBodega = [
+  //   "/dashboard/bodega/inicio",
+  //   "/dashboard/bodega/nuevo-movimiento",
+  //   "/dashboard/bodega/stock-general",
+  // ].some((path) => canAccessRoute(path, usuario || undefined));
 
   const drawerContent = (
     <Box display="flex" flexDirection="column" height="100%">
@@ -169,9 +169,12 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
               sx={navButtonStyle()}
             >
               <ListItemIcon sx={{ minWidth: 40 }}>
-                <DashboardIcon />
+                <DashboardIcon sx={iconStyle()} />
               </ListItemIcon>
-              <ListItemText primary="Inicio" />
+              <ListItemText 
+                primary="Inicio" 
+                primaryTypographyProps={{ sx: textStyle() }}
+              />
             </ListItemButton>
           </ListItem>
 
@@ -179,9 +182,12 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
           <ListItem disablePadding>
             <ListItemButton onClick={handleSubmenuClick}>
               <ListItemIcon sx={{ minWidth: 40 }}>
-                <ReceiptIcon />
+                <ReceiptIcon sx={iconStyle()} />
               </ListItemIcon>
-              <ListItemText primary="Documentos" />
+              <ListItemText 
+                primary="Documentos" 
+                primaryTypographyProps={{ sx: textStyle() }}
+              />
               {openDTE ? <ExpandLess /> : <ExpandMore />}
             </ListItemButton>
           </ListItem>
@@ -192,10 +198,13 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
                 selected={pathname === "/dashboard/facturas"}
                 onClick={() => goTo("/dashboard/facturas")}
               >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <DescriptionIcon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText primary="Facturas Electrónicas" />
+                  <ListItemIcon sx={{ minWidth: 40 }}>
+                    <DescriptionIcon sx={{ fontSize: '1rem' }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Facturas Electrónicas" 
+                    primaryTypographyProps={{ sx: { fontSize: '0.8rem' } }}
+                  />
               </ListItemButton>
 
               <ListItemButton
@@ -203,10 +212,13 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
                 selected={pathname === "/dashboard/notas-credito"}
                 onClick={() => goTo("/dashboard/notas-credito")}
               >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <RotateLeftIcon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText primary="Notas de Crédito" />
+                  <ListItemIcon sx={{ minWidth: 40 }}>
+                    <RotateLeftIcon sx={{ fontSize: '1rem' }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Notas de Crédito" 
+                    primaryTypographyProps={{ sx: { fontSize: '0.8rem' } }}
+                  />
               </ListItemButton>
 
               <ListItemButton
@@ -214,10 +226,13 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
                 selected={pathname === "/dashboard/nominas"}
                 onClick={() => goTo("/dashboard/nominas")}
               >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <ChecklistIcon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText primary="Nóminas" />
+                  <ListItemIcon sx={{ minWidth: 40 }}>
+                    <ChecklistIcon sx={{ fontSize: '1rem' }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Nóminas" 
+                    primaryTypographyProps={{ sx: { fontSize: '0.8rem' } }}
+                  />
               </ListItemButton>
             </List>
           </Collapse>
@@ -226,9 +241,12 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
           <ListItem disablePadding>
             <ListItemButton onClick={handleCajaChicaClick}>
               <ListItemIcon sx={{ minWidth: 40 }}>
-                <AccountBalanceWalletIcon />
+                <AccountBalanceWalletIcon sx={iconStyle()} />
               </ListItemIcon>
-              <ListItemText primary="Caja Chica" />
+              <ListItemText 
+                primary="Caja Chica" 
+                primaryTypographyProps={{ sx: textStyle() }}
+              />
               {openCajaChica ? <ExpandLess /> : <ExpandMore />}
             </ListItemButton>
           </ListItem>
@@ -239,10 +257,13 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
                 selected={pathname === "/dashboard/caja-chica"}
                 onClick={() => goTo("/dashboard/caja-chica")}
               >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <AttachMoneyIcon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText primary="Nóminas de Gastos" />
+                  <ListItemIcon sx={{ minWidth: 40 }}>
+                    <AttachMoneyIcon sx={{ fontSize: '1rem' }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Nóminas de Gastos" 
+                    primaryTypographyProps={{ sx: { fontSize: '0.8rem' } }}
+                  />
               </ListItemButton>
 
               <ListItemButton
@@ -250,150 +271,16 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
                 selected={pathname === "/dashboard/rinde-gastos"}
                 onClick={() => goTo("/dashboard/rinde-gastos")}
               >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <HistoryIcon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText primary="Rinde Gastos" />
+                  <ListItemIcon sx={{ minWidth: 40 }}>
+                    <HistoryIcon sx={{ fontSize: '1rem' }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Rinde Gastos" 
+                    primaryTypographyProps={{ sx: { fontSize: '0.8rem' } }}
+                  />
               </ListItemButton>
             </List>
           </Collapse>
-
-          {/* BODEGA (submenu) */}
-          {canSeeBodega && (
-            <>
-              <ListItem disablePadding>
-                <ListItemButton onClick={handleBodegaClick}>
-                  <ListItemIcon sx={{ minWidth: 40 }}>
-                    <InventoryIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Bodega" />
-                  {openBodega ? <ExpandLess /> : <ExpandMore />}
-                </ListItemButton>
-              </ListItem>
-              <Collapse in={openBodega} timeout="auto" unmountOnExit>
-                <List component="div" disablePadding>
-                  {canAccessRoute("/dashboard/bodega/inicio", usuario || undefined) && (
-                    <ListItemButton
-                      sx={{ pl: 4 }}
-                      selected={pathname === "/dashboard/bodega/inicio"}
-                      onClick={() => goTo("/dashboard/bodega/inicio")}
-                    >
-                      <ListItemIcon sx={{ minWidth: 40 }}>
-                        <HomeIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText primary="Inicio" />
-                    </ListItemButton>
-                  )}
-
-                  {canAccessRoute("/dashboard/bodega/nuevo-movimiento", usuario || undefined) && (
-                    <ListItemButton
-                      sx={{ pl: 4 }}
-                      selected={pathname === "/dashboard/bodega/nuevo-movimiento"}
-                      onClick={() => goTo("/dashboard/bodega/nuevo-movimiento")}
-                    >
-                      <ListItemIcon sx={{ minWidth: 40 }}>
-                        <AddIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText primary="Nuevo Movimiento" />
-                    </ListItemButton>
-                  )}
-
-                  {canAccessRoute("/dashboard/bodega/stock-general", usuario || undefined) && (
-                    <ListItemButton
-                      sx={{ pl: 4 }}
-                      selected={pathname === "/dashboard/bodega/stock-general"}
-                      onClick={() => goTo("/dashboard/bodega/stock-general")}
-                    >
-                      <ListItemIcon sx={{ minWidth: 40 }}>
-                        <StorageIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText primary="Stock General" />
-                    </ListItemButton>
-                  )}
-                </List>
-              </Collapse>
-            </>
-          )}
-
-          {/* Auditoría de Cartelería */}
-          {canAccessRoute("/dashboard/auditoria-carteleria", usuario || undefined) && (
-            <ListItem disablePadding>
-              <ListItemButton
-                selected={pathname === "/dashboard/auditoria-carteleria"}
-                onClick={() => goTo("/dashboard/auditoria-carteleria")}
-                sx={navButtonStyle()}
-              >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <AssessmentIcon />
-                </ListItemIcon>
-                <ListItemText primary="Auditoría de Cartelería" />
-              </ListItemButton>
-            </ListItem>
-          )}
-
-          {/* Vencimientos */}
-          {canAccessRoute("/dashboard/vencimientos", usuario || undefined) && (
-            <ListItem disablePadding>
-              <ListItemButton
-                selected={pathname === "/dashboard/vencimientos"}
-                onClick={() => goTo("/dashboard/vencimientos")}
-                sx={navButtonStyle()}
-              >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <QrCodeScannerIcon />
-                </ListItemIcon>
-                <ListItemText primary="Vencimientos" />
-              </ListItemButton>
-            </ListItem>
-          )}
-
-          {/* Control de Vencimientos */}
-          {canAccessRoute("/dashboard/control-vencimientos", usuario || undefined) && (
-            <ListItem disablePadding>
-              <ListItemButton
-                selected={pathname === "/dashboard/control-vencimientos"}
-                onClick={() => goTo("/dashboard/control-vencimientos")}
-                sx={navButtonStyle()}
-              >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <AssessmentIcon />
-                </ListItemIcon>
-                <ListItemText primary="Control de Vencimientos" />
-              </ListItemButton>
-            </ListItem>
-          )}
-
-          {/* ZebrAI */}
-          {canAccessRoute("/dashboard/zebrai", usuario || undefined) && (
-            <ListItem disablePadding>
-              <ListItemButton
-                selected={pathname === "/dashboard/zebrai"}
-                onClick={() => goTo("/dashboard/zebrai")}
-                sx={navButtonStyle()}
-              >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <ReceiptIcon />
-                </ListItemIcon>
-                <ListItemText primary="ZebrAI" />
-              </ListItemButton>
-            </ListItem>
-          )}
-
-          {/* Lector DTE */}
-          {canAccessRoute("/dashboard/lector-dte", usuario || undefined) && (
-            <ListItem disablePadding>
-              <ListItemButton
-                selected={pathname === "/dashboard/lector-dte"}
-                onClick={() => goTo("/dashboard/lector-dte")}
-                sx={navButtonStyle()}
-              >
-                <ListItemIcon sx={{ minWidth: 40 }}>
-                  <ReceiptIcon />
-                </ListItemIcon>
-                <ListItemText primary="Lector DTE" />
-              </ListItemButton>
-            </ListItem>
-          )}
 
           {/* Usuarios */}
           <ListItem disablePadding>
@@ -403,9 +290,12 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
               sx={navButtonStyle()}
             >
               <ListItemIcon sx={{ minWidth: 40 }}>
-                <PeopleIcon />
+                <PeopleIcon sx={iconStyle()} />
               </ListItemIcon>
-              <ListItemText primary="Usuarios" />
+              <ListItemText 
+                primary="Usuarios" 
+                primaryTypographyProps={{ sx: textStyle() }}
+              />
             </ListItemButton>
           </ListItem>
 
@@ -417,9 +307,196 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
               sx={navButtonStyle()}
             >
               <ListItemIcon sx={{ minWidth: 40 }}>
-                <SettingsIcon />
+                <SettingsIcon sx={iconStyle()} />
               </ListItemIcon>
-              <ListItemText primary="Configuración" />
+              <ListItemText 
+                primary="Configuración" 
+                primaryTypographyProps={{ sx: textStyle() }}
+              />
+            </ListItemButton>
+          </ListItem>
+        </List>
+      </Box>
+
+      {/* Separador para módulos en Hibernación */}
+      <Divider sx={{ my: 2 }}>
+        <Typography 
+          variant="caption" 
+          color="text.secondary" 
+          sx={{ 
+            px: 2, 
+            bgcolor: 'background.paper',
+            textDecoration: 'underline',
+            textDecorationColor: 'primary.main',
+            textUnderlineOffset: 4
+          }}
+        >
+          Módulos en Hibernación (Demo)
+        </Typography>
+      </Divider>
+
+      {/* Módulos en Hibernación */}
+      <Box>
+        <List>
+          {/* BODEGA (submenu) - DEMO */}
+          <ListItem disablePadding>
+            <ListItemButton onClick={handleBodegaClick}>
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <InventoryIcon sx={iconStyle()} />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Bodega" 
+                primaryTypographyProps={{ sx: textStyle() }}
+              />
+              <Chip 
+                label="Demo" 
+                size="small" 
+                color="info" 
+                variant="outlined"
+                sx={{ ml: 1, fontSize: '0.7rem', height: 20 }}
+              />
+              {openBodega ? <ExpandLess /> : <ExpandMore />}
+            </ListItemButton>
+          </ListItem>
+          <Collapse in={openBodega} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={pathname === "/dashboard/bodega/inicio"}
+                onClick={() => goTo("/dashboard/bodega/inicio")}
+              >
+                  <ListItemIcon sx={{ minWidth: 40 }}>
+                    <HomeIcon sx={{ fontSize: '1rem' }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Inicio" 
+                    primaryTypographyProps={{ sx: { fontSize: '0.8rem' } }}
+                  />
+              </ListItemButton>
+
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={pathname === "/dashboard/bodega/nuevo-movimiento"}
+                onClick={() => goTo("/dashboard/bodega/nuevo-movimiento")}
+              >
+                  <ListItemIcon sx={{ minWidth: 40 }}>
+                    <AddIcon sx={{ fontSize: '1rem' }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Nuevo Movimiento" 
+                    primaryTypographyProps={{ sx: { fontSize: '0.8rem' } }}
+                  />
+              </ListItemButton>
+
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={pathname === "/dashboard/bodega/stock-general"}
+                onClick={() => goTo("/dashboard/bodega/stock-general")}
+              >
+                  <ListItemIcon sx={{ minWidth: 40 }}>
+                    <StorageIcon sx={{ fontSize: '1rem' }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Stock General" 
+                    primaryTypographyProps={{ sx: { fontSize: '0.8rem' } }}
+                  />
+              </ListItemButton>
+            </List>
+          </Collapse>
+
+          {/* Auditoría de Cartelería - DEMO */}
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={pathname === "/dashboard/auditoria-carteleria"}
+              onClick={() => goTo("/dashboard/auditoria-carteleria")}
+              sx={navButtonStyle()}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <AssessmentIcon sx={iconStyle()} />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Auditoría de Cartelería" 
+                primaryTypographyProps={{ sx: textStyle() }}
+              />
+              <Chip 
+                label="Demo" 
+                size="small" 
+                color="info" 
+                variant="outlined"
+                sx={{ ml: 1, fontSize: '0.7rem', height: 20 }}
+              />
+            </ListItemButton>
+          </ListItem>
+
+          {/* Vencimientos - DEMO */}
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={pathname === "/dashboard/vencimientos"}
+              onClick={() => goTo("/dashboard/vencimientos")}
+              sx={navButtonStyle()}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <QrCodeScannerIcon sx={iconStyle()} />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Vencimientos" 
+                primaryTypographyProps={{ sx: textStyle() }}
+              />
+              <Chip 
+                label="Demo" 
+                size="small" 
+                color="info" 
+                variant="outlined"
+                sx={{ ml: 1, fontSize: '0.7rem', height: 20 }}
+              />
+            </ListItemButton>
+          </ListItem>
+
+          {/* Control de Vencimientos - DEMO */}
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={pathname === "/dashboard/control-vencimientos"}
+              onClick={() => goTo("/dashboard/control-vencimientos")}
+              sx={navButtonStyle()}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <AssessmentIcon sx={iconStyle()} />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Control de Vencimientos" 
+                primaryTypographyProps={{ sx: textStyle() }}
+              />
+              <Chip 
+                label="Demo" 
+                size="small" 
+                color="info" 
+                variant="outlined"
+                sx={{ ml: 1, fontSize: '0.7rem', height: 20 }}
+              />
+            </ListItemButton>
+          </ListItem>
+
+          {/* Lector DTE - DEMO */}
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={pathname === "/dashboard/lector-dte"}
+              onClick={() => goTo("/dashboard/lector-dte")}
+              sx={navButtonStyle()}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <ReceiptIcon sx={iconStyle()} />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Lector DTE" 
+                primaryTypographyProps={{ sx: textStyle() }}
+              />
+              <Chip 
+                label="Demo" 
+                size="small" 
+                color="info" 
+                variant="outlined"
+                sx={{ ml: 1, fontSize: '0.7rem', height: 20 }}
+              />
             </ListItemButton>
           </ListItem>
         </List>
@@ -486,4 +563,12 @@ function navButtonStyle() {
       transition: "background-color 0.3s ease",
     },
   };
+}
+
+function iconStyle() {
+  return { fontSize: '1.1rem' };
+}
+
+function textStyle() {
+  return { fontSize: '0.875rem' };
 }

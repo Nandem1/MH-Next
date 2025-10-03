@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Box, Typography, Paper, Tabs, Tab, useTheme } from "@mui/material";
 import { NuevoMovimientoContent } from "@/components/bodega/NuevoMovimientoContent";
+import { LegacyBanner } from "@/components/shared/LegacyBanner";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -44,6 +45,8 @@ export default function NuevoMovimientoPage() {
       }}
     >
       <Box sx={{ flexGrow: 1, mt: 8, px: { xs: 2, md: 3 } }}>
+        <LegacyBanner />
+        
         <Typography 
           variant="h4" 
           component="h1" 
