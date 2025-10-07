@@ -234,6 +234,20 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
                     primaryTypographyProps={{ sx: { fontSize: '0.8rem' } }}
                   />
               </ListItemButton>
+
+              <ListItemButton
+                sx={{ pl: 4 }}
+                selected={pathname === "/dashboard/ingresoFactura"}
+                onClick={() => goTo("/dashboard/ingresoFactura")}
+              >
+                  <ListItemIcon sx={{ minWidth: 40 }}>
+                    <AddIcon sx={{ fontSize: '1rem' }} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Ingreso Factura" 
+                    primaryTypographyProps={{ sx: { fontSize: '0.8rem' } }}
+                  />
+              </ListItemButton>
             </List>
           </Collapse>
 
