@@ -8,7 +8,7 @@ import {
   ErrorResponse 
 } from '@/types/nominasGastos';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 class NominasGastosService {
   private getAuthHeaders() {

@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 import { NominaGasto } from '@/types/nominasGastos';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 interface PrintOptions {
   formato?: 'A4' | 'A3' | 'Letter';
   orientacion?: 'portrait' | 'landscape';
@@ -31,7 +33,7 @@ export const usePrintNominaGasto = () => {
       };
 
       // Construir URL con parámetros
-      const baseUrl = '/api-beta/nominas-gastos';
+      const baseUrl = `${API_URL}/api-beta/nominas-gastos`;
       const params = new URLSearchParams({
         formato: defaultOptions.formato!,
         orientacion: defaultOptions.orientacion!,
@@ -40,6 +42,11 @@ export const usePrintNominaGasto = () => {
       });
 
       const pdfUrl = `${baseUrl}/${nomina.id}/pdf?${params.toString()}`;
+
+      // Debug: Log the URL being requested
+      console.log('PDF URL:', pdfUrl);
+      console.log('API URL:', API_URL);
+      console.log('Token present:', !!token);
 
       // Hacer petición con autenticación usando fetch
       const response = await fetch(pdfUrl, {
@@ -54,6 +61,12 @@ export const usePrintNominaGasto = () => {
       if (!response.ok) {
         if (response.status === 401) {
           throw new Error('Token de autenticación inválido o expirado. Por favor, inicia sesión nuevamente.');
+        }
+        if (response.status === 403) {
+          throw new Error('No tienes permisos para generar el PDF de esta nómina. Verifica tu autenticación y permisos.');
+        }
+        if (response.status === 404) {
+          throw new Error('El endpoint de generación de PDF no está disponible. Contacta al administrador.');
         }
         throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
       }
