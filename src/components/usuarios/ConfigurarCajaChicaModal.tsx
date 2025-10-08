@@ -112,7 +112,7 @@ export function ConfigurarCajaChicaModal({
 
     try {
       await habilitarCajaChicaUsuario({
-        authUserId: usuario.authUserId,
+        usuarioId: usuario.usuarioId,
         montoFijo: parseInt(montoFijo),
       });
       onSuccess?.();
@@ -126,7 +126,7 @@ export function ConfigurarCajaChicaModal({
     if (!usuario || !validateInputs()) return;
 
     try {
-      const request: { authUserId: number; montoFijo?: number; montoActual?: number } = { authUserId: usuario.authUserId };
+      const request: { usuarioId: number; montoFijo?: number; montoActual?: number } = { usuarioId: usuario.usuarioId };
       if (montoFijo) request.montoFijo = parseInt(montoFijo);
       if (montoActual) request.montoActual = parseInt(montoActual);
 
@@ -143,7 +143,7 @@ export function ConfigurarCajaChicaModal({
 
     try {
       await deshabilitarCajaChicaUsuario({
-        authUserId: usuario.authUserId,
+        usuarioId: usuario.usuarioId,
       });
       onSuccess?.();
       handleClose();
