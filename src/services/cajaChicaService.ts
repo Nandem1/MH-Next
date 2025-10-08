@@ -27,18 +27,18 @@ export interface UsuarioCajaChica {
 }
 
 export interface HabilitarCajaChicaRequest {
-  authUserId: number;
+  usuarioId: number;
   montoFijo?: number;
 }
 
 export interface EditarCajaChicaRequest {
-  authUserId: number;
+  usuarioId: number;
   montoFijo?: number;
   montoActual?: number;
 }
 
 export interface DeshabilitarCajaChicaRequest {
-  authUserId: number;
+  usuarioId: number;
 }
 
 export interface ApiResponse<T> {
