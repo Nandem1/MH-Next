@@ -572,7 +572,18 @@ export default function NominasPage() {
               variant="outlined"
               onClick={handleLimpiarFiltros}
               fullWidth
-              sx={{ height: 40 }}
+              sx={{
+                height: 40,
+                borderColor: theme.palette.divider,
+                color: "text.primary",
+                textTransform: "none",
+                borderRadius: "8px",
+                px: 3,
+                "&:hover": {
+                  borderColor: "text.primary",
+                  bgcolor: "action.hover",
+                },
+              }}
             >
               Limpiar Filtros
             </Button>
@@ -673,17 +684,23 @@ export default function NominasPage() {
                          {getLocalNombre(nomina.local)}
                        </TableCell>
                        <TableCell>
-                         <Chip
-                           label={nomina.tipoNomina === 'mixta' ? 'por pagar' : nomina.tipoNomina}
-                           color={nomina.tipoNomina === 'mixta' ? 'primary' : 
-                                  nomina.tipoNomina === 'facturas' ? 'secondary' : 'default'}
-                           size="small"
-                           sx={{ 
-                             fontWeight: 600,
-                             borderRadius: "8px",
-                             textTransform: "capitalize"
-                           }}
-                         />
+                        <Chip
+                          label={nomina.tipoNomina === 'mixta' ? 'por pagar' : nomina.tipoNomina}
+                          color={nomina.tipoNomina === 'mixta' ? 'primary' : 
+                                 nomina.tipoNomina === 'facturas' ? 'secondary' : 'default'}
+                          size="small"
+                          sx={{ 
+                            fontWeight: 600,
+                            borderRadius: "8px",
+                            textTransform: "capitalize",
+                            ...(theme.palette.mode === 'light' && nomina.tipoNomina === 'cheques'
+                              ? {
+                                  bgcolor: theme.palette.text.primary,
+                                  color: theme.palette.background.paper,
+                                }
+                              : {}),
+                          }}
+                        />
                        </TableCell>
                        <TableCell>
                          <Typography variant="body2" fontWeight={600}>

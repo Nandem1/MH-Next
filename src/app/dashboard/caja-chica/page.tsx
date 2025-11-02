@@ -216,8 +216,9 @@ export default function CajaChicaPage() {
     return tipo === 'rendicion_activa' ? 'Rendición Activa' : 'Nómina Generada';
   };
 
-  const getTipoColor = (tipo: 'nomina_generada' | 'rendicion_activa'): "info" | "warning" => {
-    return tipo === 'rendicion_activa' ? "info" : "warning";
+  const getTipoColor = (tipo: 'nomina_generada' | 'rendicion_activa'): "info" | "default" => {
+    // Gris sutil para nómina generada, azul info para rendición activa
+    return tipo === 'rendicion_activa' ? "info" : "default";
   };
 
   // Cargar datos iniciales

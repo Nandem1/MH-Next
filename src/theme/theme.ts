@@ -57,7 +57,7 @@ export const darkTheme = createTheme({
     MuiDrawer: {
       styleOverrides: {
         paper: {
-          backgroundColor: "#121212",
+          backgroundColor: "#0a0a0a",
           borderRight: "1px solid #262626",
         },
       },
@@ -109,16 +109,64 @@ export const lightTheme = createTheme({
       main: "#0EA5E9",
     },
     background: {
-      default: "#FFFFFF",
-      paper: "#F5F5F5",
+      default: "#ffffff",
+      paper: "#ffffff",
     },
+    divider: "#e0e0e0",
     text: {
-      primary: "#0A0A0A",
-      secondary: "#333333",
+      primary: "#1a1a1a",
+      secondary: "#666666",
+    },
+    action: {
+      hover: "rgba(0, 0, 0, 0.04)",
+      selected: "#1a1a1a",
     },
   },
   typography: {
     fontFamily: "Inter, sans-serif",
+  },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        "*, *::before, *::after": {
+          "::selection": {
+            backgroundColor: "#FFD93D",
+            color: "#0a0a0a",
+          },
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: "none",
+          backgroundColor: "#ffffff",
+        },
+      },
+    },
+    MuiDrawer: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: "#ffffff",
+          borderRight: "1px solid #e0e0e0",
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "#ffffff",
+          borderBottom: "1px solid #e0e0e0",
+        },
+      },
+    },
+    MuiDivider: {
+      styleOverrides: {
+        root: {
+          borderColor: "#e0e0e0",
+        },
+      },
+    },
   },
 });
 

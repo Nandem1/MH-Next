@@ -48,10 +48,10 @@ export function MetricsIndicator() {
               height: 8,
               borderRadius: "50%",
               bgcolor: getDatabaseColor(nodeMetrics.database.activeConnections),
-              boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
+              boxShadow: `0 0 0 2px ${theme.palette.background.default}`,
             }}
           />
-          <Typography variant="caption" sx={{ color: "white", fontSize: "0.75rem", fontWeight: 500 }}>
+          <Typography variant="caption" color="text.primary" sx={{ fontSize: "0.75rem", fontWeight: 500 }}>
             DB
           </Typography>
         </Box>
@@ -66,10 +66,10 @@ export function MetricsIndicator() {
               height: 8,
               borderRadius: "50%",
               bgcolor: getCacheColor(nodeMetrics.cache.connected),
-              boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
+              boxShadow: `0 0 0 2px ${theme.palette.background.default}`,
             }}
           />
-          <Typography variant="caption" sx={{ color: "white", fontSize: "0.75rem", fontWeight: 500 }}>
+          <Typography variant="caption" color="text.primary" sx={{ fontSize: "0.75rem", fontWeight: 500 }}>
             Redis
           </Typography>
         </Box>
@@ -84,7 +84,7 @@ export function MetricsIndicator() {
               height: 8,
               borderRadius: "50%",
               bgcolor: getWhatsAppColor(botMetrics?.whatsapp?.status || 'disconnected'),
-              boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
+              boxShadow: `0 0 0 2px ${theme.palette.background.default}`,
             }}
           />
           <Typography variant="caption" sx={{ color: "white", fontSize: "0.75rem", fontWeight: 500 }}>
@@ -103,11 +103,11 @@ export function MetricsIndicator() {
                 height: 8,
                 borderRadius: "50%",
                 bgcolor: theme.palette.error.main,
-                boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
+                boxShadow: `0 0 0 2px ${theme.palette.background.default}`,
                 animation: "pulse 2s infinite",
               }}
             />
-            <Typography variant="caption" sx={{ color: "white", fontSize: "0.75rem", fontWeight: 500 }}>
+            <Typography variant="caption" color="text.primary" sx={{ fontSize: "0.75rem", fontWeight: 500 }}>
               {nodeMetrics.requests.errors.length}
             </Typography>
           </Box>

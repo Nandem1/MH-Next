@@ -28,6 +28,7 @@ import { useRouter, usePathname } from "next/navigation";
 
 import { drawerWidth } from "@/constants/layout";
 import { useAuth } from "@/hooks/useAuth";
+import { useThemeContext } from "@/context/ThemeContext";
 // import { canAccessRoute } from "@/utils/permissions";
 import { useState } from "react";
 
@@ -41,6 +42,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
   const pathname = usePathname();
   const isMobile = useMediaQuery("(max-width:900px)");
   const { logout, usuario } = useAuth();
+  const { mode } = useThemeContext();
   const [openDTE, setOpenDTE] = useState(false);
   const [openBodega, setOpenBodega] = useState(false);
   const [openCajaChica, setOpenCajaChica] = useState(false);
@@ -84,7 +86,6 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
           height: { xs: "auto", md: 64 }, // Altura automática en móvil, fija en desktop
           borderBottom: "1px solid",
           borderColor: "divider",
-          bgcolor: "background.paper",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -111,7 +112,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
             style={{
               objectFit: "contain",
               objectPosition: "center",
-              filter: "brightness(0) invert(1)", // Hace el logo blanco
+              filter: mode === "dark" ? "brightness(0) invert(1)" : "none",
               transform: "scale(1.3)", // Hace zoom a la imagen
             }}
             priority
@@ -140,8 +141,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
               </Typography>
             )}
             <Button
-              variant="outlined"
-              color="primary"
+              variant={mode === "light" ? "contained" : "outlined"}
               size="small"
               onClick={logout}
               sx={{ 
@@ -149,7 +149,24 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
                 textTransform: "none",
                 width: "100%",
                 mx: 0,
-                display: "block"
+                display: "block",
+                ...(mode === "light" ? {
+                  bgcolor: "background.paper",
+                  color: "text.primary",
+                  "&:hover": {
+                    bgcolor: "background.paper",
+                    color: "text.primary",
+                    opacity: 0.9,
+                  },
+                } : {
+                  borderColor: "background.paper",
+                  color: "background.paper",
+                  "&:hover": {
+                    borderColor: "background.paper",
+                    bgcolor: "background.paper",
+                    color: "text.primary",
+                  },
+                }),
               }}
             >
               Cerrar sesión
@@ -166,7 +183,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
             <ListItemButton
               selected={pathname === "/dashboard/inicio"}
               onClick={() => goTo("/dashboard/inicio")}
-              sx={navButtonStyle()}
+              sx={navButtonStyle(mode)}
             >
               <ListItemIcon sx={{ minWidth: 40 }}>
                 <DashboardIcon sx={iconStyle()} />
@@ -194,7 +211,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
           <Collapse in={openDTE} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               <ListItemButton
-                sx={{ pl: 4 }}
+                sx={subNavButtonStyle(mode)}
                 selected={pathname === "/dashboard/facturas"}
                 onClick={() => goTo("/dashboard/facturas")}
               >
@@ -208,7 +225,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
               </ListItemButton>
 
               <ListItemButton
-                sx={{ pl: 4 }}
+                sx={subNavButtonStyle(mode)}
                 selected={pathname === "/dashboard/notas-credito"}
                 onClick={() => goTo("/dashboard/notas-credito")}
               >
@@ -222,7 +239,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
               </ListItemButton>
 
               <ListItemButton
-                sx={{ pl: 4 }}
+                sx={subNavButtonStyle(mode)}
                 selected={pathname === "/dashboard/nominas"}
                 onClick={() => goTo("/dashboard/nominas")}
               >
@@ -253,7 +270,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
           <Collapse in={openCajaChica} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               <ListItemButton
-                sx={{ pl: 4 }}
+                sx={subNavButtonStyle(mode)}
                 selected={pathname === "/dashboard/caja-chica"}
                 onClick={() => goTo("/dashboard/caja-chica")}
               >
@@ -267,7 +284,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
               </ListItemButton>
 
               <ListItemButton
-                sx={{ pl: 4 }}
+                sx={subNavButtonStyle(mode)}
                 selected={pathname === "/dashboard/rinde-gastos"}
                 onClick={() => goTo("/dashboard/rinde-gastos")}
               >
@@ -287,7 +304,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
             <ListItemButton
               selected={pathname === "/dashboard/usuarios"}
               onClick={() => goTo("/dashboard/usuarios")}
-              sx={navButtonStyle()}
+              sx={navButtonStyle(mode)}
             >
               <ListItemIcon sx={{ minWidth: 40 }}>
                 <PeopleIcon sx={iconStyle()} />
@@ -304,7 +321,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
             <ListItemButton
               selected={pathname === "/dashboard/configuracion"}
               onClick={() => goTo("/dashboard/configuracion")}
-              sx={navButtonStyle()}
+              sx={navButtonStyle(mode)}
             >
               <ListItemIcon sx={{ minWidth: 40 }}>
                 <SettingsIcon sx={iconStyle()} />
@@ -325,7 +342,6 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
           color="text.secondary" 
           sx={{ 
             px: 2, 
-            bgcolor: 'background.paper',
             textDecoration: 'underline',
             textDecorationColor: 'primary.main',
             textUnderlineOffset: 4
@@ -361,7 +377,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
           <Collapse in={openBodega} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               <ListItemButton
-                sx={{ pl: 4 }}
+                sx={subNavButtonStyle(mode)}
                 selected={pathname === "/dashboard/bodega/inicio"}
                 onClick={() => goTo("/dashboard/bodega/inicio")}
               >
@@ -375,7 +391,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
               </ListItemButton>
 
               <ListItemButton
-                sx={{ pl: 4 }}
+                sx={subNavButtonStyle(mode)}
                 selected={pathname === "/dashboard/bodega/nuevo-movimiento"}
                 onClick={() => goTo("/dashboard/bodega/nuevo-movimiento")}
               >
@@ -389,7 +405,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
               </ListItemButton>
 
               <ListItemButton
-                sx={{ pl: 4 }}
+                sx={subNavButtonStyle(mode)}
                 selected={pathname === "/dashboard/bodega/stock-general"}
                 onClick={() => goTo("/dashboard/bodega/stock-general")}
               >
@@ -409,7 +425,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
             <ListItemButton
               selected={pathname === "/dashboard/auditoria-carteleria"}
               onClick={() => goTo("/dashboard/auditoria-carteleria")}
-              sx={navButtonStyle()}
+              sx={navButtonStyle(mode)}
             >
               <ListItemIcon sx={{ minWidth: 40 }}>
                 <AssessmentIcon sx={iconStyle()} />
@@ -433,7 +449,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
             <ListItemButton
               selected={pathname === "/dashboard/vencimientos"}
               onClick={() => goTo("/dashboard/vencimientos")}
-              sx={navButtonStyle()}
+              sx={navButtonStyle(mode)}
             >
               <ListItemIcon sx={{ minWidth: 40 }}>
                 <QrCodeScannerIcon sx={iconStyle()} />
@@ -457,7 +473,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
             <ListItemButton
               selected={pathname === "/dashboard/control-vencimientos"}
               onClick={() => goTo("/dashboard/control-vencimientos")}
-              sx={navButtonStyle()}
+              sx={navButtonStyle(mode)}
             >
               <ListItemIcon sx={{ minWidth: 40 }}>
                 <AssessmentIcon sx={iconStyle()} />
@@ -481,7 +497,7 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
             <ListItemButton
               selected={pathname === "/dashboard/lector-dte"}
               onClick={() => goTo("/dashboard/lector-dte")}
-              sx={navButtonStyle()}
+              sx={navButtonStyle(mode)}
             >
               <ListItemIcon sx={{ minWidth: 40 }}>
                 <ReceiptIcon sx={iconStyle()} />
@@ -513,7 +529,6 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
           color: "text.secondary",
           borderTop: "1px solid",
           borderColor: "divider",
-          bgcolor: "background.paper",
         }}
       >
         Desarrollado por{" "}
@@ -521,6 +536,13 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
           href="https://github.com/Nandem1"
           target="_blank"
           underline="hover"
+          sx={{
+            color: mode === "light" ? "text.primary" : "primary.main",
+            "&:hover": {
+              color: mode === "light" ? "text.primary" : "primary.main",
+              opacity: 0.8,
+            },
+          }}
         >
           Nandev
         </Link>
@@ -539,7 +561,6 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
         [`& .MuiDrawer-paper`]: {
           width: drawerWidth,
           boxSizing: "border-box",
-          bgcolor: "background.paper",
         },
         [`& .MuiDrawer-docked`]: {
           ...(isMobile ? {} : { width: 0 }),
@@ -551,15 +572,42 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
   );
 }
 
-function navButtonStyle() {
+function navButtonStyle(mode: "light" | "dark") {
   return {
     "&.Mui-selected": {
-      backgroundColor: "primary.main",
-      color: "#0a0a0a",
-      "&:hover": { backgroundColor: "#e6c235" },
+      backgroundColor: mode === "light" ? "text.primary" : "background.paper",
+      color: mode === "light" ? "background.paper" : "text.primary",
+      "& .MuiListItemIcon-root": {
+        color: mode === "light" ? "background.paper" : "text.primary",
+      },
+      "&:hover": { 
+        backgroundColor: mode === "light" ? "text.primary" : "background.paper",
+        opacity: 0.9,
+      },
     },
     "&:hover": {
-      bgcolor: "rgba(255, 217, 61, 0.08)",
+      bgcolor: "action.hover",
+      transition: "background-color 0.3s ease",
+    },
+  };
+}
+
+function subNavButtonStyle(mode: "light" | "dark") {
+  return {
+    pl: 4,
+    "&.Mui-selected": {
+      backgroundColor: mode === "light" ? "text.primary" : "background.paper",
+      color: mode === "light" ? "background.paper" : "text.primary",
+      "& .MuiListItemIcon-root": {
+        color: mode === "light" ? "background.paper" : "text.primary",
+      },
+      "&:hover": {
+        backgroundColor: mode === "light" ? "text.primary" : "background.paper",
+        opacity: 0.9,
+      },
+    },
+    "&:hover": {
+      bgcolor: "action.hover",
       transition: "background-color 0.3s ease",
     },
   };

@@ -57,11 +57,15 @@ export function EstadisticasSection({
               fontSize: "0.875rem",
               px: 2,
               py: 0.75,
+              '&:hover': {
+                bgcolor: theme.palette.action.hover,
+              },
               '&.Mui-selected': {
-                bgcolor: theme.palette.primary.main,
-                color: theme.palette.primary.contrastText,
+                bgcolor: theme.palette.mode === 'light' ? theme.palette.text.primary : theme.palette.common.white,
+                color: theme.palette.mode === 'light' ? theme.palette.background.paper : theme.palette.background.default,
+                borderColor: theme.palette.mode === 'light' ? theme.palette.text.primary : theme.palette.common.white,
                 '&:hover': {
-                  bgcolor: theme.palette.primary.dark,
+                  bgcolor: theme.palette.mode === 'light' ? theme.palette.text.primary : theme.palette.common.white,
                 }
               }
             }

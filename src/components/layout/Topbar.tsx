@@ -50,12 +50,10 @@ export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
   return (
     <AppBar
       position="fixed"
-      elevation={1}
+      elevation={0}
       sx={{
         width: { md: `calc(100% - ${drawerWidth}px)` }, // Solo width, NO ml
-        bgcolor: "background.paper",
         color: "text.primary",
-        boxShadow: 1,
       }}
     >
       <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -141,11 +139,29 @@ export function Topbar({ handleDrawerToggle, isMobile }: TopbarProps) {
           {/* Botón logout - SOLO EN DESKTOP */}
           <Box sx={{ display: { xs: "none", md: "block" } }}>
             <Button
-              variant="outlined"
-              color="primary"
+              variant={mode === "light" ? "contained" : "outlined"}
               size="small"
               onClick={handleLogout}
-              sx={{ textTransform: "none" }}
+              sx={{ 
+                textTransform: "none",
+                ...(mode === "light" ? {
+                  bgcolor: "text.primary",
+                  color: "background.paper",
+                  "&:hover": {
+                    bgcolor: "text.primary",
+                    color: "background.paper",
+                    opacity: 0.9,
+                  },
+                } : {
+                  borderColor: "common.white",
+                  color: "common.white",
+                  "&:hover": {
+                    borderColor: "common.white",
+                    bgcolor: "common.white",
+                    color: "background.default",
+                  },
+                }),
+              }}
             >
               Cerrar sesión
             </Button>

@@ -100,7 +100,19 @@ export function FiltrosNominasGastos({
         <Button
           variant="outlined"
           onClick={onLimpiarFiltros}
-          sx={{ height: 40, minWidth: 120 }}
+          sx={{
+            height: 40,
+            minWidth: 120,
+            borderColor: theme.palette.divider,
+            color: "text.primary",
+            textTransform: "none",
+            borderRadius: "8px",
+            px: 3,
+            "&:hover": {
+              borderColor: "text.primary",
+              bgcolor: "action.hover",
+            },
+          }}
         >
           Limpiar Filtros
         </Button>
