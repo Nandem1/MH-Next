@@ -8,6 +8,7 @@ interface PrintOptions {
   incluirFirma?: boolean;
 }
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 export const usePrintNominaGasto = () => {
   const [loading, setLoading] = useState(false);
 
@@ -31,7 +32,7 @@ export const usePrintNominaGasto = () => {
       };
 
       // Construir URL con parámetros
-      const baseUrl = '/api-beta/nominas-gastos';
+      const baseUrl = `${BASE_URL}/api-beta/nominas-gastos`;
       const params = new URLSearchParams({
         formato: defaultOptions.formato!,
         orientacion: defaultOptions.orientacion!,

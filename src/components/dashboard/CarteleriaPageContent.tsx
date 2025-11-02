@@ -9,6 +9,7 @@ import AlertTitle from "@mui/material/AlertTitle";
 import Chip from "@mui/material/Chip";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
+import Pagination from "@mui/material/Pagination";
 import { useCarteleria } from "@/hooks/useCarteleria";
 import { CarteleriaSearchBar } from "./CarteleriaSearchBar";
 import { CarteleriaCard } from "./CarteleriaCard";
@@ -16,9 +17,13 @@ import WarningIcon from "@mui/icons-material/Warning";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { useRouter } from "next/navigation";
+import { memo, useState, useMemo, useEffect } from "react";
 
-export function CarteleriaPageContent() {
+// Memoizar el componente completo
+export const CarteleriaPageContent = memo(function CarteleriaPageContent() {
   const router = useRouter();
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 50; // 50 items por página para buen balance
   const {
     data,
     isLoading,
@@ -34,6 +39,27 @@ export function CarteleriaPageContent() {
     tiposUnicos,
     estadisticas,
   } = useCarteleria();
+
+  // Reset a página 1 cuando cambian los filtros o búsqueda
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, filterTipo, filterDiscrepancia]);
+
+  // Calcular paginación
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+  
+  // Datos paginados - solo renderizamos los de la página actual
+  const paginatedData = useMemo(() => {
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return data.slice(startIndex, endIndex);
+  }, [data, page, itemsPerPage]);
+
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+    // Scroll suave al inicio de la lista
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   if (isLoading) {
     return (
@@ -140,22 +166,52 @@ export function CarteleriaPageContent() {
           </Paper>
         ) : (
           <>
-            <Box mb={2}>
+            <Box mb={2} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
               <Typography variant="body2" color="text.secondary">
-                Mostrando {data.length} resultado{data.length !== 1 ? "s" : ""}
+                Mostrando {paginatedData.length} de {data.length} resultado{data.length !== 1 ? "s" : ""}
+                {totalPages > 1 && ` • Página ${page} de ${totalPages}`}
               </Typography>
+              
+              {totalPages > 1 && (
+                <Pagination 
+                  count={totalPages} 
+                  page={page} 
+                  onChange={handlePageChange}
+                  color="primary"
+                  showFirstButton
+                  showLastButton
+                  siblingCount={1}
+                  boundaryCount={1}
+                />
+              )}
             </Box>
             
+            {/* Grid con las cards - como estaba antes */}
             <Grid container spacing={2}>
-              {data.map((item) => (
+              {paginatedData.map((item) => (
                 <Grid size={{ xs: 12, md: 6 }} key={item.carteleria.carteleria_id}>
                   <CarteleriaCard item={item} />
                 </Grid>
               ))}
             </Grid>
+
+            {/* Paginación inferior para fácil navegación */}
+            {totalPages > 1 && (
+              <Box mt={4} display="flex" justifyContent="center">
+                <Pagination 
+                  count={totalPages} 
+                  page={page} 
+                  onChange={handlePageChange}
+                  color="primary"
+                  showFirstButton
+                  showLastButton
+                  size="large"
+                />
+              </Box>
+            )}
           </>
         )}
       </Box>
     </Box>
   );
-} 
+}); 

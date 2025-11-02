@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { carteleriaService } from "@/services/carteleriaService";
-import { Carteleria, CarteleriaAuditResult } from "@/types/carteleria";
+import { useDebounce } from "./useDebounce";
 
 export const useCarteleria = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterTipo, setFilterTipo] = useState<string>("");
   const [filterDiscrepancia, setFilterDiscrepancia] = useState<string>("");
+
+  // Debounce search term para evitar renders innecesarios
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const {
     data: carteleriaDataRaw,
@@ -21,7 +24,10 @@ export const useCarteleria = () => {
   });
 
   // Deduplicar datos por carteleria_id (solución temporal para el problema del backend)
-  const carteleriaData = carteleriaDataRaw ? (() => {
+  // MEMOIZADO: Solo se ejecuta cuando cambian los datos del backend
+  const carteleriaData = useMemo(() => {
+    if (!carteleriaDataRaw) return undefined;
+    
     const seen = new Set();
     return carteleriaDataRaw.filter(item => {
       if (seen.has(item.carteleria_id)) {
@@ -30,11 +36,14 @@ export const useCarteleria = () => {
       seen.add(item.carteleria_id);
       return true;
     });
-  })() : undefined;
+  }, [carteleriaDataRaw]);
 
-  // Función para procesar los datos y calcular discrepancias
-  const processAuditData = (data: Carteleria[]): CarteleriaAuditResult[] => {
-    return data.map((item) => {
+  // MEMOIZADO: Procesar los datos y calcular discrepancias
+  // Solo se recalcula cuando cambian los datos del backend
+  const processedData = useMemo(() => {
+    if (!carteleriaData) return [];
+    
+    return carteleriaData.map((item) => {
       // Obtener precios de lista con manejo de null y convertir a números
       const listaPrecioDetalle = Number(item.lista_precio_detalle ?? 0);
       const listaPrecioMayorista = Number(item.lista_precio_mayorista ?? 0);
@@ -45,8 +54,6 @@ export const useCarteleria = () => {
       if (item.tipo_carteleria === "UNICO" || item.tipo_carteleria === "PALLET UNICO") {
         carteleriaPrecioMayorista = carteleriaPrecioDetalle;
       }
-      
-
       
       // Calcular discrepancias - si no hay precio en lista (0), no es discrepancia
       const precioDetalleCoincide = 
@@ -67,49 +74,58 @@ export const useCarteleria = () => {
         diferenciaMayorista: carteleriaPrecioMayorista - listaPrecioMayorista,
       };
     });
-  };
+  }, [carteleriaData]);
 
-  // Filtrar datos procesados
-  const processedData = carteleriaData ? processAuditData(carteleriaData) : [];
-  
-  const filteredData = processedData.filter((item) => {
+  // MEMOIZADO: Filtrar datos procesados
+  // Solo se recalcula cuando cambian los filtros o el término de búsqueda
+  const filteredData = useMemo(() => {
+    if (!processedData.length) return [];
     
-    const searchTermLower = searchTerm.toLowerCase();
+    const searchTermLower = debouncedSearchTerm.toLowerCase();
     
-    const matchesSearch = 
-      (item.carteleria.nombre?.toLowerCase().includes(searchTermLower) ?? false) ||
-      (item.carteleria.codigo?.toLowerCase().includes(searchTermLower) ?? false) ||
-      (item.carteleria.codigo_barras?.toString().toLowerCase().includes(searchTermLower) ?? false) ||
-      (item.carteleria.nombre_producto?.toLowerCase().includes(searchTermLower) ?? false) ||
-      (item.carteleria.codigo_producto?.toLowerCase().includes(searchTermLower) ?? false) ||
-      (item.carteleria.nombre_pack?.toLowerCase().includes(searchTermLower) ?? false) ||
-      (item.carteleria.codigo_pack?.toLowerCase().includes(searchTermLower) ?? false) ||
-      (item.carteleria.codigo_articulo?.toLowerCase().includes(searchTermLower) ?? false) ||
-      (item.carteleria.nombre_articulo?.toLowerCase().includes(searchTermLower) ?? false);
+    return processedData.filter((item) => {
+      // Si no hay término de búsqueda, no filtrar por texto
+      const matchesSearch = !searchTermLower || (
+        (item.carteleria.nombre?.toLowerCase().includes(searchTermLower) ?? false) ||
+        (item.carteleria.codigo?.toLowerCase().includes(searchTermLower) ?? false) ||
+        (item.carteleria.codigo_barras?.toString().toLowerCase().includes(searchTermLower) ?? false) ||
+        (item.carteleria.nombre_producto?.toLowerCase().includes(searchTermLower) ?? false) ||
+        (item.carteleria.codigo_producto?.toLowerCase().includes(searchTermLower) ?? false) ||
+        (item.carteleria.nombre_pack?.toLowerCase().includes(searchTermLower) ?? false) ||
+        (item.carteleria.codigo_pack?.toLowerCase().includes(searchTermLower) ?? false) ||
+        (item.carteleria.codigo_articulo?.toLowerCase().includes(searchTermLower) ?? false) ||
+        (item.carteleria.nombre_articulo?.toLowerCase().includes(searchTermLower) ?? false)
+      );
 
-    const matchesTipo = filterTipo === "" || item.carteleria.tipo_carteleria === filterTipo;
+      const matchesTipo = filterTipo === "" || item.carteleria.tipo_carteleria === filterTipo;
 
-    const matchesDiscrepancia = (() => {
-      switch (filterDiscrepancia) {
-        case "discrepancia":
-          return !item.precioDetalleCoincide || !item.precioMayoristaCoincide;
-        case "coincide":
-          return item.precioDetalleCoincide && item.precioMayoristaCoincide;
-        default:
-          return true;
-      }
-    })();
+      const matchesDiscrepancia = (() => {
+        switch (filterDiscrepancia) {
+          case "discrepancia":
+            return !item.precioDetalleCoincide || !item.precioMayoristaCoincide;
+          case "coincide":
+            return item.precioDetalleCoincide && item.precioMayoristaCoincide;
+          default:
+            return true;
+        }
+      })();
 
-    return matchesSearch && matchesTipo && matchesDiscrepancia;
-  });
+      return matchesSearch && matchesTipo && matchesDiscrepancia;
+    });
+  }, [processedData, debouncedSearchTerm, filterTipo, filterDiscrepancia]);
 
-  // Obtener tipos únicos para el filtro
-  const tiposUnicos = carteleriaData 
-    ? [...new Set(carteleriaData.map(item => item.tipo_carteleria))]
-    : [];
+  // MEMOIZADO: Obtener tipos únicos para el filtro
+  const tiposUnicos = useMemo(() => {
+    if (!carteleriaData) return [];
+    return [...new Set(carteleriaData.map(item => item.tipo_carteleria))];
+  }, [carteleriaData]);
 
-  // Estadísticas
-  const estadisticas = carteleriaData ? (() => {
+  // MEMOIZADO: Estadísticas
+  const estadisticas = useMemo(() => {
+    if (!processedData.length) {
+      return { total: 0, conDiscrepancia: 0, coinciden: 0, porcentajeDiscrepancia: "0" };
+    }
+    
     const total = processedData.length;
     const conDiscrepancia = processedData.filter(item => 
       !item.precioDetalleCoincide || !item.precioMayoristaCoincide
@@ -122,7 +138,7 @@ export const useCarteleria = () => {
       coinciden,
       porcentajeDiscrepancia: total > 0 ? ((conDiscrepancia / total) * 100).toFixed(1) : "0",
     };
-  })() : { total: 0, conDiscrepancia: 0, coinciden: 0, porcentajeDiscrepancia: "0" };
+  }, [processedData]);
 
   return {
     data: filteredData,

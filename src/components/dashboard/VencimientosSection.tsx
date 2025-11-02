@@ -8,7 +8,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import WarningIcon from "@mui/icons-material/Warning";
 import InfoIcon from "@mui/icons-material/Info";
-import { useState } from "react";
+import { useState, memo, useMemo, useCallback } from "react";
 
 interface Vencimiento {
   fecha_vencimiento: string;
@@ -20,32 +20,33 @@ interface VencimientosSectionProps {
   fechas_vencimiento?: Vencimiento[];
 }
 
-export function VencimientosSection({ fechas_vencimiento }: VencimientosSectionProps) {
+// Memoizar el componente para evitar re-renders innecesarios
+export const VencimientosSection = memo(function VencimientosSection({ fechas_vencimiento }: VencimientosSectionProps) {
   const [expanded, setExpanded] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const handleToggleExpanded = () => {
+  const handleToggleExpanded = useCallback(() => {
     setExpanded(!expanded);
-  };
+  }, [expanded]);
 
-  const formatDate = (dateString: string) => {
+  const formatDate = useCallback((dateString: string) => {
     return new Date(dateString).toLocaleDateString("es-CL", {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
-  };
+  }, []);
 
-  const getDaysUntilExpiry = (dateString: string) => {
+  const getDaysUntilExpiry = useCallback((dateString: string) => {
     const today = new Date();
     const expiryDate = new Date(dateString);
     const diffTime = expiryDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
-  };
+  }, []);
 
-  const getExpiryStatus = (dateString: string) => {
+  const getExpiryStatus = useCallback((dateString: string) => {
     const daysUntilExpiry = getDaysUntilExpiry(dateString);
     
     if (daysUntilExpiry < 0) {
@@ -55,22 +56,23 @@ export function VencimientosSection({ fechas_vencimiento }: VencimientosSectionP
     } else {
       return { status: "ok", color: "success" as const, icon: <InfoIcon /> };
     }
-  };
+  }, [getDaysUntilExpiry]);
 
-  const getTotalQuantity = () => {
+  // Memoizar cálculos costosos
+  const totalQuantity = useMemo(() => {
     if (!fechas_vencimiento) return 0;
     return fechas_vencimiento.reduce((total, v) => total + v.cantidad, 0);
-  };
+  }, [fechas_vencimiento]);
 
-  const getExpiringSoonCount = () => {
+  const expiringSoonCount = useMemo(() => {
     if (!fechas_vencimiento) return 0;
     return fechas_vencimiento.filter(v => getDaysUntilExpiry(v.fecha_vencimiento) <= 30).length;
-  };
+  }, [fechas_vencimiento, getDaysUntilExpiry]);
 
-  const getExpiredCount = () => {
+  const expiredCount = useMemo(() => {
     if (!fechas_vencimiento) return 0;
     return fechas_vencimiento.filter(v => getDaysUntilExpiry(v.fecha_vencimiento) < 0).length;
-  };
+  }, [fechas_vencimiento, getDaysUntilExpiry]);
 
   if (!fechas_vencimiento || fechas_vencimiento.length === 0) {
     return (
@@ -81,10 +83,6 @@ export function VencimientosSection({ fechas_vencimiento }: VencimientosSectionP
       </Box>
     );
   }
-
-  const totalQuantity = getTotalQuantity();
-  const expiringSoonCount = getExpiringSoonCount();
-  const expiredCount = getExpiredCount();
 
   return (
     <Box sx={{ mt: 0, mb: 0 }}>
@@ -212,4 +210,4 @@ export function VencimientosSection({ fechas_vencimiento }: VencimientosSectionP
       </Collapse>
     </Box>
   );
-} 
+}); 

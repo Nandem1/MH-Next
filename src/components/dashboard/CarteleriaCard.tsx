@@ -8,7 +8,7 @@ import { CarteleriaAuditResult } from "@/types/carteleria";
 import WarningIcon from "@mui/icons-material/Warning";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import { useState, useRef } from "react";
+import { useState, useRef, memo, useCallback } from "react";
 import { CarteleriaPreview } from "./CarteleriaPreview";
 import { VencimientosSection } from "./VencimientosSection";
 
@@ -16,7 +16,8 @@ interface CarteleriaCardProps {
   item: CarteleriaAuditResult;
 }
 
-export function CarteleriaCard({ item }: CarteleriaCardProps) {
+// Memoizar el componente para evitar re-renders innecesarios
+export const CarteleriaCard = memo(function CarteleriaCard({ item }: CarteleriaCardProps) {
   const [openPreview, setOpenPreview] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -30,15 +31,16 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
 
   const hasDiscrepancia = !precioDetalleCoincide || !precioMayoristaCoincide;
 
-  const handleOpenPreview = () => {
+  // Memoizar callbacks para evitar re-renders en componentes hijos
+  const handleOpenPreview = useCallback(() => {
     setOpenPreview(true);
-  };
+  }, []);
 
-  const handleClosePreview = () => {
+  const handleClosePreview = useCallback(() => {
     setOpenPreview(false);
-  };
+  }, []);
 
-  const handleDownloadPNG = async () => {
+  const handleDownloadPNG = useCallback(async () => {
     if (previewRef.current) {
       try {
         // Lazy load html2canvas only when needed
@@ -55,17 +57,17 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
         console.error("Error al generar la imagen:", error);
       }
     }
-  };
+  }, [carteleria.carteleria_id]);
 
-  const formatPrice = (price: number) => {
+  const formatPrice = useCallback((price: number) => {
     return new Intl.NumberFormat("es-CL", {
       style: "currency",
       currency: "CLP",
       minimumFractionDigits: 0,
     }).format(price);
-  };
+  }, []);
 
-  const formatDate = (dateString: string) => {
+  const formatDate = useCallback((dateString: string) => {
     return new Date(dateString).toLocaleDateString("es-CL", {
       year: "numeric",
       month: "short",
@@ -73,7 +75,7 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
+  }, []);
 
   // Fallbacks dinámicos
   const nombreMostrar =
@@ -340,4 +342,4 @@ export function CarteleriaCard({ item }: CarteleriaCardProps) {
       </Dialog>
     </Card>
   );
-}
+});
