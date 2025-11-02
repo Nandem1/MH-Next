@@ -7,6 +7,7 @@ import {
   FiltrosNominasGastos, 
   PaginationMeta, 
   EstadisticasNominasGastos,
+  EstadisticasActivas,
   UseNominasGastosReturn 
 } from '@/types/nominasGastos';
 
@@ -14,7 +15,8 @@ import {
 const initialFiltros: FiltrosNominasGastos = {
   pagina: 1,
   limite: 20,
-  include_stats: true
+  include_stats: true,
+  stats_tipo: 'historicas' // Por defecto, pedir estadísticas históricas
 };
 
 export const useNominasGastos = (): UseNominasGastosReturn => {
@@ -22,6 +24,7 @@ export const useNominasGastos = (): UseNominasGastosReturn => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [estadisticas, setEstadisticas] = useState<EstadisticasNominasGastos | null>(null);
+  const [estadisticasActivas, setEstadisticasActivas] = useState<EstadisticasActivas | null>(null);
   const [pagination, setPagination] = useState<PaginationMeta>({
     pagina: 1,
     limite: 20,
@@ -45,11 +48,30 @@ export const useNominasGastos = (): UseNominasGastosReturn => {
         console.log('✅ Datos recibidos del API:', resultado);
         console.log('✅ Nóminas:', resultado.data);
         console.log('✅ Primera nómina:', resultado.data[0]);
+        
+        // Nota: El backend debe enviar los datos ya ordenados con:
+        // 1. Rendiciones activas (tipo: 'rendicion_activa') primero
+        // 2. Luego ordenados por antigüedad (fecha_creacion ASC - más antiguas primero)
+        // No reordenamos en el frontend para mantener consistencia con la paginación del backend
         setNominas(resultado.data);
         setPagination(resultado.meta);
+        
+        // Manejar estadísticas históricas
         if (resultado.estadisticas) {
           setEstadisticas(resultado.estadisticas);
+        } else if (resultado.estadisticas_historicas) {
+          setEstadisticas(resultado.estadisticas_historicas);
+        } else {
+          setEstadisticas(null);
         }
+        
+        // Manejar estadísticas activas
+        if (resultado.estadisticas_activas) {
+          setEstadisticasActivas(resultado.estadisticas_activas);
+        } else {
+          setEstadisticasActivas(null);
+        }
+        
         // Mantener el estado local de filtros
         if (nuevosFiltros) setFiltros(filtrosAplicar);
       } else {
@@ -62,8 +84,54 @@ export const useNominasGastos = (): UseNominasGastosReturn => {
     }
   }, [filtros]);
 
+  // Cargar solo estadísticas sin recargar las nóminas
+  const loadEstadisticas = useCallback(async (statsTipo: 'historicas' | 'activas') => {
+    try {
+      // Mantener los filtros actuales pero solo cambiar stats_tipo
+      const filtrosEstadisticas = {
+        ...filtros,
+        include_stats: true,
+        stats_tipo: statsTipo,
+        limite: 1, // Solo necesitamos 1 resultado para obtener estadísticas
+        pagina: 1
+      };
+      
+      const resultado = await nominasGastosService.getNominasGastos(filtrosEstadisticas);
+      
+      if (resultado.success) {
+        // Solo actualizar estadísticas, NO actualizar nominas ni paginación
+        if (resultado.estadisticas) {
+          setEstadisticas(resultado.estadisticas);
+        } else if (resultado.estadisticas_historicas) {
+          setEstadisticas(resultado.estadisticas_historicas);
+        } else {
+          setEstadisticas(null);
+        }
+        
+        if (resultado.estadisticas_activas) {
+          setEstadisticasActivas(resultado.estadisticas_activas);
+        } else {
+          setEstadisticasActivas(null);
+        }
+
+        // Mantener el filtro en sincronía con la selección actual para futuras peticiones
+        setFiltros((prevFiltros) => ({
+          ...prevFiltros,
+          stats_tipo: statsTipo,
+        }));
+        
+        // Importante: no disparamos loadNominas aquí, solo sincronizamos el filtro
+      }
+    } catch (err) {
+      // No mostramos error aquí para no interrumpir la experiencia
+      // Solo loggeamos silenciosamente
+      console.error('Error al cargar estadísticas:', err);
+    }
+  }, [filtros]);
+
   // Cargar detalle de una nómina específica
-  const loadNominaDetalle = useCallback(async (id: number): Promise<NominaGasto> => {
+  // Nota: El ID puede ser string (rendiciones activas) o number (nóminas generadas)
+  const loadNominaDetalle = useCallback(async (id: string | number): Promise<NominaGasto> => {
     try {
       setError(null);
       const resultado = await nominasGastosService.getNominaGastoDetalle(id);
@@ -88,16 +156,18 @@ export const useNominasGastos = (): UseNominasGastosReturn => {
       ...filtros,
       ...nuevosFiltros,
       pagina: 1, // Resetear a primera página al aplicar filtros
-      include_stats: true // Siempre incluir estadísticas
+      include_stats: true, // Siempre incluir estadísticas
+      stats_tipo: nuevosFiltros.stats_tipo || 'historicas' // Mantener históricas por defecto
     };
     loadNominas(filtrosCompletos);
   }, [filtros, loadNominas]);
 
   // Limpiar filtros
   const limpiarFiltros = useCallback(() => {
-    const filtrosLimpios = {
+    const filtrosLimpios: FiltrosNominasGastos = {
       ...initialFiltros,
-      include_stats: true
+      include_stats: true,
+      stats_tipo: 'historicas' // Resetear a históricas por defecto
     };
     loadNominas(filtrosLimpios);
   }, [loadNominas]);
@@ -121,20 +191,23 @@ export const useNominasGastos = (): UseNominasGastosReturn => {
     loadNominas(nuevosFiltros);
   }, [filtros, loadNominas]);
 
-  // Cargar datos iniciales
+  // Cargar datos iniciales solo una vez al montar
   useEffect(() => {
     loadNominas();
-  }, [loadNominas]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo ejecutar al montar, no re-ejecutar cuando cambie loadNominas
 
   return {
     nominas,
     loading,
     error,
     estadisticas,
+    estadisticasActivas,
     pagination,
     filtros,
     loadNominas,
     loadNominaDetalle,
+    loadEstadisticas,
     aplicarFiltros,
     limpiarFiltros,
     cambiarPagina,

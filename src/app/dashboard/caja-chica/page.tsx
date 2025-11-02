@@ -20,12 +20,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Autocomplete,
   useTheme,
   TablePagination,
   Button,
@@ -40,9 +34,10 @@ import Footer from "@/components/shared/Footer";
 import { formatearMontoPesos } from "@/utils/formatearMonto";
 import { useRouter } from "next/navigation";
 import { useAuthStatus } from "@/hooks/useAuthStatus";
-import { locales } from "@/hooks/useAuthStatus";
 import { NominaGastoMenuActions } from "@/components/nominas/NominaGastoMenuActions";
 import { usePrintNominaGasto } from "@/hooks/usePrintNominaGasto";
+import { EstadisticasSection } from "@/components/dashboard/EstadisticasSection";
+import { FiltrosNominasGastos } from "@/components/dashboard/FiltrosNominasGastos";
 
 export default function CajaChicaPage() {
   const theme = useTheme();
@@ -60,9 +55,11 @@ export default function CajaChicaPage() {
     loading,
     error,
     estadisticas,
+    estadisticasActivas,
     pagination,
     loadNominas,
     loadNominaDetalle,
+    loadEstadisticas,
     aplicarFiltros,
     limpiarFiltros,
     cambiarPagina,
@@ -82,12 +79,29 @@ export default function CajaChicaPage() {
   // Estados para filtros
   const [filtroLocal, setFiltroLocal] = useState<number | null>(null);
   const [filtroUsuario, setFiltroUsuario] = useState("");
+  const [tipoEstadisticas, setTipoEstadisticas] = useState<'historicas' | 'activas'>('historicas');
+  const [loadingEstadisticas, setLoadingEstadisticas] = useState(false);
+
+  // Manejar cambio de tipo de estadísticas - Solo actualiza estadísticas, no recarga la tabla
+  const handleTipoEstadisticasChange = useCallback(async (nuevoTipo: 'historicas' | 'activas') => {
+    setTipoEstadisticas(nuevoTipo);
+    setLoadingEstadisticas(true);
+    try {
+      // Solo cargar estadísticas, mantener la tabla sin cambios
+      await loadEstadisticas(nuevoTipo);
+    } finally {
+      setLoadingEstadisticas(false);
+    }
+  }, [loadEstadisticas]);
 
   // Manejar cambio de filtro de local
   const handleFiltroLocalChange = useCallback((localId: number | null) => {
     setFiltroLocal(localId);
     
-    const nuevosFiltros: Record<string, unknown> = {};
+    const nuevosFiltros: Record<string, unknown> = {
+      stats_tipo: tipoEstadisticas // Mantener el tipo de estadísticas actual
+    };
+    
     if (localId) {
       nuevosFiltros.local_id = localId;
     }
@@ -99,13 +113,16 @@ export default function CajaChicaPage() {
     }
     
     aplicarFiltros(nuevosFiltros);
-  }, [filtroUsuario, usuarios, aplicarFiltros]);
+  }, [filtroUsuario, tipoEstadisticas, usuarios, aplicarFiltros]);
 
   // Manejar cambio de filtro de usuario
   const handleFiltroUsuarioChange = useCallback((nombreUsuario: string) => {
     setFiltroUsuario(nombreUsuario);
     
-    const nuevosFiltros: Record<string, unknown> = {};
+    const nuevosFiltros: Record<string, unknown> = {
+      stats_tipo: tipoEstadisticas // Mantener el tipo de estadísticas actual
+    };
+    
     if (filtroLocal) {
       nuevosFiltros.local_id = filtroLocal;
     }
@@ -117,11 +134,12 @@ export default function CajaChicaPage() {
     }
     
     aplicarFiltros(nuevosFiltros);
-  }, [filtroLocal, usuarios, aplicarFiltros]);
+  }, [filtroLocal, tipoEstadisticas, usuarios, aplicarFiltros]);
 
   const handleLimpiarFiltros = useCallback(() => {
     setFiltroLocal(null);
     setFiltroUsuario("");
+    setTipoEstadisticas('historicas'); // Resetear a históricas por defecto
     limpiarFiltros();
   }, [limpiarFiltros]);
 
@@ -135,6 +153,7 @@ export default function CajaChicaPage() {
       setModalDetalleOpen(true);
       
       // Cargar nómina completa con todos los gastos
+      // Nota: El ID puede ser string (rendiciones activas) o number (nóminas generadas)
       const nominaCompleta = await loadNominaDetalle(nomina.id);
       setSelectedNomina(nominaCompleta);
     } catch (err) {
@@ -177,10 +196,42 @@ export default function CajaChicaPage() {
     console.log("Eliminar nómina:", nomina);
   };
 
+  // Helper functions - Deben estar antes de los returns
+  const getEstadoColor = (estado: string): "warning" | "success" | "error" | "info" | "default" => {
+    switch (estado) {
+      case "activa":
+        return "info";
+      case "generada":
+        return "warning";
+      case "reembolsada":
+        return "success";
+      case "pendiente":
+        return "error";
+      default:
+        return "default";
+    }
+  };
+
+  const getTipoLabel = (tipo: 'nomina_generada' | 'rendicion_activa'): string => {
+    return tipo === 'rendicion_activa' ? 'Rendición Activa' : 'Nómina Generada';
+  };
+
+  const getTipoColor = (tipo: 'nomina_generada' | 'rendicion_activa'): "info" | "warning" => {
+    return tipo === 'rendicion_activa' ? "info" : "warning";
+  };
+
   // Cargar datos iniciales
   useEffect(() => {
     loadNominas();
-  }, [loadNominas]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Redirigir cuando no exista sesión
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   if (authLoading) {
     return (
@@ -199,22 +250,9 @@ export default function CajaChicaPage() {
   }
 
   if (!isAuthenticated) {
-    router.push("/login");
     return null;
   }
 
-  const getEstadoColor = (estado: string): "warning" | "success" | "error" | "default" => {
-    switch (estado) {
-      case "generada":
-        return "warning";
-      case "reembolsada":
-        return "success";
-      case "pendiente":
-        return "error";
-      default:
-        return "default";
-    }
-  };
 
 
   return (
@@ -243,166 +281,33 @@ export default function CajaChicaPage() {
               variant="body1" 
               sx={{ color: "text.secondary" }}
             >
-              Gestiona y visualiza las nóminas de gastos generadas automáticamente
+              Gestiona y visualiza las nóminas de gastos y rendiciones activas
             </AnimatedTypography>
           </Box>
         </AnimatedBox>
 
         {/* Estadísticas */}
-        {estadisticas && (
-          <AnimatedPaper
-            {...filtersAnimation}
-            elevation={0}
-            sx={{
-              bgcolor: "background.paper",
-              borderRadius: "12px",
-              border: `1px solid ${theme.palette.divider}`,
-              p: 3,
-            }}
-          >
-            <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: "text.primary" }}>
-              Estadísticas ({estadisticas.contexto})
-            </Typography>
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr 1fr" }, gap: 3 }}>
-              <Box>
-                <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
-                  Total Gastado
-                </Typography>
-                <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700, mt: 0.5 }}>
-                  {formatearMontoPesos(estadisticas.total_gastado)}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
-                  Total Gastos
-                </Typography>
-                <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700, mt: 0.5 }}>
-                  {estadisticas.total_gastos}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
-                  Promedio por Gasto
-                </Typography>
-                <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700, mt: 0.5 }}>
-                  {formatearMontoPesos(estadisticas.promedio_gasto)}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
-                  Período
-                </Typography>
-                <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 500, mt: 0.5 }}>
-                  {new Date(estadisticas.primera_fecha).toLocaleDateString('es-CL')} - {new Date(estadisticas.ultima_fecha).toLocaleDateString('es-CL')}
-                </Typography>
-              </Box>
-            </Box>
-            
-            {/* Estadísticas por Local */}
-            {estadisticas.top_locales && estadisticas.top_locales.length > 0 && (
-              <Box sx={{ mt: 3, pt: 3, borderTop: `1px solid ${theme.palette.divider}` }}>
-                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, color: "text.primary" }}>
-                  Total Gastado por Local
-                </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                  {estadisticas.top_locales.map((local) => (
-                    <Chip
-                      key={local.local_id}
-                      label={`${local.nombre_local}: ${formatearMontoPesos(local.total_gastado)}`}
-                      variant="outlined"
-                      sx={{
-                        bgcolor: "background.default",
-                        borderColor: theme.palette.divider,
-                        '& .MuiChip-label': {
-                          fontWeight: 500,
-                          fontSize: '0.875rem'
-                        }
-                      }}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            )}
-          </AnimatedPaper>
-        )}
+        <EstadisticasSection
+          tipoEstadisticas={tipoEstadisticas}
+          onTipoEstadisticasChange={handleTipoEstadisticasChange}
+          loading={loading}
+          loadingEstadisticas={loadingEstadisticas}
+          estadisticas={estadisticas}
+          estadisticasActivas={estadisticasActivas}
+          filtersAnimation={filtersAnimation}
+        />
 
         {/* Filtros */}
-        <AnimatedPaper
-          {...filtersAnimation}
-          elevation={0}
-          sx={{
-            bgcolor: "background.paper",
-            borderRadius: "12px",
-            border: `1px solid ${theme.palette.divider}`,
-            p: 3,
-          }}
-        >
-          <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: "text.primary" }}>
-            Filtros
-          </Typography>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Local</InputLabel>
-              <Select
-                value={filtroLocal ?? ""}
-                label="Local"
-                onChange={(e) => {
-                  const value = (e.target as HTMLInputElement).value as unknown;
-                  const selectedId = value === "" ? null : Number(value);
-                  handleFiltroLocalChange(selectedId);
-                }}
-              >
-                <MenuItem value="">Todos los locales</MenuItem>
-                {locales.map((local) => (
-                  <MenuItem key={local.id} value={local.id}>
-                    {local.nombre}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <Autocomplete
-              disablePortal
-              options={usuarios || []}
-              getOptionLabel={(option) => option.nombre}
-              value={usuarios?.find(u => u.nombre === filtroUsuario) || null}
-              onChange={(event, newValue) => {
-                handleFiltroUsuarioChange(newValue ? newValue.nombre : "");
-              }}
-              loading={isLoadingUsuarios}
-              fullWidth
-              size="small"
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Usuario"
-                  placeholder="Buscar por usuario..."
-                  InputProps={{
-                    ...params.InputProps,
-                    endAdornment: (
-                      <>
-                        {isLoadingUsuarios ? <CircularProgress color="inherit" size={20} /> : null}
-                        {params.InputProps.endAdornment}
-                      </>
-                    ),
-                  }}
-                />
-              )}
-              noOptionsText="No se encontraron usuarios"
-              loadingText="Cargando usuarios..."
-              clearOnBlur
-              clearOnEscape
-            />
-          </Box>
-          <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
-            <Button
-              variant="outlined"
-              onClick={handleLimpiarFiltros}
-              sx={{ height: 40, minWidth: 120 }}
-            >
-              Limpiar Filtros
-            </Button>
-          </Box>
-        </AnimatedPaper>
+        <FiltrosNominasGastos
+          filtroLocal={filtroLocal}
+          filtroUsuario={filtroUsuario}
+          onFiltroLocalChange={handleFiltroLocalChange}
+          onFiltroUsuarioChange={handleFiltroUsuarioChange}
+          onLimpiarFiltros={handleLimpiarFiltros}
+          usuarios={usuarios}
+          isLoadingUsuarios={isLoadingUsuarios}
+          filtersAnimation={filtersAnimation}
+        />
 
         {/* Content */}
         <AnimatedPaper
@@ -443,6 +348,7 @@ export default function CajaChicaPage() {
                 <TableHead>
                   <TableRow sx={{ bgcolor: "background.default" }}>
                     <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Tipo</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Usuario</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Monto Total</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Cantidad Gastos</TableCell>
@@ -466,6 +372,19 @@ export default function CajaChicaPage() {
                         <Typography variant="body2" fontWeight={600}>
                           #{nomina.id}
                         </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={getTipoLabel(nomina.tipo)}
+                          color={getTipoColor(nomina.tipo)}
+                          size="small"
+                          variant={nomina.tipo === 'rendicion_activa' ? "filled" : "outlined"}
+                          sx={{ 
+                            fontWeight: 600,
+                            borderRadius: "8px",
+                            fontSize: "0.75rem"
+                          }}
+                        />
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" fontWeight={500}>
@@ -578,10 +497,12 @@ export default function CajaChicaPage() {
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <Box>
               <Typography variant="h5" fontWeight={700} sx={{ color: "text.primary", mb: 0.5 }}>
-                Nómina #{selectedNomina?.id}
+                {selectedNomina?.tipo === 'rendicion_activa' ? 'Rendición Activa' : 'Nómina'} #{selectedNomina?.id}
               </Typography>
               <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                Detalle de la nómina de gastos
+                {selectedNomina?.tipo === 'rendicion_activa' 
+                  ? 'Detalle de la rendición activa' 
+                  : 'Detalle de la nómina de gastos'}
               </Typography>
             </Box>
             {selectedNomina && (
@@ -610,10 +531,24 @@ export default function CajaChicaPage() {
             <Box sx={{ p: 4 }}>
               {/* Información general */}
               <Box sx={{ mb: 4, p: 3, bgcolor: "background.default", borderRadius: "8px" }}>
-                <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
-                  Información General
-                </Typography>
-                <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" }, gap: 3 }}>
+              <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                Información General
+              </Typography>
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" }, gap: 3 }}>
+                  <Box>
+                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
+                      Tipo
+                    </Typography>
+                    <Box sx={{ mt: 0.5 }}>
+                      <Chip
+                        label={getTipoLabel(selectedNomina.tipo)}
+                        color={getTipoColor(selectedNomina.tipo)}
+                        size="small"
+                        variant={selectedNomina.tipo === 'rendicion_activa' ? "filled" : "outlined"}
+                        sx={{ fontWeight: 600, borderRadius: "8px" }}
+                      />
+                    </Box>
+                  </Box>
                   <Box>
                     <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
                       Usuario
@@ -646,26 +581,43 @@ export default function CajaChicaPage() {
                       {new Date(selectedNomina.fecha_creacion).toLocaleDateString('es-CL')}
                     </Typography>
                   </Box>
-                  <Box>
-                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
-                      Fecha de Reembolso
-                    </Typography>
-                    <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 500, mt: 0.5 }}>
-                      {selectedNomina.fecha_reembolso ? new Date(selectedNomina.fecha_reembolso).toLocaleDateString('es-CL') : 'No reembolsada'}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
-                      Fecha de Reinicio de Ciclo
-                    </Typography>
-                    <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 500, mt: 0.5 }}>
-                      {new Date(selectedNomina.fecha_reinicio_ciclo).toLocaleDateString('es-CL')}
-                    </Typography>
-                  </Box>
+                  {/* Mostrar fecha_reembolso solo si no es null y es una nómina generada */}
+                  {selectedNomina.tipo === 'nomina_generada' && (
+                    <Box>
+                      <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
+                        Fecha de Reembolso
+                      </Typography>
+                      <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 500, mt: 0.5 }}>
+                        {selectedNomina.fecha_reembolso ? new Date(selectedNomina.fecha_reembolso).toLocaleDateString('es-CL') : 'No reembolsada'}
+                      </Typography>
+                    </Box>
+                  )}
+                  {/* Mostrar fecha_reinicio_ciclo solo si no es null y es una nómina generada */}
+                  {selectedNomina.tipo === 'nomina_generada' && selectedNomina.fecha_reinicio_ciclo && (
+                    <Box>
+                      <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
+                        Fecha de Reinicio de Ciclo
+                      </Typography>
+                      <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 500, mt: 0.5 }}>
+                        {new Date(selectedNomina.fecha_reinicio_ciclo).toLocaleDateString('es-CL')}
+                      </Typography>
+                    </Box>
+                  )}
+                  {/* Mostrar rendicion_id para rendiciones activas */}
+                  {selectedNomina.tipo === 'rendicion_activa' && (
+                    <Box>
+                      <Typography variant="caption" sx={{ color: "text.secondary", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 }}>
+                        ID Rendición
+                      </Typography>
+                      <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 500, mt: 0.5 }}>
+                        {selectedNomina.rendicion_id}
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
               </Box>
 
-              {/* Observaciones */}
+              {/* Observaciones - Solo mostrar si existe */}
               {selectedNomina.observaciones && (
                 <Box sx={{ mb: 4, p: 3, bgcolor: "background.default", borderRadius: "8px" }}>
                   <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
@@ -673,6 +625,18 @@ export default function CajaChicaPage() {
                   </Typography>
                   <Typography variant="body1" sx={{ color: "text.primary" }}>
                     {selectedNomina.observaciones}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Observaciones de Reinicio - Solo para nóminas generadas */}
+              {selectedNomina.tipo === 'nomina_generada' && selectedNomina.observaciones_reinicio && (
+                <Box sx={{ mb: 4, p: 3, bgcolor: "background.default", borderRadius: "8px" }}>
+                  <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                    Observaciones de Reinicio
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: "text.primary" }}>
+                    {selectedNomina.observaciones_reinicio}
                   </Typography>
                 </Box>
               )}

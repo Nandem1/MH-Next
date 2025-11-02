@@ -40,7 +40,9 @@ export const usePrintNominaGasto = () => {
         incluirFirma: defaultOptions.incluirFirma!.toString(),
       });
 
-      const pdfUrl = `${baseUrl}/${nomina.id}/pdf?${params.toString()}`;
+      // El ID puede ser string (rendiciones activas) o number (nóminas generadas)
+      const nominaId = typeof nomina.id === 'string' ? nomina.id : nomina.id.toString();
+      const pdfUrl = `${baseUrl}/${nominaId}/pdf?${params.toString()}`;
 
       // Hacer petición con autenticación usando fetch
       const response = await fetch(pdfUrl, {

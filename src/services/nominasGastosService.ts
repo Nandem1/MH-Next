@@ -37,6 +37,7 @@ class NominasGastosService {
       if (filtros.pagina) params.append('pagina', filtros.pagina.toString());
       if (filtros.limite) params.append('limite', filtros.limite.toString());
       if (filtros.include_stats) params.append('include_stats', 'true');
+      if (filtros.stats_tipo) params.append('stats_tipo', filtros.stats_tipo);
 
       const url = `${API_URL}/api-beta/nominas-gastos?${params.toString()}`;
       const headers = this.getAuthHeaders();
@@ -59,8 +60,9 @@ class NominasGastosService {
 
   /**
    * Obtener detalle de una nómina específica
+   * Nota: El ID puede ser string (rendiciones activas) o number (nóminas generadas)
    */
-  async getNominaGastoDetalle(id: number): Promise<NominaGastoDetalleResponse> {
+  async getNominaGastoDetalle(id: string | number): Promise<NominaGastoDetalleResponse> {
     try {
       const response = await axios.get<NominaGastoDetalleResponse>(
         `${API_URL}/api-beta/nominas-gastos/${id}`,
@@ -96,6 +98,7 @@ class NominasGastosService {
     if (filtros.pagina) params.append('pagina', filtros.pagina.toString());
     if (filtros.limite) params.append('limite', filtros.limite.toString());
     if (filtros.include_stats) params.append('include_stats', 'true');
+    if (filtros.stats_tipo) params.append('stats_tipo', filtros.stats_tipo);
 
     return `${API_URL}/api-beta/nominas-gastos?${params.toString()}`;
   }
