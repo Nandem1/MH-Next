@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Button, CircularProgress, Typography, Paper, Snackbar, Alert, Table, TableHead, TableRow, TableCell, TableBody, Chip } from "@mui/material";
+import { Box, Button, CircularProgress, Typography, Paper, Snackbar, Alert, Table, TableHead, TableRow, TableCell, TableBody, Chip, Tabs, Tab } from "@mui/material";
 // /app/dashboard/usuarios/page.tsx
 
 import { useUsuariosFull } from "@/hooks/useUsuariosFull";
@@ -14,7 +14,30 @@ import NuevoUsuarioModal from "@/components/usuarios/NuevoUsuarioModal";
 import { UsuarioMenuActions } from "@/components/usuarios/UsuarioMenuActions";
 import { ConfigurarCajaChicaModal } from "@/components/usuarios/ConfigurarCajaChicaModal";
 import { UsuarioCajaChica } from "@/services/cajaChicaService";
+import { UsuariosAutorizados } from "@/components/usuarios/UsuariosAutorizados";
 import Footer from "@/components/shared/Footer";
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`usuarios-tabpanel-${index}`}
+      aria-labelledby={`usuarios-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+    </div>
+  );
+}
 
 export default function UsuariosPage() {
   const { usuarios, isLoading, isError } = useUsuariosFull();
@@ -22,6 +45,7 @@ export default function UsuariosPage() {
   const { isAuthenticated, isLoading: authLoading, rol_id } = useAuthStatus();
   const router = useRouter();
 
+  const [tabValue, setTabValue] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -30,6 +54,10 @@ export default function UsuariosPage() {
   // Estados para el modal de caja chica
   const [modalCajaChicaOpen, setModalCajaChicaOpen] = useState(false);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<UsuarioCajaChica | null>(null);
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
 
   if (isLoading || authLoading || isLoadingCajaChica) {
     return (
@@ -133,100 +161,113 @@ export default function UsuariosPage() {
           Gestión de Usuarios
         </Typography>
 
-        {esAdmin && (
-          <Box sx={{ mb: 2 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => setModalOpen(true)}
-            >
-              Nuevo Usuario
-            </Button>
-          </Box>
-        )}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mt: 3 }}>
+          <Tabs value={tabValue} onChange={handleTabChange}>
+            <Tab label="Usuarios Autenticados" />
+            <Tab label="Usuarios Autorizados para Cartelería" />
+          </Tabs>
+        </Box>
 
-        <Paper sx={{ width: "100%", overflowX: "auto" }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Email</TableCell>
-                <TableCell>Nombre</TableCell>
-                <TableCell>WhatsApp ID</TableCell>
-                <TableCell>Rol</TableCell>
-                <TableCell>Local</TableCell>
-                <TableCell>Estado Caja Chica</TableCell>
-                <TableCell>Saldo Actual</TableCell>
-                <TableCell align="center">Acciones</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {ordenarUsuariosPorRol(usuarios).map((usuario) => {
-                const usuarioCajaChica = getUsuarioCajaChica(usuario.id_auth_user);
-                return (
-                  <TableRow key={usuario.id_auth_user}>
-                    <TableCell>{usuario.email}</TableCell>
-                    <TableCell>{usuario.nombre ?? "-"}</TableCell>
-                    <TableCell>{usuario.whatsapp_id ?? "-"}</TableCell>
-                    <TableCell>
-                      {usuario.rol_id === 1
-                        ? "Administrador"
-                        : usuario.rol_id === 2
-                        ? "Supervisor"
-                        : "Empleado"}
-                    </TableCell>
-                    <TableCell>
-                      {usuarioCajaChica?.nombreLocal ? (
-                        <Typography variant="body2" color="text.primary" fontWeight={500}>
-                          {usuarioCajaChica.nombreLocal}
-                        </Typography>
-                      ) : (
-                        <Typography variant="body2" color="text.secondary">
-                          Sin asignar
-                        </Typography>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {usuarioCajaChica ? (
-                        <Chip
-                          label={getCajaChicaChipText(usuarioCajaChica)}
-                          color={getCajaChicaChipColor(usuarioCajaChica)}
-                          size="small"
-                          variant="outlined"
-                        />
-                      ) : (
-                        <Chip
-                          label="Sin información"
-                          color="default"
-                          size="small"
-                          variant="outlined"
-                        />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {usuarioCajaChica?.montoActual ? (
-                        <Typography variant="body2" color="success.main" fontWeight="bold">
-                          {formatearMonto(usuarioCajaChica.montoActual)}
-                        </Typography>
-                      ) : (
-                        <Typography variant="body2" color="text.secondary">
-                          -
-                        </Typography>
-                      )}
-                    </TableCell>
-                    <TableCell align="center">
-                      {esAdmin && usuarioCajaChica && (
-                        <UsuarioMenuActions
-                          usuario={usuarioCajaChica}
-                          onConfigurarCajaChica={handleConfigurarCajaChica}
-                        />
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Paper>
+        <TabPanel value={tabValue} index={0}>
+          {esAdmin && (
+            <Box sx={{ mb: 2 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => setModalOpen(true)}
+              >
+                Nuevo Usuario
+              </Button>
+            </Box>
+          )}
+
+          <Paper sx={{ width: "100%", overflowX: "auto" }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Nombre</TableCell>
+                  <TableCell>WhatsApp ID</TableCell>
+                  <TableCell>Rol</TableCell>
+                  <TableCell>Local</TableCell>
+                  <TableCell>Estado Caja Chica</TableCell>
+                  <TableCell>Saldo Actual</TableCell>
+                  <TableCell align="center">Acciones</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {ordenarUsuariosPorRol(usuarios).map((usuario) => {
+                  const usuarioCajaChica = getUsuarioCajaChica(usuario.id_auth_user);
+                  return (
+                    <TableRow key={usuario.id_auth_user}>
+                      <TableCell>{usuario.email}</TableCell>
+                      <TableCell>{usuario.nombre ?? "-"}</TableCell>
+                      <TableCell>{usuario.whatsapp_id ?? "-"}</TableCell>
+                      <TableCell>
+                        {usuario.rol_id === 1
+                          ? "Administrador"
+                          : usuario.rol_id === 2
+                          ? "Supervisor"
+                          : "Empleado"}
+                      </TableCell>
+                      <TableCell>
+                        {usuarioCajaChica?.nombreLocal ? (
+                          <Typography variant="body2" color="text.primary" fontWeight={500}>
+                            {usuarioCajaChica.nombreLocal}
+                          </Typography>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            Sin asignar
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {usuarioCajaChica ? (
+                          <Chip
+                            label={getCajaChicaChipText(usuarioCajaChica)}
+                            color={getCajaChicaChipColor(usuarioCajaChica)}
+                            size="small"
+                            variant="outlined"
+                          />
+                        ) : (
+                          <Chip
+                            label="Sin información"
+                            color="default"
+                            size="small"
+                            variant="outlined"
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {usuarioCajaChica?.montoActual ? (
+                          <Typography variant="body2" color="success.main" fontWeight="bold">
+                            {formatearMonto(usuarioCajaChica.montoActual)}
+                          </Typography>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            -
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell align="center">
+                        {esAdmin && usuarioCajaChica && (
+                          <UsuarioMenuActions
+                            usuario={usuarioCajaChica}
+                            onConfigurarCajaChica={handleConfigurarCajaChica}
+                          />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </Paper>
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={1}>
+          <UsuariosAutorizados />
+        </TabPanel>
 
         <NuevoUsuarioModal
           open={modalOpen}

@@ -76,3 +76,114 @@ export const getUsuariosDisponibles = async (): Promise<UsuarioDisponible[]> => 
     throw new Error("No se pudieron cargar los usuarios disponibles");
   }
 };
+
+// 🎯 Interfaces para usuarios autorizados para cartelería
+export interface UsuarioAutorizado {
+  id: number;
+  nombre: string;
+  rut: string;
+  id_local: number;
+  local: {
+    id: number;
+    nombre_local: string;
+  };
+}
+
+export interface UsuarioAutorizadoResponse {
+  success: boolean;
+  data: UsuarioAutorizado[];
+}
+
+export interface CreateUsuarioAutorizadoRequest {
+  nombre: string;
+  rut: string;
+  local: {
+    id: number;
+  };
+}
+
+export interface UpdateUsuarioAutorizadoRequest {
+  nombre?: string;
+  rut?: string;
+  local?: {
+    id: number;
+  };
+}
+
+// 🚀 Servicio para obtener usuarios autorizados
+export const getUsuariosAutorizados = async (): Promise<UsuarioAutorizado[]> => {
+  try {
+    const response = await axios.get<UsuarioAutorizadoResponse>(`${API_URL}/api-beta/usuariosCarteleria`, {
+      withCredentials: true,
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error("Error obteniendo usuarios autorizados:", error);
+    throw new Error("No se pudieron cargar los usuarios autorizados");
+  }
+};
+
+// 🚀 Servicio para crear usuario autorizado
+export const createUsuarioAutorizado = async (
+  data: CreateUsuarioAutorizadoRequest
+): Promise<UsuarioAutorizado> => {
+  try {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      throw new Error('Token de autenticación no encontrado');
+    }
+
+    const response = await axios.post<UsuarioAutorizadoResponse>(
+      `${API_URL}/api-beta/usuariosCarteleria`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true,
+      }
+    );
+    return response.data.data[0];
+  } catch (error) {
+    console.error("Error creando usuario autorizado:", error);
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const errorMessage = error.response.data.error?.message || error.response.data.message;
+      throw new Error(errorMessage || "No se pudo crear el usuario autorizado");
+    }
+    throw new Error("No se pudo crear el usuario autorizado");
+  }
+};
+
+// 🚀 Servicio para actualizar usuario autorizado
+export const updateUsuarioAutorizado = async (
+  id: number,
+  data: UpdateUsuarioAutorizadoRequest
+): Promise<UsuarioAutorizado> => {
+  try {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      throw new Error('Token de autenticación no encontrado');
+    }
+
+    const response = await axios.put<UsuarioAutorizadoResponse>(
+      `${API_URL}/api-beta/usuariosCarteleria/${id}`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true,
+      }
+    );
+    return response.data.data[0];
+  } catch (error) {
+    console.error("Error actualizando usuario autorizado:", error);
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const errorMessage = error.response.data.error?.message || error.response.data.message;
+      throw new Error(errorMessage || "No se pudo actualizar el usuario autorizado");
+    }
+    throw new Error("No se pudo actualizar el usuario autorizado");
+  }
+};
