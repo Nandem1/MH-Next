@@ -77,7 +77,7 @@ export function EditarUsuarioAutorizadoModal({
       setErrorRut("");
     }
 
-    if (!localId || localId === "") {
+    if (!localId || (typeof localId === "string" && localId === "")) {
       setErrorLocal("Debe seleccionar un local");
       hasErrors = true;
     } else {
