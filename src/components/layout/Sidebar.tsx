@@ -299,6 +299,23 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
             </List>
           </Collapse>
 
+          {/* Auditoría de Cartelería */}
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={pathname === "/dashboard/auditoria-carteleria"}
+              onClick={() => goTo("/dashboard/auditoria-carteleria")}
+              sx={navButtonStyle(mode)}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <AssessmentIcon sx={iconStyle()} />
+              </ListItemIcon>
+              <ListItemText 
+                primary="Auditoría de Cartelería" 
+                primaryTypographyProps={{ sx: textStyle() }}
+              />
+            </ListItemButton>
+          </ListItem>
+
           {/* Usuarios */}
           <ListItem disablePadding>
             <ListItemButton
@@ -419,30 +436,6 @@ export function Sidebar({ mobileOpen, handleDrawerToggle }: SidebarProps) {
               </ListItemButton>
             </List>
           </Collapse>
-
-          {/* Auditoría de Cartelería - DEMO */}
-          <ListItem disablePadding>
-            <ListItemButton
-              selected={pathname === "/dashboard/auditoria-carteleria"}
-              onClick={() => goTo("/dashboard/auditoria-carteleria")}
-              sx={navButtonStyle(mode)}
-            >
-              <ListItemIcon sx={{ minWidth: 40 }}>
-                <AssessmentIcon sx={iconStyle()} />
-              </ListItemIcon>
-              <ListItemText 
-                primary="Auditoría de Cartelería" 
-                primaryTypographyProps={{ sx: textStyle() }}
-              />
-              <Chip 
-                label="Demo" 
-                size="small" 
-                color="info" 
-                variant="outlined"
-                sx={{ ml: 1, fontSize: '0.7rem', height: 20 }}
-              />
-            </ListItemButton>
-          </ListItem>
 
           {/* Vencimientos - DEMO */}
           <ListItem disablePadding>
