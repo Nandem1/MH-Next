@@ -31,6 +31,11 @@ export interface UsuariosDisponiblesResponse {
   data: UsuarioDisponible[];
 }
 
+export interface UsuariosResponse {
+  success: boolean;
+  data: Usuario[];
+}
+
 export interface Proveedor {
   id: number;
   nombre: string;
@@ -47,8 +52,8 @@ export const getUsuariosFull = async (): Promise<UsuarioFull[]> => {
 
 export const getUsuarios = async (): Promise<Usuario[]> => {
   try {
-    const response = await axios.get<Usuario[]>(`${API_URL}/api-beta/usuarios`);
-    return response.data;
+    const response = await axios.get<UsuariosResponse>(`${API_URL}/api-beta/usuarios`);
+    return response.data.data;
   } catch (error) {
     console.error("Error obteniendo usuarios:", error);
     throw new Error("No se pudieron cargar los usuarios");
