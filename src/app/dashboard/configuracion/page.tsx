@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Footer from "@/components/shared/Footer";
 import { ListaPreciosImporter } from "@/components/configuracion/ListaPreciosImporter";
+import { ListaArticulosImporter } from "@/components/configuracion/ListaArticulosImporter";
 import { CategoriasArticulos } from "@/components/configuracion/CategoriasArticulos";
 import { ChangePasswordModal } from "@/components/usuarios/ChangePasswordModal";
 
@@ -77,6 +78,7 @@ export default function ConfiguracionPage() {
           <Tabs value={tabValue} onChange={handleTabChange}>
             <Tab label="Información de Usuario" />
             <Tab label="Importar Lista de Precios" />
+            <Tab label="Importar Lista de Artículos" />
             <Tab label="Categorías Artículos" />
           </Tabs>
         </Box>
@@ -124,6 +126,10 @@ export default function ConfiguracionPage() {
         </TabPanel>
 
         <TabPanel value={tabValue} index={2}>
+          <ListaArticulosImporter />
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={3}>
           <CategoriasArticulos />
         </TabPanel>
       </Box>
