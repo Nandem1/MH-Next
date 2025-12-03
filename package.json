@@ -38,9 +38,9 @@
     "framer-motion": "^12.6.3",
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.487.0",
-    "next": "15.2.4",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "next": "15.2.6",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
     "tanstack": "^1.0.0"
   },
   "devDependencies": {
@@ -51,7 +51,7 @@
     "@types/react-dom": "^19",
     "cross-env": "^7.0.3",
     "eslint": "^9",
-    "eslint-config-next": "15.2.4",
+    "eslint-config-next": "15.2.6",
     "typescript": "^5.8.3"
   }
 }
