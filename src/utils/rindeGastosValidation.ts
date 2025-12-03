@@ -57,23 +57,6 @@ export const validarCrearGasto = (gasto: CrearGastoRequest): ValidationResult =>
       field: 'fecha',
       message: 'La fecha es obligatoria'
     });
-  } else {
-    const fechaGasto = new Date(gasto.fecha);
-    const hoy = new Date();
-    const hace30Dias = new Date();
-    hace30Dias.setDate(hoy.getDate() - 30);
-
-    if (fechaGasto > hoy) {
-      errors.push({
-        field: 'fecha',
-        message: 'La fecha no puede ser futura'
-      });
-    } else if (fechaGasto < hace30Dias) {
-      errors.push({
-        field: 'fecha',
-        message: 'La fecha no puede ser anterior a 30 días'
-      });
-    }
   }
 
   // Validar categoría

@@ -139,23 +139,9 @@ export const GastoFormNew: React.FC<GastoFormNewProps> = ({ onGastoCreado }) => 
       return false;
     }
     
-    // Validar fecha de forma segura
+    // Validar formato de fecha básico
     if (!isValidDate(fechaInput)) {
       setError("La fecha ingresada no es válida. Use el formato YYYY-MM-DD");
-      return false;
-    }
-
-    const fechaGasto = new Date(fechaInput);
-    const hoy = new Date();
-    hoy.setHours(23, 59, 59, 999);
-    if (fechaGasto > hoy) {
-      setError("La fecha no puede ser futura");
-      return false;
-    }
-    const hace30Dias = new Date();
-    hace30Dias.setDate(hoy.getDate() - 30);
-    if (fechaGasto < hace30Dias) {
-      setError("La fecha no puede ser anterior a 30 días");
       return false;
     }
     
