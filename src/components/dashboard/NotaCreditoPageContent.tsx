@@ -11,8 +11,9 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Pagination from "@mui/material/Pagination";
 import { adaptNotaCredito } from "@/utils/adaptNotaCredito";
+import { ENV } from '@/config/env';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = ENV.API_URL;
 
 export function NotaCreditoPageContent() {
   // Hook para forzar un re-render después del primer mount y corregir glitch visual

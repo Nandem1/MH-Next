@@ -7,8 +7,9 @@ import {
   FiltrosNominasGastos,
   ErrorResponse 
 } from '@/types/nominasGastos';
+import { ENV } from '@/config/env';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = ENV.API_URL || 'http://localhost:8000';
 
 class NominasGastosService {
   private getAuthHeaders() {

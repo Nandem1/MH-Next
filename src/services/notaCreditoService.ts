@@ -1,8 +1,9 @@
 import axios from "axios";
 import { NotaCredito, NotaCreditoResponse } from "@/types/notaCredito";
 import { adaptNotaCredito } from "@/utils/adaptNotaCredito";
+import { ENV } from '@/config/env';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = ENV.API_URL;
 
 interface NotaCreditoAPIResponse {
   notas_credito: NotaCreditoResponse[];

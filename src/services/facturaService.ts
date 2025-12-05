@@ -2,8 +2,8 @@
 import axios from "axios";
 import { Factura, FacturaResponse, FacturaDisponibleResponse, ActualizarMetodoPagoRequest, ActualizarFechaPagoRequest } from "@/types/factura";
 import { adaptFactura, adaptFacturaDisponible } from "@/utils/adaptFactura";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { ENV } from '@/config/env';
+const API_URL = ENV.API_URL;
 
 interface FacturaAPIResponse {
   facturas: FacturaResponse[];

@@ -16,8 +16,9 @@ import {
   AsignarChequeAFacturaResponse
 } from "@/types/nominaCheque";
 import { getUsuarioAutenticado } from "@/services/authService";
+import { ENV } from '@/config/env';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE_URL = ENV.API_URL || "http://localhost:8000";
 
 // Tipos para la respuesta del API
 interface ApiResponse<T> {

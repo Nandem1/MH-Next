@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { NominaGasto } from '@/types/nominasGastos';
+import { ENV } from '@/config/env';
 
 interface PrintOptions {
   formato?: 'A4' | 'A3' | 'Letter';
@@ -8,7 +9,7 @@ interface PrintOptions {
   incluirFirma?: boolean;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL = ENV.API_URL;
 export const usePrintNominaGasto = () => {
   const [loading, setLoading] = useState(false);
 

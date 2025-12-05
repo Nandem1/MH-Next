@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { Vencimiento, VencimientoResponse, ControlVencimientosResponse } from '../types/vencimientos';
+import { ENV } from '@/config/env';
 
 // Usar la variable de entorno como los otros servicios
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = ENV.API_URL;
 
 // Helper para manejar errores de axios
 const handleAxiosError = (error: unknown): VencimientoResponse => {

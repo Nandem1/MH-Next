@@ -42,7 +42,8 @@ interface ProductoResponse {
   total: number;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+import { ENV } from '@/config/env';
+const API_BASE_URL = ENV.API_URL;
 
 export const buscarProductoPorCodigo = async (codigoBarras: string): Promise<ProductoResponse> => {
   try {

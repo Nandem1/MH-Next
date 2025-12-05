@@ -6,8 +6,9 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import CancelIcon from '@mui/icons-material/Cancel';
 import axios, { AxiosError } from "axios";
 import { useSnackbar } from "@/hooks/useSnackbar";
+import { ENV } from '@/config/env';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = ENV.API_URL;
 
 export function ListaArticulosImporter() {
   const { open, message, severity, showSnackbar, handleClose } = useSnackbar();

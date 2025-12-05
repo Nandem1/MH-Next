@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
+import { ENV } from '@/config/env';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = ENV.API_URL;
 
 export interface Usuario {
   id_auth_user: number;

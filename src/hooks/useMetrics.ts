@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { MetricsData } from "@/types/metrics";
+import { ENV } from '@/config/env';
 
 export function useMetrics() {
   const [metrics, setMetrics] = useState<MetricsData | null>(null);
@@ -12,7 +13,7 @@ export function useMetrics() {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+        const apiUrl = ENV.API_URL || 'http://localhost:3000';
         const url = `${apiUrl}/api-beta/monitoring/metrics`;
         const response = await fetch(url, {
           method: 'GET',

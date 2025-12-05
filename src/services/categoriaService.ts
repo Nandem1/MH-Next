@@ -1,7 +1,7 @@
 // /services/categoriaService.ts
 import axios from "axios";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+import { ENV } from '@/config/env';
+const API_URL = ENV.API_URL;
 
 export interface Categoria {
   id: number;

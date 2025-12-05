@@ -216,17 +216,21 @@ El sistema actualmente implementa **autenticación mixta** con múltiples patron
 
 ## 🌐 **Variables de Entorno**
 
+Para configurar las variables de entorno para desarrollo y producción:
+
+📖 **[Guía Rápida de Configuración](ENV_SETUP.md)** - Setup rápido  
+📚 **[Documentación Completa](docs/environment-variables.md)** - Guía detallada
+
+### Variables Principales
+
 ```env
-# API Configuration
-NEXT_PUBLIC_API_URL=https://your-api-url.com
-NEXT_PUBLIC_SITE_URL=https://your-site-url.com
+# URLs
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_API_URL=https://apidemercadohouse.app
+NEXT_PUBLIC_GO_API_URL=http://localhost:8080/api/v1
 
-# Authentication (Pendiente NextAuth)
-NEXTAUTH_URL=https://your-site-url.com
-NEXTAUTH_SECRET=your-secret-key
-
-# External Services
-NEXT_PUBLIC_GOOGLE_VERIFICATION=your-google-code
+# Entorno
+NEXT_PUBLIC_ENV=development
 ```
 
 ---
@@ -246,8 +250,11 @@ npm install
 
 ### **3. Configurar Variables de Entorno**
 ```bash
-cp .env.example .env.local
-# Editar .env.local con tus valores
+# Ver la guía rápida
+cat ENV_SETUP.md
+
+# Crear archivo .env.local y configurar variables
+# Ver ENV_SETUP.md para más detalles
 ```
 
 ### **4. Iniciar Desarrollo**

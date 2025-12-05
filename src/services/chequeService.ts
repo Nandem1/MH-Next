@@ -7,6 +7,7 @@ import {
   ActualizarChequeRequest,
   ChequesPorProveedorResponse
 } from "@/types/factura";
+import { ENV } from '@/config/env';
 
 interface EstadisticasProveedor {
   nombre_proveedor: string;
@@ -17,7 +18,7 @@ interface EstadisticasProveedor {
   monto_disponible: number;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api-beta";
+const API_URL = ENV.API_URL || "http://localhost:3001/api-beta";
 
 // Función helper para construir URLs correctamente
 const buildApiUrl = (endpoint: string): string => {
