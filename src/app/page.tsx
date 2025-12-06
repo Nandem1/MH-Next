@@ -1,5 +1,6 @@
 import LandingPageClient from "@/components/landing/LandingPageClient";
 import { Metadata } from "next";
+import { ENV } from '@/config/env';
 
 export const metadata: Metadata = {
   title: "Mercadohouse - Tu supermercado de confianza en La Serena/Coquimbo",
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(ENV.SITE_URL || ''),
   alternates: {
     canonical: '/',
   },

@@ -1,7 +1,7 @@
 import { Carteleria } from "@/types/carteleria";
 import { ENV } from '@/config/env';
 
-const API_BASE_URL = ENV.API_URL || "http://localhost:3000";
+const API_BASE_URL = ENV.API_URL;
 
 export const carteleriaService = {
   async getAuditoriaCarteleria(): Promise<Carteleria[]> {

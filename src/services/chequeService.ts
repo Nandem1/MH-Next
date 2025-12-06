@@ -18,7 +18,7 @@ interface EstadisticasProveedor {
   monto_disponible: number;
 }
 
-const API_URL = ENV.API_URL || "http://localhost:3001/api-beta";
+const API_URL = ENV.API_URL;
 
 // Función helper para construir URLs correctamente
 const buildApiUrl = (endpoint: string): string => {

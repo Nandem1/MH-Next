@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { ENV } from '@/config/env';
 
 interface GoMetricsData {
   requests: {
@@ -83,7 +84,7 @@ export function useGoMetrics() {
     const fetchMetrics = async () => {
       try {
         // Usar la URL del backend Go configurada (ya incluye /api/v1/)
-        const apiUrl = process.env.NEXT_PUBLIC_GO_API_URL || 'http://localhost:8080';
+        const apiUrl = ENV.GO_API_URL;
         
         // Endpoint específico del servidor Go (sin duplicar /api/v1/)
         const url = `${apiUrl}/monitoring/metrics`;

@@ -7,6 +7,7 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import SchemaData from "@/components/seo/SchemaData";
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/next';
+import { ENV } from '@/config/env';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(ENV.SITE_URL || ''),
   alternates: {
     canonical: '/',
   },

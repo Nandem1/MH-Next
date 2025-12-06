@@ -13,7 +13,7 @@ export function useMetrics() {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const apiUrl = ENV.API_URL || 'http://localhost:3000';
+        const apiUrl = ENV.API_URL;
         const url = `${apiUrl}/api-beta/monitoring/metrics`;
         const response = await fetch(url, {
           method: 'GET',

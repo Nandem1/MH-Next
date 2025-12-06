@@ -1,7 +1,8 @@
 // /services/cajaChicaService.ts
 import axios from "axios";
+import { ENV } from '@/config/env';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = ENV.API_URL;
 
 // Interfaces basadas en la documentación de endpoints
 export interface UsuarioCajaChica {

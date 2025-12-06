@@ -1,7 +1,8 @@
 import { MetadataRoute } from 'next'
+import { ENV } from '@/config/env';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mercadohouse.cl'
+  const baseUrl = ENV.SITE_URL || 'https://mercadohouse.cl'
   
   return [
     {

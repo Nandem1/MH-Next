@@ -9,8 +9,8 @@ import {
   ProductoPack,
   StockLocalCompletoResponse,
 } from '@/types/stock';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_GO_API_URL || 'http://localhost:8080/api/v1';
+import { ENV } from '@/config/env';
+const API_BASE_URL = ENV.GO_API_URL;
 
 // Configuración base de axios
 const stockApi = axios.create({
