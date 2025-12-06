@@ -17,11 +17,11 @@ export const ENV = {
   NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV || 'development',
   
   // URLs
-  SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+  SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || '',
   
   // APIs
-  API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
-  GO_API_URL: process.env.NEXT_PUBLIC_GO_API_URL || 'http://localhost:8080/api/v1',
+  API_URL: process.env.NEXT_PUBLIC_API_URL || '',
+  GO_API_URL: process.env.NEXT_PUBLIC_GO_API_URL || '',
   
   // SEO
   GOOGLE_VERIFICATION: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION || '',
